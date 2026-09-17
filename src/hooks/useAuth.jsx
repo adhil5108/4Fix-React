@@ -1,31 +1,21 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { setUnauthorizedHandler } from '../services/api.js';
 import {
   loginRequest,
+  meRequest,
   signupCustomerRequest,
   signupProviderRequest,
 } from '../services/authApi.js';
-
-const AUTH_STORAGE_KEY = '4fix.auth';
+import { clearStoredAuth, persistAuth, readStoredAuth } from '../services/authStorage.js';
+import { buildLoginPath } from '../utils/roles.js';
+import { getCurrentLocation, navigate } from './useRoute.js';
 
 const AuthContext = createContext(null);
-
-function readStoredAuth() {
-  try {
-    const storedAuth = window.localStorage.getItem(AUTH_STORAGE_KEY);
-    return storedAuth ? JSON.parse(storedAuth) : null;
-  } catch (_error) {
-    return null;
-  }
-}
-
-function persistAuth(authState) {
-  window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authState));
-}
 
 export function AuthProvider({ children }) {
   const [authState, setAuthState] = useState(() => readStoredAuth());
 
-  function completeAuth(result) {
+  const completeAuth = useCallback((result) => {
     const nextAuthState = {
       accessToken: result.accessToken,
       user: result.user,
@@ -34,36 +24,65 @@ export function AuthProvider({ children }) {
     persistAuth(nextAuthState);
     setAuthState(nextAuthState);
     return nextAuthState;
-  }
+  }, []);
 
-  async function login(credentials) {
-    return completeAuth(await loginRequest(credentials));
-  }
-
-  async function signupCustomer(payload) {
-    return completeAuth(await signupCustomerRequest(payload));
-  }
-
-  async function signupProvider(payload) {
-    return completeAuth(await signupProviderRequest(payload));
-  }
-
-  function logout() {
-    window.localStorage.removeItem(AUTH_STORAGE_KEY);
+  const logout = useCallback(() => {
+    clearStoredAuth();
     setAuthState(null);
-  }
+  }, []);
+
+  const updateUser = useCallback((user) => {
+    setAuthState((current) => {
+      if (!current) {
+        return current;
+      }
+
+      const nextAuthState = { ...current, user };
+      persistAuth(nextAuthState);
+      return nextAuthState;
+    });
+  }, []);
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      // Concurrent requests can all fail with 401; only the first should redirect.
+      if (!readStoredAuth()) {
+        return;
+      }
+
+      clearStoredAuth();
+      setAuthState(null);
+      navigate(buildLoginPath(getCurrentLocation()), { replace: true });
+    });
+
+    return () => setUnauthorizedHandler(null);
+  }, []);
+
+  const hasToken = Boolean(authState?.accessToken);
+
+  // Revalidate a stored session once; an expired token is cleared by the 401 handler.
+  useEffect(() => {
+    if (!hasToken) {
+      return;
+    }
+
+    meRequest()
+      .then((result) => updateUser(result.user))
+      .catch(() => {});
+  }, [hasToken, updateUser]);
 
   const value = useMemo(
     () => ({
       accessToken: authState?.accessToken || null,
       user: authState?.user || null,
       isAuthenticated: Boolean(authState?.accessToken && authState?.user),
-      login,
+      login: async (credentials) => completeAuth(await loginRequest(credentials)),
+      signupCustomer: async (payload) => completeAuth(await signupCustomerRequest(payload)),
+      signupProvider: async (payload) => completeAuth(await signupProviderRequest(payload)),
       logout,
-      signupCustomer,
-      signupProvider,
+      updateUser,
     }),
-    [authState],
+    [authState, completeAuth, logout, updateUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

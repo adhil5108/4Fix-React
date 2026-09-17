@@ -1,0 +1,176 @@
+import { useAuth } from '../hooks/useAuth.jsx';
+import { navigate, useRoute } from '../hooks/useRoute.js';
+import { ButtonLink, Link } from './ui.jsx';
+
+const icons = {
+  home: <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />,
+  grid: (
+    <>
+      <rect x="3" y="3" width="7" height="7" rx="1.5" />
+      <rect x="14" y="3" width="7" height="7" rx="1.5" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+      <rect x="14" y="14" width="7" height="7" rx="1.5" />
+    </>
+  ),
+  plus: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v8M8 12h8" />
+    </>
+  ),
+  list: <path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01" />,
+  user: (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </>
+  ),
+  briefcase: (
+    <>
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+    </>
+  ),
+};
+
+function Icon({ name }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {icons[name]}
+    </svg>
+  );
+}
+
+const NAV_BY_ROLE = {
+  PUBLIC: [
+    { to: '/', label: 'Home', icon: 'home', exact: true },
+    { to: '/services', label: 'Services', icon: 'grid' },
+    { to: '/about', label: 'About', icon: 'list' },
+  ],
+  CUSTOMER: [
+    { to: '/', label: 'Home', icon: 'home', exact: true },
+    { to: '/services', label: 'Services', icon: 'grid' },
+    { to: '/report', label: 'Report', icon: 'plus', mobileOnly: true },
+    { to: '/requests', label: 'My requests', shortLabel: 'Requests', icon: 'list' },
+    { to: '/history', label: 'History', desktopOnly: true },
+    { to: '/profile', label: 'Profile', icon: 'user' },
+  ],
+  PROVIDER: [
+    { to: '/provider', label: 'Dashboard', icon: 'home', exact: true },
+    { to: '/provider/requests', label: 'Requests', icon: 'briefcase' },
+    { to: '/provider/profile', label: 'Profile', icon: 'user' },
+  ],
+  ADMIN: [{ to: '/app/admin', label: 'Admin', icon: 'home', exact: true }],
+};
+
+function isActive(item, path) {
+  if (item.exact) {
+    return path === item.to;
+  }
+
+  return path === item.to || path.startsWith(`${item.to}/`);
+}
+
+function Header({ navItems, path }) {
+  const { isAuthenticated, user, logout } = useAuth();
+  const homeTarget = user?.role === 'PROVIDER' ? '/provider' : '/';
+
+  function handleLogout() {
+    logout();
+    navigate('/login');
+  }
+
+  return (
+    <header className="site-header">
+      <div className="site-header__inner">
+        <Link to={homeTarget} className="brand-logo brand-logo--header" aria-label="4Fix home">
+          <span className="brand-logo__mark">4</span>Fix
+        </Link>
+
+        <nav className="site-nav" aria-label="Main">
+          {navItems
+            .filter((item) => !item.mobileOnly)
+            .map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`site-nav__link${isActive(item, path) ? ' is-active' : ''}`}
+                aria-current={isActive(item, path) ? 'page' : undefined}
+              >
+                {item.label}
+              </Link>
+            ))}
+        </nav>
+
+        <div className="site-header__actions">
+          {!isAuthenticated ? (
+            <>
+              <Link to="/login" className="text-link site-header__login">
+                Log in
+              </Link>
+              <ButtonLink to="/signup/customer" size="sm">
+                Sign up
+              </ButtonLink>
+            </>
+          ) : null}
+          {isAuthenticated && user.role === 'CUSTOMER' ? (
+            <ButtonLink to="/report" size="sm" className="hide-mobile">
+              Report an issue
+            </ButtonLink>
+          ) : null}
+          {isAuthenticated && user.role === 'ADMIN' ? (
+            <button type="button" className="text-link" onClick={handleLogout}>
+              Log out
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function MobileNav({ navItems, path }) {
+  const items = navItems.filter((item) => !item.desktopOnly && item.icon);
+
+  return (
+    <nav className="mobile-nav" aria-label="Main">
+      {items.map((item) => (
+        <Link
+          key={item.to}
+          to={item.to}
+          className={`mobile-nav__link${isActive(item, path) ? ' is-active' : ''}${
+            item.icon === 'plus' ? ' mobile-nav__link--primary' : ''
+          }`}
+          aria-current={isActive(item, path) ? 'page' : undefined}
+        >
+          <Icon name={item.icon} />
+          <span>{item.shortLabel || item.label}</span>
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+function AppShell({ children, width = 'default' }) {
+  const { path } = useRoute();
+  const { isAuthenticated, user } = useAuth();
+  const navItems = NAV_BY_ROLE[isAuthenticated ? user.role : 'PUBLIC'] || NAV_BY_ROLE.PUBLIC;
+
+  return (
+    <div className="app-shell">
+      <Header navItems={navItems} path={path} />
+      <main className={`app-main app-main--${width}`}>{children}</main>
+      <MobileNav navItems={navItems} path={path} />
+    </div>
+  );
+}
+
+export default AppShell;

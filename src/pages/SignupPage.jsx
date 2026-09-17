@@ -2,9 +2,10 @@ import { useState } from 'react';
 import PasswordField from '../components/PasswordField.jsx';
 import PhonePrefix from '../components/PhonePrefix.jsx';
 import TextField from '../components/TextField.jsx';
+import { Link } from '../components/ui.jsx';
 import { useAuth } from '../hooks/useAuth.jsx';
-import { navigate } from '../hooks/useRoute.js';
-import { getHomeRouteForRole } from '../utils/roles.js';
+import { navigate, useQueryParam } from '../hooks/useRoute.js';
+import { getSafeReturnTo, resolvePostAuthRoute } from '../utils/roles.js';
 
 const signupContent = {
   CUSTOMER: {
@@ -55,6 +56,8 @@ function validateForm(form) {
 function SignupPage({ role }) {
   const content = signupContent[role];
   const { signupCustomer, signupProvider } = useAuth();
+  const returnTo = getSafeReturnTo(useQueryParam('returnTo'));
+  const returnQuery = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : '';
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
@@ -85,7 +88,7 @@ function SignupPage({ role }) {
 
     try {
       const result = role === 'CUSTOMER' ? await signupCustomer(form) : await signupProvider(form);
-      navigate(getHomeRouteForRole(result.user.role));
+      navigate(resolvePostAuthRoute(result.user.role, returnTo), { replace: true });
     } catch (error) {
       setFormError(error.message);
     } finally {
@@ -96,9 +99,9 @@ function SignupPage({ role }) {
   return (
     <main className="auth-shell">
       <section className="auth-card" aria-labelledby="signup-heading">
-        <div className="brand-logo" aria-hidden="true">
+        <Link to="/" className="brand-logo" aria-label="4Fix home">
           <span className="brand-logo__mark">4</span>Fix
-        </div>
+        </Link>
 
         <h1 id="signup-heading" className="auth-heading">
           {content.heading}
@@ -159,7 +162,7 @@ function SignupPage({ role }) {
 
         <p className="auth-footer">
           Already have an account?{' '}
-          <button type="button" className="text-link" onClick={() => navigate('/login')}>
+          <button type="button" className="text-link" onClick={() => navigate(`/login${returnQuery}`)}>
             Log in
           </button>
         </p>

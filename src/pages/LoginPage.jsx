@@ -2,12 +2,15 @@ import { useState } from 'react';
 import PasswordField from '../components/PasswordField.jsx';
 import PhonePrefix from '../components/PhonePrefix.jsx';
 import TextField from '../components/TextField.jsx';
+import { Link } from '../components/ui.jsx';
 import { useAuth } from '../hooks/useAuth.jsx';
-import { navigate } from '../hooks/useRoute.js';
-import { getHomeRouteForRole } from '../utils/roles.js';
+import { navigate, useQueryParam } from '../hooks/useRoute.js';
+import { getSafeReturnTo, resolvePostAuthRoute } from '../utils/roles.js';
 
 function LoginPage() {
   const { login } = useAuth();
+  const returnTo = getSafeReturnTo(useQueryParam('returnTo'));
+  const returnQuery = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : '';
   const [form, setForm] = useState({ username: '', password: '' });
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
@@ -46,7 +49,7 @@ function LoginPage() {
 
     try {
       const result = await login(form);
-      navigate(getHomeRouteForRole(result.user.role));
+      navigate(resolvePostAuthRoute(result.user.role, returnTo), { replace: true });
     } catch (error) {
       setFormError(error.message);
     } finally {
@@ -57,9 +60,9 @@ function LoginPage() {
   return (
     <main className="auth-shell">
       <section className="auth-card" aria-labelledby="login-heading">
-        <div className="brand-logo" aria-hidden="true">
+        <Link to="/" className="brand-logo" aria-label="4Fix home">
           <span className="brand-logo__mark">4</span>Fix
-        </div>
+        </Link>
 
         <h1 id="login-heading" className="auth-heading">
           Welcome back
@@ -101,7 +104,7 @@ function LoginPage() {
 
         <p className="auth-footer">
           New to 4Fix?{' '}
-          <button type="button" className="text-link" onClick={() => navigate('/signup/customer')}>
+          <button type="button" className="text-link" onClick={() => navigate(`/signup/customer${returnQuery}`)}>
             Create an account
           </button>
         </p>
