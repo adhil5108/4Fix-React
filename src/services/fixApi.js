@@ -4,6 +4,7 @@ const id = (value) => encodeURIComponent(value);
 
 export const uploadsApi = {
   image: (file) => uploadFile('/api/uploads/image', file, 'image'),
+  audio: (file) => uploadFile('/api/uploads/audio', file, 'audio'),
 };
 
 export const servicesApi = {
@@ -48,6 +49,10 @@ export const bookingsApi = {
     }),
 
   openChat: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}/chat`, { method: 'POST' }),
+  // Read-only GET, never creates a conversation — used by admin's platform-wide,
+  // read-only chat view (a customer/provider could use it too, but they already have
+  // openChat, which also creates the conversation on first use).
+  getConversation: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}/chat`),
   messages: (bookingId, since) =>
     apiRequest(`/api/bookings/${id(bookingId)}/messages${toQueryString({ since })}`),
   sendMessage: (bookingId, message) =>

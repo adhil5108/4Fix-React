@@ -4,6 +4,7 @@ import ChatWindow from '../../components/ChatWindow.jsx';
 import { ErrorState, LoadingState, PageHeader } from '../../components/ui.jsx';
 import { useAction, useApi } from '../../hooks/useApi.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
+import { useConversationSocket } from '../../hooks/useConversationSocket.js';
 import { usePolling } from '../../hooks/usePolling.js';
 import { bookingsApi } from '../../services/fixApi.js';
 
@@ -16,7 +17,13 @@ function ChatPage({ bookingId }) {
   const send = useAction();
   const markingRead = useRef(false);
 
-  usePolling(() => messages.refresh(), 5000, Boolean(conversation.data));
+  // Socket.IO delivers new messages/read receipts in real time; the slow poll is
+  // only a safety net in case the socket connection drops unnoticed.
+  useConversationSocket(bookingId, {
+    onMessage: () => messages.refresh(),
+    onRead: () => messages.refresh(),
+  });
+  usePolling(() => messages.refresh(), 20000, Boolean(conversation.data));
 
   const list = messages.data?.messages || [];
   const unreadFromOther = list.some((message) => !message.isMine && !message.readAt);

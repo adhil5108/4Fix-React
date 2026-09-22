@@ -218,6 +218,23 @@ export function QuoteCard({ quote, showProvider = true, highlight = false, actio
   );
 }
 
+// A customer's recorded voice message, wherever a request/job/booking with one is
+// shown. Native controls only (play/pause/seek); never autoplays.
+export function VoiceNoteBlock({ voiceNote }) {
+  if (!voiceNote?.url) {
+    return null;
+  }
+
+  return (
+    <div className="voice-note">
+      <span className="voice-note__label">🎤 Voice message from customer</span>
+      <audio controls preload="none" src={voiceNote.url} className="voice-note__player">
+        Your browser does not support audio playback.
+      </audio>
+    </div>
+  );
+}
+
 export function AddressBlock({ address }) {
   if (!address) {
     return null;

@@ -1,6 +1,7 @@
 import AdminShell from '../../components/admin/AdminShell.jsx';
+import AdminConversationView from '../../components/admin/AdminConversationView.jsx';
 import TrackingTimeline from '../../components/TrackingTimeline.jsx';
-import { AddressBlock, AttachmentList } from '../../components/cards.jsx';
+import { AddressBlock, AttachmentList, VoiceNoteBlock } from '../../components/cards.jsx';
 import { Card, DetailList, ErrorState, Link, LoadingState, PageHeader, StatusBadge } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { adminApi } from '../../services/fixApi.js';
@@ -65,6 +66,12 @@ function AdminBookingDetailPage({ bookingId }) {
                 <AttachmentList attachments={booking.request.attachments} />
               </>
             ) : null}
+            <VoiceNoteBlock voiceNote={booking.request?.voiceNote} />
+          </Card>
+
+          <Card>
+            <h2 className="card__title">Conversation</h2>
+            <AdminConversationView bookingId={booking.id} />
           </Card>
         </div>
 

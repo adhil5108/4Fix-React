@@ -625,6 +625,97 @@ a.provider-card__name:hover {
   border-color: var(--green);
 }
 
+.chat--admin {
+  height: auto;
+  max-height: 420px;
+}
+
+.chat--admin .chat__messages {
+  min-height: 160px;
+}
+
+.bubble__role {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  opacity: 0.7;
+  text-transform: uppercase;
+}
+
+.chat__admin-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding: 10px 16px;
+}
+
+/* Voice notes: recorder (BookPage) and read-only player (detail views) */
+
+.voice-recorder {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.voice-recorder--recording {
+  color: var(--red, #d64545);
+  font-weight: 600;
+}
+
+.voice-recorder__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--red, #d64545);
+  animation: voice-recorder-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes voice-recorder-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.voice-recorder--done {
+  flex-wrap: wrap;
+}
+
+.voice-recorder__player {
+  max-width: 100%;
+  height: 40px;
+}
+
+.voice-recorder__duration {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.voice-note {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.voice-note__label {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.voice-note__player {
+  width: 100%;
+  max-width: 360px;
+  height: 40px;
+}
+
 /* Stars, reviews, payment */
 
 .stars {

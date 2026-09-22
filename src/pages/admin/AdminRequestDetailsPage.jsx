@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import AdminShell from '../../components/admin/AdminShell.jsx';
-import { AddressBlock, AttachmentList, QuoteCard } from '../../components/cards.jsx';
+import { AddressBlock, AttachmentList, QuoteCard, VoiceNoteBlock } from '../../components/cards.jsx';
 import {
   Button,
   Card,
@@ -98,7 +98,21 @@ function AdminRequestDetailsPage({ requestId }) {
                 <AttachmentList attachments={request.attachments} />
               </>
             ) : null}
+            <VoiceNoteBlock voiceNote={request.voiceNote} />
           </Card>
+
+          {booking ? (
+            <Card>
+              <h2 className="card__title">Conversation</h2>
+              <p className="body-text">
+                Read the customer/provider chat for this job's booking. Admin can view every message
+                but cannot send as either participant.
+              </p>
+              <Link to={`/app/admin/bookings/${booking.id}`} className="text-link">
+                View conversation →
+              </Link>
+            </Card>
+          ) : null}
 
           <section className="section section--tight" aria-labelledby="quotes-heading">
             <h2 id="quotes-heading" className="section__title">
@@ -176,6 +190,15 @@ function AdminRequestDetailsPage({ requestId }) {
         </div>
 
         <aside>
+          <Card>
+            <h2 className="card__title">Customer</h2>
+            <DetailList items={[{ label: 'Name', value: request.customer?.name }]} />
+            {request.customer ? (
+              <Link to={`/app/admin/customers/${request.customer.id}`} className="text-link">
+                View customer →
+              </Link>
+            ) : null}
+          </Card>
           <Card>
             <h2 className="card__title">Selected provider</h2>
             {request.selectedProvider ? (

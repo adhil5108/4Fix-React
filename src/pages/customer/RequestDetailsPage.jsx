@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import AppShell from '../../components/AppShell.jsx';
 import StepIndicator from '../../components/StepIndicator.jsx';
-import { AddressBlock, AttachmentList, ProviderCard, QuoteCard } from '../../components/cards.jsx';
+import { AddressBlock, AttachmentList, ProviderCard, QuoteCard, VoiceNoteBlock } from '../../components/cards.jsx';
 import {
   Button,
   ButtonLink,
@@ -319,6 +319,7 @@ function RequestDetailsPage({ requestId }) {
                 <AttachmentList attachments={request.attachments} />
               </>
             ) : null}
+            <VoiceNoteBlock voiceNote={request.voiceNote} />
           </Card>
         </aside>
       </div>

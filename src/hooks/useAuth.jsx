@@ -7,6 +7,7 @@ import {
   signupProviderRequest,
 } from '../services/authApi.js';
 import { clearStoredAuth, persistAuth, readStoredAuth } from '../services/authStorage.js';
+import { disconnectSocket } from '../services/socket.js';
 import { buildLoginPath } from '../utils/roles.js';
 import { getCurrentLocation, navigate } from './useRoute.js';
 
@@ -28,6 +29,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(() => {
     clearStoredAuth();
+    disconnectSocket();
     setAuthState(null);
   }, []);
 
@@ -51,6 +53,7 @@ export function AuthProvider({ children }) {
       }
 
       clearStoredAuth();
+      disconnectSocket();
       setAuthState(null);
       navigate(buildLoginPath(getCurrentLocation()), { replace: true });
     });

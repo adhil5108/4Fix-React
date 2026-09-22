@@ -2,7 +2,7 @@ import { useState } from 'react';
 import AppShell from '../../components/AppShell.jsx';
 import { LifecycleActions } from '../../components/JobActions.jsx';
 import TextField, { TextArea } from '../../components/TextField.jsx';
-import { AddressBlock, AttachmentList, QuoteCard } from '../../components/cards.jsx';
+import { AddressBlock, AttachmentList, QuoteCard, VoiceNoteBlock } from '../../components/cards.jsx';
 import {
   Button,
   ButtonLink,
@@ -308,6 +308,7 @@ function ProviderRequestDetailsPage({ requestId }) {
                 <AttachmentList attachments={request.attachments} />
               </>
             ) : null}
+            <VoiceNoteBlock voiceNote={request.voiceNote} />
           </Card>
         </aside>
       </div>

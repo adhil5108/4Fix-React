@@ -3,6 +3,7 @@ import { AddressForm, DateTimePicker, validateAddress, validateDateTime } from '
 import AppShell from '../../components/AppShell.jsx';
 import StepIndicator from '../../components/StepIndicator.jsx';
 import { TextArea } from '../../components/TextField.jsx';
+import VoiceRecorder from '../../components/VoiceRecorder.jsx';
 import { IssueCard } from '../../components/cards.jsx';
 import {
   Button,
@@ -228,6 +229,7 @@ function BookPage({ serviceId }) {
   const service = useApi(() => servicesApi.get(serviceId), [serviceId]);
   const [form, setForm] = useState(initialForm);
   const [attachments, setAttachments] = useState([]);
+  const [voiceNote, setVoiceNote] = useState(null);
   const [errors, setErrors] = useState({});
   const submit = useAction();
 
@@ -281,6 +283,7 @@ function BookPage({ serviceId }) {
         issueKey: issue.key,
         description: form.description.trim(),
         attachments,
+        voiceNote: voiceNote || undefined,
         address: {
           addressLine: form.addressLine.trim(),
           city: form.city.trim(),
@@ -356,6 +359,7 @@ function BookPage({ serviceId }) {
               onChange={(event) => updateField('description', event.target.value)}
             />
             <ImageAttachments attachments={attachments} setAttachments={setAttachments} error={errors.attachments} />
+            <VoiceRecorder value={voiceNote} onChange={setVoiceNote} disabled={submit.pending === 'create'} />
           </div>
         </Card>
 

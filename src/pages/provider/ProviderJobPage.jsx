@@ -4,7 +4,7 @@ import { ScheduleForm } from '../../components/JobActions.jsx';
 import PaymentCard from '../../components/PaymentCard.jsx';
 import TextField, { Select } from '../../components/TextField.jsx';
 import TrackingTimeline from '../../components/TrackingTimeline.jsx';
-import { AddressBlock, AttachmentList } from '../../components/cards.jsx';
+import { AddressBlock, AttachmentList, VoiceNoteBlock } from '../../components/cards.jsx';
 import {
   Button,
   ButtonLink,
@@ -347,6 +347,7 @@ function ProviderJobPage({ bookingId }) {
                 <AttachmentList attachments={request.attachments} />
               </>
             ) : null}
+            <VoiceNoteBlock voiceNote={request?.voiceNote} />
             <div className="card__actions">
               <ButtonLink to={`/bookings/${booking.id}/chat`} variant="secondary" block>
                 Chat with customer
