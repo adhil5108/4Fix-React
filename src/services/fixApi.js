@@ -70,6 +70,46 @@ export const bookingsApi = {
     }),
 };
 
+export const adminApi = {
+  dashboard: () => apiRequest('/api/admin/dashboard'),
+
+  services: (params = {}) => apiRequest(`/api/admin/services${toQueryString(params)}`),
+  service: (serviceId) => apiRequest(`/api/admin/services/${id(serviceId)}`),
+  createService: (payload) => apiRequest('/api/admin/services', { method: 'POST', body: payload }),
+  updateService: (serviceId, payload) =>
+    apiRequest(`/api/admin/services/${id(serviceId)}`, { method: 'PATCH', body: payload }),
+  deleteService: (serviceId) =>
+    apiRequest(`/api/admin/services/${id(serviceId)}`, { method: 'DELETE' }),
+
+  providers: (params = {}) => apiRequest(`/api/admin/providers${toQueryString(params)}`),
+  provider: (providerId) => apiRequest(`/api/admin/providers/${id(providerId)}`),
+  setProviderStatus: (providerId, isActive) =>
+    apiRequest(`/api/admin/providers/${id(providerId)}/status`, {
+      method: 'PATCH',
+      body: { isActive },
+    }),
+
+  customers: (params = {}) => apiRequest(`/api/admin/customers${toQueryString(params)}`),
+  customer: (customerId) => apiRequest(`/api/admin/customers/${id(customerId)}`),
+
+  requests: (params = {}) => apiRequest(`/api/admin/requests${toQueryString(params)}`),
+  request: (requestId) => apiRequest(`/api/admin/requests/${id(requestId)}`),
+
+  quotes: (params = {}) => apiRequest(`/api/admin/quotes${toQueryString(params)}`),
+  quote: (quoteId) => apiRequest(`/api/admin/quotes/${id(quoteId)}`),
+  assignQuote: (quoteId) =>
+    apiRequest(`/api/admin/quotes/${id(quoteId)}/assign`, { method: 'POST' }),
+
+  bookings: (params = {}) => apiRequest(`/api/admin/bookings${toQueryString(params)}`),
+  booking: (bookingId) => apiRequest(`/api/admin/bookings/${id(bookingId)}`),
+
+  payments: (params = {}) => apiRequest(`/api/admin/payments${toQueryString(params)}`),
+  payment: (paymentId) => apiRequest(`/api/admin/payments/${id(paymentId)}`),
+
+  reviews: (params = {}) => apiRequest(`/api/admin/reviews${toQueryString(params)}`),
+  review: (reviewId) => apiRequest(`/api/admin/reviews/${id(reviewId)}`),
+};
+
 export const providerApi = {
   listRequests: (status) => apiRequest(`/api/provider/requests${toQueryString({ status })}`),
   getRequest: (requestId) => apiRequest(`/api/provider/requests/${id(requestId)}`),

@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { AuthProvider, useAuth } from './hooks/useAuth.jsx';
 import { getCurrentLocation, matchPath, navigate, useRoute } from './hooks/useRoute.js';
-import DashboardPage from './pages/DashboardPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import SignupPage from './pages/SignupPage.jsx';
@@ -15,6 +14,23 @@ import RequestDetailsPage from './pages/customer/RequestDetailsPage.jsx';
 import RequestsPage from './pages/customer/RequestsPage.jsx';
 import ReviewPage from './pages/customer/ReviewPage.jsx';
 import TrackingPage from './pages/customer/TrackingPage.jsx';
+import AdminBookingDetailPage from './pages/admin/AdminBookingDetailPage.jsx';
+import AdminBookingsPage from './pages/admin/AdminBookingsPage.jsx';
+import AdminCustomerDetailPage from './pages/admin/AdminCustomerDetailPage.jsx';
+import AdminCustomersPage from './pages/admin/AdminCustomersPage.jsx';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage.jsx';
+import AdminPaymentDetailPage from './pages/admin/AdminPaymentDetailPage.jsx';
+import AdminPaymentsPage from './pages/admin/AdminPaymentsPage.jsx';
+import AdminProviderDetailPage from './pages/admin/AdminProviderDetailPage.jsx';
+import AdminProvidersPage from './pages/admin/AdminProvidersPage.jsx';
+import AdminQuoteDetailPage from './pages/admin/AdminQuoteDetailPage.jsx';
+import AdminQuotesPage from './pages/admin/AdminQuotesPage.jsx';
+import AdminRequestDetailsPage from './pages/admin/AdminRequestDetailsPage.jsx';
+import AdminRequestsPage from './pages/admin/AdminRequestsPage.jsx';
+import AdminReviewDetailPage from './pages/admin/AdminReviewDetailPage.jsx';
+import AdminReviewsPage from './pages/admin/AdminReviewsPage.jsx';
+import AdminServiceFormPage from './pages/admin/AdminServiceFormPage.jsx';
+import AdminServicesPage from './pages/admin/AdminServicesPage.jsx';
 import ProviderDashboardPage from './pages/provider/ProviderDashboardPage.jsx';
 import ProviderJobPage from './pages/provider/ProviderJobPage.jsx';
 import ProviderJobsPage from './pages/provider/ProviderJobsPage.jsx';
@@ -114,7 +130,56 @@ const ROUTES = [
   },
   { path: '/provider/profile', access: 'PROVIDER', render: () => <ProfilePage /> },
 
-  { path: '/app/admin', access: 'ADMIN', render: () => <DashboardPage role="ADMIN" /> },
+  { path: '/app/admin', access: 'ADMIN', render: () => <AdminDashboardPage /> },
+  { path: '/app/admin/services', access: 'ADMIN', render: () => <AdminServicesPage /> },
+  { path: '/app/admin/services/new', access: 'ADMIN', render: () => <AdminServiceFormPage /> },
+  {
+    path: '/app/admin/services/:serviceId',
+    access: 'ADMIN',
+    render: ({ serviceId }) => <AdminServiceFormPage key={serviceId} serviceId={serviceId} />,
+  },
+  { path: '/app/admin/providers', access: 'ADMIN', render: () => <AdminProvidersPage /> },
+  {
+    path: '/app/admin/providers/:providerId',
+    access: 'ADMIN',
+    render: ({ providerId }) => <AdminProviderDetailPage key={providerId} providerId={providerId} />,
+  },
+  { path: '/app/admin/customers', access: 'ADMIN', render: () => <AdminCustomersPage /> },
+  {
+    path: '/app/admin/customers/:customerId',
+    access: 'ADMIN',
+    render: ({ customerId }) => <AdminCustomerDetailPage key={customerId} customerId={customerId} />,
+  },
+  { path: '/app/admin/requests', access: 'ADMIN', render: () => <AdminRequestsPage /> },
+  {
+    path: '/app/admin/requests/:requestId',
+    access: 'ADMIN',
+    render: ({ requestId }) => <AdminRequestDetailsPage key={requestId} requestId={requestId} />,
+  },
+  { path: '/app/admin/quotes', access: 'ADMIN', render: () => <AdminQuotesPage /> },
+  {
+    path: '/app/admin/quotes/:quoteId',
+    access: 'ADMIN',
+    render: ({ quoteId }) => <AdminQuoteDetailPage key={quoteId} quoteId={quoteId} />,
+  },
+  { path: '/app/admin/bookings', access: 'ADMIN', render: () => <AdminBookingsPage /> },
+  {
+    path: '/app/admin/bookings/:bookingId',
+    access: 'ADMIN',
+    render: ({ bookingId }) => <AdminBookingDetailPage key={bookingId} bookingId={bookingId} />,
+  },
+  { path: '/app/admin/payments', access: 'ADMIN', render: () => <AdminPaymentsPage /> },
+  {
+    path: '/app/admin/payments/:paymentId',
+    access: 'ADMIN',
+    render: ({ paymentId }) => <AdminPaymentDetailPage key={paymentId} paymentId={paymentId} />,
+  },
+  { path: '/app/admin/reviews', access: 'ADMIN', render: () => <AdminReviewsPage /> },
+  {
+    path: '/app/admin/reviews/:reviewId',
+    access: 'ADMIN',
+    render: ({ reviewId }) => <AdminReviewDetailPage key={reviewId} reviewId={reviewId} />,
+  },
 
   // Legacy links from the earlier customer experience.
   {
