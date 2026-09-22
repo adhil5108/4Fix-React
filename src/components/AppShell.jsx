@@ -1,3 +1,4 @@
+import AreaSwitcher from './admin/AreaSwitcher.jsx';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { navigate, useRoute } from '../hooks/useRoute.js';
 import { ButtonLink, Link } from './ui.jsx';
@@ -94,7 +95,7 @@ function isActive(item, path) {
   return path === item.to || path.startsWith(`${item.to}/`);
 }
 
-function Header({ navItems, path }) {
+function Header({ navItems, path, previewRole }) {
   const { isAuthenticated, user, logout } = useAuth();
   const homeTarget = user?.role === 'PROVIDER' ? '/provider' : '/';
 
@@ -148,6 +149,15 @@ function Header({ navItems, path }) {
           ) : null}
         </div>
       </div>
+
+      {previewRole ? (
+        <div className="admin-preview-banner">
+          <span className="admin-preview-banner__label">
+            Admin Preview — Viewing {previewRole === 'PROVIDER' ? 'Provider' : 'Customer'} Side as Admin
+          </span>
+          <AreaSwitcher current={previewRole} className="admin-preview-banner__areas" linkClassName="chip" />
+        </div>
+      ) : null}
     </header>
   );
 }
@@ -174,14 +184,24 @@ function MobileNav({ navItems, path }) {
   );
 }
 
+// AppShell only ever renders customer/provider/public pages (the admin console uses
+// AdminShell), so an authenticated ADMIN here is always previewing — never their own
+// area — which side is inferred from the current path.
+function resolvePreviewRole(path) {
+  return path === '/provider' || path.startsWith('/provider/') ? 'PROVIDER' : 'CUSTOMER';
+}
+
 function AppShell({ children, width = 'default' }) {
   const { path } = useRoute();
   const { isAuthenticated, user } = useAuth();
-  const navItems = NAV_BY_ROLE[isAuthenticated ? user.role : 'PUBLIC'] || NAV_BY_ROLE.PUBLIC;
+  const isAdminPreview = isAuthenticated && user.role === 'ADMIN';
+  const previewRole = isAdminPreview ? resolvePreviewRole(path) : null;
+  const navRole = isAdminPreview ? previewRole : isAuthenticated ? user.role : 'PUBLIC';
+  const navItems = NAV_BY_ROLE[navRole] || NAV_BY_ROLE.PUBLIC;
 
   return (
     <div className="app-shell">
-      <Header navItems={navItems} path={path} />
+      <Header navItems={navItems} path={path} previewRole={previewRole} />
       <main className={`app-main app-main--${width}`}>{children}</main>
       <MobileNav navItems={navItems} path={path} />
     </div>

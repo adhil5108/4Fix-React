@@ -99,6 +99,31 @@ a.brand-logo--header {
   margin-left: auto;
 }
 
+/* Shown only when an ADMIN is browsing the customer/provider UI (never for a real
+   customer/provider), so the preview is never mistaken for that user's own session. */
+.admin-preview-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  border-top: 1px solid var(--line);
+  background: var(--green-soft);
+  padding: 8px 20px;
+}
+
+.admin-preview-banner__label {
+  color: var(--green);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.admin-preview-banner__areas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 0 auto;
+}
+
 .app-main {
   margin: 0 auto;
   padding: 24px 20px calc(var(--nav-height) + 40px + env(safe-area-inset-bottom, 0px));

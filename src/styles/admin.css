@@ -125,6 +125,35 @@ a.admin-header__brand {
   text-decoration: none;
 }
 
+/* Area switcher: which of the three top-level areas (Admin Console / Customer View /
+   Provider View) the admin is in — visually grouped apart from the admin section nav. */
+.admin-sidebar__areas {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 4px;
+}
+
+.admin-sidebar__area-link {
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 650;
+  padding: 8px 10px;
+  text-decoration: none;
+}
+
+.admin-sidebar__area-link:hover {
+  background: rgba(5, 7, 13, 0.05);
+}
+
+.admin-sidebar__area-link.is-active {
+  background: var(--ink);
+  color: #ffffff;
+}
+
 .admin-sidebar__nav {
   display: grid;
   gap: 2px;

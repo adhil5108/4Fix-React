@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { navigate, useRoute } from '../../hooks/useRoute.js';
 import { Link } from '../ui.jsx';
+import AreaSwitcher from './AreaSwitcher.jsx';
 
 const NAV_ITEMS = [
   { to: '/app/admin', label: 'Dashboard', exact: true },
@@ -85,6 +86,13 @@ function AdminShell({ children }) {
           >
             <span className="brand-logo__mark">4</span>Fix <span className="admin-header__tag">Admin</span>
           </Link>
+
+          <AreaSwitcher
+            current="ADMIN"
+            className="admin-sidebar__areas"
+            linkClassName="admin-sidebar__area-link"
+            onNavigate={closeDrawer}
+          />
 
           <nav className="admin-sidebar__nav" aria-label="Admin sections">
             {NAV_ITEMS.map((item) => (

@@ -155,10 +155,14 @@ function ProviderRequestDetailsPage({ requestId }) {
   }
 
   const { request, quotes, job } = data.data;
+  const isAdminViewer = user.role === 'ADMIN';
   const isSelected = request.selectedProviderId === user.id;
   const activeQuote = quotes.find((quote) => quote.status === 'PENDING' || quote.status === 'ACCEPTED');
   const hasRejectedQuote = quotes.some((quote) => quote.status === 'REJECTED');
-  const canQuote = QUOTABLE.includes(request.status) && !activeQuote && !isSelected;
+  // Reachable from Provider View since this is shared discovery data, but an admin is
+  // never a real provider here — the backend would reject a quote from ADMIN anyway,
+  // so the form itself is never offered rather than failing after the fact.
+  const canQuote = QUOTABLE.includes(request.status) && !activeQuote && !isSelected && !isAdminViewer;
   const lostJob = !isSelected && Boolean(request.selectedProviderId) && request.status !== 'CANCELLED';
 
   async function perform(key, operation, message) {
@@ -268,6 +272,10 @@ function ProviderRequestDetailsPage({ requestId }) {
                 perform('quote', () => providerApi.submitQuote(request.id, payload), 'Quote sent. The customer will review it.')
               }
             />
+          ) : null}
+
+          {isAdminViewer && QUOTABLE.includes(request.status) && !activeQuote ? (
+            <Notice tone="info">Admin preview is read-only — quoting is a provider-only action.</Notice>
           ) : null}
 
           {quotes.length > 0 ? (

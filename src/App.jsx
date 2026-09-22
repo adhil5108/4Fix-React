@@ -74,7 +74,11 @@ const ROUTES = [
     access: 'CUSTOMER',
     render: ({ serviceId }) => <BookPage key={serviceId} serviceId={serviceId} />,
   },
-  { path: '/requests', access: 'CUSTOMER', render: () => <RequestsPage /> },
+  {
+    path: '/requests',
+    access: ['CUSTOMER', 'ADMIN'],
+    render: () => <RequestsPage />,
+  },
   {
     path: '/requests/:requestId',
     access: 'CUSTOMER',
@@ -85,7 +89,11 @@ const ROUTES = [
     access: 'CUSTOMER',
     render: ({ requestId }) => <ConfirmPage key={requestId} requestId={requestId} />,
   },
-  { path: '/bookings', access: 'CUSTOMER', render: () => <BookingsPage /> },
+  {
+    path: '/bookings',
+    access: ['CUSTOMER', 'ADMIN'],
+    render: () => <BookingsPage />,
+  },
   {
     path: '/bookings/:bookingId',
     access: 'CUSTOMER',
@@ -111,24 +119,46 @@ const ROUTES = [
     access: 'CUSTOMER',
     render: ({ bookingId }) => <ReviewPage key={bookingId} bookingId={bookingId} />,
   },
-  { path: '/profile', access: 'CUSTOMER', render: () => <ProfilePage /> },
-
-  { path: '/provider', access: 'PROVIDER', render: () => <ProviderDashboardPage /> },
-  { path: '/provider/requests', access: 'PROVIDER', render: () => <ProviderRequestsPage /> },
   {
+    path: '/profile',
+    access: ['CUSTOMER', 'ADMIN'],
+    render: () => <ProfilePage />,
+  },
+
+  {
+    path: '/provider',
+    access: ['PROVIDER', 'ADMIN'],
+    render: () => <ProviderDashboardPage />,
+  },
+  {
+    path: '/provider/requests',
+    access: ['PROVIDER', 'ADMIN'],
+    render: () => <ProviderRequestsPage />,
+  },
+  {
+    // Discovery data (open requests any provider can see), not owner-scoped — safe to
+    // let admin open from the Provider View list without exposing anything private.
     path: '/provider/requests/:requestId',
-    access: 'PROVIDER',
+    access: ['PROVIDER', 'ADMIN'],
     render: ({ requestId }) => (
       <ProviderRequestDetailsPage key={requestId} requestId={requestId} />
     ),
   },
-  { path: '/provider/jobs', access: 'PROVIDER', render: () => <ProviderJobsPage /> },
+  {
+    path: '/provider/jobs',
+    access: ['PROVIDER', 'ADMIN'],
+    render: () => <ProviderJobsPage />,
+  },
   {
     path: '/provider/jobs/:bookingId',
     access: 'PROVIDER',
     render: ({ bookingId }) => <ProviderJobPage key={bookingId} bookingId={bookingId} />,
   },
-  { path: '/provider/profile', access: 'PROVIDER', render: () => <ProfilePage /> },
+  {
+    path: '/provider/profile',
+    access: ['PROVIDER', 'ADMIN'],
+    render: () => <ProfilePage />,
+  },
 
   { path: '/app/admin', access: 'ADMIN', render: () => <AdminDashboardPage /> },
   { path: '/app/admin/services', access: 'ADMIN', render: () => <AdminServicesPage /> },
