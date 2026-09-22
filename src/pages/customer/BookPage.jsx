@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AddressForm, DateTimePicker, validateAddress, validateDateTime } from '../../components/AddressForm.jsx';
 import AppShell from '../../components/AppShell.jsx';
 import StepIndicator from '../../components/StepIndicator.jsx';
@@ -15,7 +15,7 @@ import {
 } from '../../components/ui.jsx';
 import { useAction, useApi } from '../../hooks/useApi.js';
 import { navigate, useQueryParam } from '../../hooks/useRoute.js';
-import { requestsApi, servicesApi } from '../../services/fixApi.js';
+import { requestsApi, servicesApi, uploadsApi } from '../../services/fixApi.js';
 import { bookPath } from '../public/publicLinks.js';
 
 const MAX_ATTACHMENTS = 10;
@@ -48,74 +48,177 @@ function validate(form, attachments) {
   return errors;
 }
 
-function Attachments({ attachments, setAttachments, error }) {
-  const [draft, setDraft] = useState('');
-  const [draftError, setDraftError] = useState('');
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
-  function add() {
-    const value = draft.trim();
-    if (!value) return setDraftError('Enter a link or note to attach.');
-    if (value.length > 500) return setDraftError('Attachments must be 500 characters or fewer.');
-    if (attachments.length >= MAX_ATTACHMENTS) return setDraftError(`You can add up to ${MAX_ATTACHMENTS}.`);
-    setAttachments([...attachments, value]);
-    setDraft('');
-    setDraftError('');
-    return undefined;
+function validateImageFile(file) {
+  if (!file.type.startsWith('image/')) {
+    return 'Only image files are allowed.';
+  }
+
+  if (file.size > MAX_IMAGE_BYTES) {
+    return 'Images must be 5MB or smaller.';
+  }
+
+  return '';
+}
+
+// Each picked file gets its own upload lifecycle (uploading/success/error), tracked
+// locally here. Only successfully uploaded Cloudinary URLs are pushed into
+// `attachments` — the array that is actually sent when the request is submitted.
+function ImageAttachments({ attachments, setAttachments, error }) {
+  const [items, setItems] = useState([]);
+  const [pickError, setPickError] = useState('');
+  const inputRef = useRef(null);
+  const removedIdsRef = useRef(new Set());
+
+  useEffect(() => {
+    // Revoke every preview URL once, when the form is left.
+    return () => items.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function uploadItem(item) {
+    try {
+      const result = await uploadsApi.image(item.file);
+
+      if (removedIdsRef.current.has(item.id)) {
+        return;
+      }
+
+      setItems((current) =>
+        current.map((entry) =>
+          entry.id === item.id ? { ...entry, status: 'success', url: result.image.url } : entry,
+        ),
+      );
+      setAttachments((current) => [...current, result.image.url]);
+    } catch (uploadError) {
+      if (removedIdsRef.current.has(item.id)) {
+        return;
+      }
+
+      setItems((current) =>
+        current.map((entry) =>
+          entry.id === item.id ? { ...entry, status: 'error', error: uploadError.message } : entry,
+        ),
+      );
+    }
+  }
+
+  function addFiles(fileList) {
+    const files = Array.from(fileList || []);
+
+    if (files.length === 0) {
+      return;
+    }
+
+    const availableSlots = MAX_ATTACHMENTS - items.length;
+
+    if (availableSlots <= 0) {
+      setPickError(`You can add up to ${MAX_ATTACHMENTS} photos.`);
+      return;
+    }
+
+    const accepted = files.slice(0, availableSlots);
+    setPickError(files.length > accepted.length ? `You can add up to ${MAX_ATTACHMENTS} photos.` : '');
+
+    const newItems = accepted.map((file) => {
+      const validationError = validateImageFile(file);
+
+      return {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        file,
+        previewUrl: URL.createObjectURL(file),
+        status: validationError ? 'error' : 'uploading',
+        url: null,
+        error: validationError,
+      };
+    });
+
+    setItems((current) => [...current, ...newItems]);
+    newItems.filter((item) => item.status === 'uploading').forEach(uploadItem);
+  }
+
+  function removeItem(item) {
+    removedIdsRef.current.add(item.id);
+    setItems((current) => current.filter((entry) => entry.id !== item.id));
+    URL.revokeObjectURL(item.previewUrl);
+
+    if (item.status === 'success' && item.url) {
+      setAttachments((current) => current.filter((url) => url !== item.url));
+    }
+  }
+
+  function retryItem(item) {
+    setItems((current) =>
+      current.map((entry) => (entry.id === item.id ? { ...entry, status: 'uploading', error: '' } : entry)),
+    );
+    uploadItem(item);
   }
 
   return (
     <div className="field">
-      <label htmlFor="attachmentDraft">Photos or links (optional)</label>
-      <div className="inline-input">
-        <div className={`field-control${draftError || error ? ' field-control--error' : ''}`}>
-          <input
-            id="attachmentDraft"
-            className="field-input"
-            type="text"
-            value={draft}
-            maxLength={500}
-            placeholder="Paste a photo link or add a note"
-            disabled={attachments.length >= MAX_ATTACHMENTS}
-            onChange={(event) => {
-              setDraft(event.target.value);
-              setDraftError('');
-            }}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                add();
-              }
-            }}
-          />
-        </div>
-        <Button variant="secondary" size="sm" onClick={add} disabled={attachments.length >= MAX_ATTACHMENTS}>
-          Add
-        </Button>
+      <label htmlFor="imageInput">Photos (optional)</label>
+      <input
+        ref={inputRef}
+        id="imageInput"
+        type="file"
+        accept="image/*"
+        multiple
+        className="sr-only"
+        onChange={(event) => {
+          addFiles(event.target.files);
+          event.target.value = '';
+        }}
+      />
+      <div className="image-picker">
+        {items.map((item) => (
+          <div key={item.id} className={`image-picker__item image-picker__item--${item.status}`}>
+            <div className="image-picker__thumb">
+              <img src={item.previewUrl} alt="" />
+              {item.status === 'uploading' ? (
+                <span className="image-picker__overlay" aria-live="polite">
+                  <span className="spinner spinner--sm" aria-hidden="true" />
+                  <span className="sr-only">Uploading…</span>
+                </span>
+              ) : null}
+              {item.status === 'success' ? (
+                <span className="image-picker__badge" aria-hidden="true">
+                  ✓
+                </span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className="image-picker__remove"
+              onClick={() => removeItem(item)}
+              aria-label="Remove photo"
+            >
+              ×
+            </button>
+            {item.status === 'error' ? (
+              <div className="image-picker__error">
+                <span>{item.error}</span>
+                <button type="button" className="text-link" onClick={() => retryItem(item)}>
+                  Retry
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ))}
+        {items.length < MAX_ATTACHMENTS ? (
+          <button type="button" className="image-picker__add" onClick={() => inputRef.current?.click()}>
+            <span aria-hidden="true">+</span>
+            <span>Add photo</span>
+          </button>
+        ) : null}
       </div>
-      {draftError || error ? (
-        <p className="field-error">{draftError || error}</p>
+      {pickError || error ? (
+        <p className="field-error">{pickError || error}</p>
       ) : (
         <p className="field-hint">
-          {attachments.length}/{MAX_ATTACHMENTS} added. File upload is coming soon.
+          Up to {MAX_ATTACHMENTS} photos, 5MB each. Photos help providers understand the problem.
         </p>
       )}
-      {attachments.length > 0 ? (
-        <ul className="removable-list">
-          {attachments.map((attachment, index) => (
-            <li key={`${attachment}-${index}`}>
-              <span>{attachment}</span>
-              <button
-                type="button"
-                className="text-link"
-                onClick={() => setAttachments(attachments.filter((_, i) => i !== index))}
-                aria-label={`Remove attachment ${index + 1}`}
-              >
-                Remove
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
     </div>
   );
 }
@@ -252,7 +355,7 @@ function BookPage({ serviceId }) {
               }
               onChange={(event) => updateField('description', event.target.value)}
             />
-            <Attachments attachments={attachments} setAttachments={setAttachments} error={errors.attachments} />
+            <ImageAttachments attachments={attachments} setAttachments={setAttachments} error={errors.attachments} />
           </div>
         </Card>
 

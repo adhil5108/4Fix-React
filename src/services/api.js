@@ -47,7 +47,9 @@ function friendlyMessage(status, payload) {
   return message || GENERIC_MESSAGE;
 }
 
-export async function apiRequest(path, { method = 'GET', body, auth = true } = {}) {
+// Shared by apiRequest (JSON) and uploadFile (multipart): same auth token, same
+// network/401/error handling either way.
+async function sendRequest(path, { method, headers, body, auth }) {
   const token = auth ? readStoredAuth()?.accessToken : null;
   let response;
 
@@ -55,10 +57,10 @@ export async function apiRequest(path, { method = 'GET', body, auth = true } = {
     response = await fetch(`${API_BASE_URL}${path}`, {
       method,
       headers: {
-        'Content-Type': 'application/json',
+        ...headers,
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body,
     });
   } catch {
     throw new ApiRequestError('Unable to reach 4Fix. Check your connection and try again.', {
@@ -81,6 +83,24 @@ export async function apiRequest(path, { method = 'GET', body, auth = true } = {
   }
 
   return payload;
+}
+
+export function apiRequest(path, { method = 'GET', body, auth = true } = {}) {
+  return sendRequest(path, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+    auth,
+  });
+}
+
+// multipart/form-data upload for a single file. No Content-Type header is set so the
+// browser fills in the correct multipart boundary itself.
+export function uploadFile(path, file, fieldName) {
+  const formData = new FormData();
+  formData.append(fieldName, file);
+
+  return sendRequest(path, { method: 'POST', headers: {}, body: formData, auth: true });
 }
 
 export function toQueryString(params) {

@@ -747,3 +747,192 @@ a.provider-card__name:hover {
     font-size: 0.8rem;
   }
 }
+
+/* ---------- Image upload (booking form) ---------- */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  margin: -1px;
+  padding: 0;
+}
+
+.image-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.image-picker__item {
+  position: relative;
+  width: 84px;
+}
+
+.image-picker__thumb {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--ground);
+}
+
+.image-picker__thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-picker__item--error .image-picker__thumb {
+  border-color: #f0c9c7;
+  opacity: 0.6;
+}
+
+.image-picker__overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(5, 7, 13, 0.35);
+}
+
+.spinner--sm {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+.image-picker__badge {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--green);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.image-picker__remove {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(16, 24, 20, 0.15);
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.image-picker__remove:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.image-picker__error {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+  color: var(--danger);
+  font-size: 0.72rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.image-picker__error .text-link {
+  font-size: 0.72rem;
+}
+
+.image-picker__add {
+  display: flex;
+  width: 84px;
+  height: 84px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.image-picker__add span:first-child {
+  color: var(--green);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.image-picker__add:hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.image-picker__add:focus-visible,
+.image-picker__remove:focus-visible {
+  outline: 3px solid rgba(0, 91, 62, 0.25);
+  outline-offset: 2px;
+}
+
+/* Image attachments shown on request/booking/job detail pages. */
+.attachment-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.attachment-thumbs li {
+  width: 72px;
+  height: 72px;
+}
+
+.attachment-thumbs a {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.attachment-thumbs a:focus-visible {
+  outline: 3px solid rgba(0, 91, 62, 0.25);
+  outline-offset: 2px;
+}
+
+.attachment-thumbs img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 150ms ease;
+}
+
+.attachment-thumbs a:hover img {
+  transform: scale(1.05);
+}

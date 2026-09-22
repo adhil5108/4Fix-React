@@ -1,6 +1,10 @@
-import { apiRequest, toQueryString } from './api.js';
+import { apiRequest, toQueryString, uploadFile } from './api.js';
 
 const id = (value) => encodeURIComponent(value);
+
+export const uploadsApi = {
+  image: (file) => uploadFile('/api/uploads/image', file, 'image'),
+};
 
 export const servicesApi = {
   list: ({ search, category, popular } = {}) =>

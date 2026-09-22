@@ -231,28 +231,50 @@ export function AddressBlock({ address }) {
   );
 }
 
+const IMAGE_ATTACHMENT_RE = /^https?:\/\/.*\.(?:jpe?g|png|gif|webp|avif|bmp|svg)(?:\?.*)?$/i;
+
+// Uploaded photos (Cloudinary URLs) render as thumbnails; any other attachment
+// (a plain note, or a non-image link) keeps the original text/link treatment.
 export function AttachmentList({ attachments }) {
   if (!attachments?.length) {
     return null;
   }
 
-  return (
-    <ul className="attachment-list">
-      {attachments.map((attachment, index) => {
-        const isUrl = /^https?:\/\//i.test(attachment);
+  const images = attachments.filter((attachment) => IMAGE_ATTACHMENT_RE.test(attachment));
+  const others = attachments.filter((attachment) => !IMAGE_ATTACHMENT_RE.test(attachment));
 
-        return (
-          <li key={`${attachment}-${index}`}>
-            {isUrl ? (
-              <a href={attachment} target="_blank" rel="noopener noreferrer" className="text-link">
-                {attachment}
+  return (
+    <>
+      {images.length > 0 ? (
+        <ul className="attachment-thumbs">
+          {images.map((url, index) => (
+            <li key={`${url}-${index}`}>
+              <a href={url} target="_blank" rel="noopener noreferrer" aria-label={`Open photo ${index + 1}`}>
+                <img src={url} alt={`Attachment ${index + 1}`} loading="lazy" />
               </a>
-            ) : (
-              <span>{attachment}</span>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {others.length > 0 ? (
+        <ul className="attachment-list">
+          {others.map((attachment, index) => {
+            const isUrl = /^https?:\/\//i.test(attachment);
+
+            return (
+              <li key={`${attachment}-${index}`}>
+                {isUrl ? (
+                  <a href={attachment} target="_blank" rel="noopener noreferrer" className="text-link">
+                    {attachment}
+                  </a>
+                ) : (
+                  <span>{attachment}</span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </>
   );
 }
