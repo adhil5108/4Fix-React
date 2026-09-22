@@ -1,8 +1,10 @@
-/* Admin back-office shell: sticky header, sidebar (desktop) / tab row (mobile), table. */
+/* Admin back-office shell: sticky header, persistent sidebar (desktop) / off-canvas
+   drawer (mobile, toggled by the header's hamburger button), table. */
 
 .admin-shell {
   min-height: 100vh;
   background: var(--ground);
+  overflow-x: hidden;
 }
 
 .admin-header {
@@ -19,8 +21,22 @@
   padding: 14px 20px;
 }
 
+.admin-header__menu-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
 a.admin-header__brand {
-  margin: 0;
+  margin: 0 auto 0 0;
   font-size: 1.25rem;
   text-decoration: none;
 }
@@ -39,8 +55,10 @@ a.admin-header__brand {
   padding: 3px 8px;
 }
 
+/* On mobile the same profile/log out controls live in the drawer footer instead, so
+   the header stays to just the toggle and brand and never has to wrap. */
 .admin-header__actions {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 14px;
 }
@@ -51,22 +69,21 @@ a.admin-header__brand {
   font-weight: 650;
 }
 
-.admin-tabs {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  border-bottom: 1px solid var(--line);
-  padding: 10px 16px;
-  scrollbar-width: none;
+@media (min-width: 860px) {
+  .admin-header__actions {
+    display: flex;
+  }
 }
 
-.admin-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.admin-tabs__link {
-  flex: 0 0 auto;
-  text-decoration: none;
+.admin-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  border: none;
+  margin: 0;
+  padding: 0;
+  background: rgba(5, 7, 13, 0.45);
+  cursor: default;
 }
 
 .admin-layout {
@@ -77,8 +94,59 @@ a.admin-header__brand {
   gap: 20px;
 }
 
+/* Off-canvas by default (mobile): a fixed drawer sliding in from the left, opened by
+   the header's hamburger button and closed by the backdrop, Log out, or navigating. */
 .admin-sidebar {
-  display: none;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 264px;
+  max-width: 82vw;
+  overflow-y: auto;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  padding: 18px 14px;
+  transform: translateX(-100%);
+  transition: transform 0.2s ease;
+}
+
+.admin-sidebar.is-open {
+  transform: translateX(0);
+}
+
+.admin-sidebar__brand {
+  margin: 0 6px 10px;
+  font-size: 1.1rem;
+  text-decoration: none;
+}
+
+.admin-sidebar__nav {
+  display: grid;
+  gap: 2px;
+}
+
+.admin-sidebar__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  padding: 14px 6px 4px;
+}
+
+.admin-sidebar__user {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .admin-content {
@@ -108,8 +176,35 @@ a.admin-header__brand {
   font-size: 0.92rem;
 }
 
+.admin-sidebar__link {
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.93rem;
+  font-weight: 650;
+  padding: 10px 12px;
+  text-decoration: none;
+}
+
+.admin-sidebar__link:hover {
+  background: rgba(5, 7, 13, 0.05);
+}
+
+.admin-sidebar__link.is-active {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.admin-sidebar__link:focus-visible {
+  outline: 3px solid rgba(0, 91, 62, 0.25);
+  outline-offset: 2px;
+}
+
 @media (min-width: 860px) {
-  .admin-tabs {
+  .admin-header__menu-toggle {
+    display: none;
+  }
+
+  .admin-drawer-backdrop {
     display: none;
   }
 
@@ -121,31 +216,17 @@ a.admin-header__brand {
   .admin-sidebar {
     position: sticky;
     top: 84px;
-    display: grid;
-    gap: 2px;
-  }
-
-  .admin-sidebar__link {
-    border-radius: 10px;
-    color: var(--text);
-    font-size: 0.93rem;
-    font-weight: 650;
-    padding: 10px 12px;
-    text-decoration: none;
-  }
-
-  .admin-sidebar__link:hover {
-    background: rgba(5, 7, 13, 0.05);
-  }
-
-  .admin-sidebar__link.is-active {
-    background: var(--green-soft);
-    color: var(--green);
-  }
-
-  .admin-sidebar__link:focus-visible {
-    outline: 3px solid rgba(0, 91, 62, 0.25);
-    outline-offset: 2px;
+    left: auto;
+    bottom: auto;
+    z-index: 1;
+    width: auto;
+    max-width: none;
+    max-height: calc(100vh - 104px);
+    border-right: none;
+    background: transparent;
+    padding: 0;
+    transform: none;
+    transition: none;
   }
 }
 

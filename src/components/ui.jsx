@@ -2,8 +2,10 @@ import { useEffect, useRef } from 'react';
 import { navigate } from '../hooks/useRoute.js';
 import { statusLabel, statusTone } from '../utils/format.js';
 
-export function Link({ to, className, children, ...props }) {
+export function Link({ to, className, children, onClick, ...props }) {
   function handleClick(event) {
+    onClick?.(event);
+
     if (
       event.defaultPrevented ||
       event.button !== 0 ||
