@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import TextField, { TextArea } from '../../components/TextField.jsx';
 import {
@@ -12,7 +12,7 @@ import {
 } from '../../components/ui.jsx';
 import { useAction, useApi } from '../../hooks/useApi.js';
 import { navigate } from '../../hooks/useRoute.js';
-import { adminApi } from '../../services/fixApi.js';
+import { adminApi, uploadsApi } from '../../services/fixApi.js';
 
 const EMPTY_FORM = {
   name: '',
@@ -69,6 +69,133 @@ function buildPayload(form, issues) {
     isActive: form.isActive,
     issues: issues.map(issueFromRow),
   };
+}
+
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+function validateServiceImageFile(file) {
+  if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+    return 'Only JPG, PNG or WebP images are allowed.';
+  }
+
+  if (file.size > MAX_IMAGE_BYTES) {
+    return 'Image must be 5MB or smaller.';
+  }
+
+  return '';
+}
+
+// Uploads through the same Cloudinary endpoint the customer booking flow already uses
+// (POST /api/uploads/image via uploadsApi) — no separate upload path. `value`/`onChange`
+// plug straight into the form's existing `image` field, so the rest of the form (and the
+// create/update payload) is unchanged from when this was a plain URL text input.
+function ServiceImageField({ value, onChange, onUploadingChange }) {
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [status, setStatus] = useState('idle');
+  const [error, setError] = useState('');
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  async function handleFile(file) {
+    const validationError = validateServiceImageFile(file);
+
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setError('');
+    setPreviewUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return URL.createObjectURL(file);
+    });
+    setStatus('uploading');
+    onUploadingChange(true);
+
+    try {
+      const result = await uploadsApi.image(file);
+      onChange(result.image.url);
+      setStatus('idle');
+    } catch (uploadError) {
+      setStatus('error');
+      setError(uploadError.message);
+    } finally {
+      onUploadingChange(false);
+    }
+  }
+
+  function handleRemove() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setStatus('idle');
+    setError('');
+    onChange('');
+  }
+
+  const displayUrl = previewUrl || value || null;
+  const isUploading = status === 'uploading';
+
+  return (
+    <div className="field">
+      <label htmlFor="serviceImageInput">Service image (optional)</label>
+      <input
+        ref={inputRef}
+        id="serviceImageInput"
+        type="file"
+        accept={ACCEPTED_IMAGE_TYPES.join(',')}
+        className="sr-only"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = '';
+          if (file) handleFile(file);
+        }}
+      />
+      <div className="image-picker">
+        {displayUrl ? (
+          <div className={`image-picker__item image-picker__item--${status}`}>
+            <div className="image-picker__thumb">
+              <img src={displayUrl} alt="" />
+              {isUploading ? (
+                <span className="image-picker__overlay" aria-live="polite">
+                  <span className="spinner spinner--sm" aria-hidden="true" />
+                  <span className="sr-only">Uploading…</span>
+                </span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className="image-picker__remove"
+              onClick={handleRemove}
+              disabled={isUploading}
+              aria-label="Remove image"
+            >
+              ×
+            </button>
+          </div>
+        ) : null}
+        <button
+          type="button"
+          className="image-picker__add"
+          onClick={() => inputRef.current?.click()}
+          disabled={isUploading}
+        >
+          <span aria-hidden="true">{displayUrl ? '↻' : '+'}</span>
+          <span>{displayUrl ? 'Replace' : 'Add image'}</span>
+        </button>
+      </div>
+      {error ? (
+        <p className="field-error">{error}</p>
+      ) : (
+        <p className="field-hint">JPG, PNG or WebP, up to 5MB.</p>
+      )}
+    </div>
+  );
 }
 
 function IssueEditor({ issues, setIssues }) {
@@ -150,6 +277,7 @@ function AdminServiceFormPage({ serviceId }) {
   const [issues, setIssues] = useState([]);
   const [errors, setErrors] = useState({});
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
   const save = useAction();
   const remove = useAction();
 
@@ -173,6 +301,13 @@ function AdminServiceFormPage({ serviceId }) {
 
   async function handleSubmit(event) {
     event.preventDefault();
+
+    // Belt-and-suspenders: the submit button is already disabled while an image
+    // upload is in flight, but guard here too in case submit is triggered another way.
+    if (imageUploading) {
+      return;
+    }
+
     const nextErrors = validate(form);
 
     if (Object.keys(nextErrors).length > 0) {
@@ -272,13 +407,10 @@ function AdminServiceFormPage({ serviceId }) {
                 onChange={(event) => update('startingPrice', event.target.value.replace(/[^\d.]/g, ''))}
               />
             </div>
-            <TextField
-              id="image"
-              label="Image URL (optional)"
+            <ServiceImageField
               value={form.image}
-              maxLength={500}
-              placeholder="https://…"
-              onChange={(event) => update('image', event.target.value)}
+              onChange={(url) => update('image', url)}
+              onUploadingChange={setImageUploading}
             />
             <label className="toggle">
               <input
@@ -311,7 +443,12 @@ function AdminServiceFormPage({ serviceId }) {
         </Card>
 
         <div className="admin-form-actions">
-          <Button type="submit" loading={save.pending === 'save'} loadingText="Saving…">
+          <Button
+            type="submit"
+            loading={save.pending === 'save'}
+            loadingText="Saving…"
+            disabled={imageUploading}
+          >
             {isEdit ? 'Save changes' : 'Create service'}
           </Button>
           {isEdit ? (
