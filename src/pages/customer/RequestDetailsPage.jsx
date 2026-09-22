@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import AppShell from '../../components/AppShell.jsx';
-import { AddressBlock, AttachmentList, QuoteCard } from '../../components/cards.jsx';
-import RequestProgress from '../../components/RequestProgress.jsx';
+import StepIndicator from '../../components/StepIndicator.jsx';
+import { AddressBlock, AttachmentList, ProviderCard, QuoteCard } from '../../components/cards.jsx';
 import {
   Button,
   ButtonLink,
@@ -17,29 +17,29 @@ import {
 } from '../../components/ui.jsx';
 import { useAction, useApi } from '../../hooks/useApi.js';
 import { useQueryParam } from '../../hooks/useRoute.js';
+import { usePolling } from '../../hooks/usePolling.js';
 import { quotesApi, requestsApi } from '../../services/fixApi.js';
 import { formatMoney, formatSlot, formatTimestamp } from '../../utils/format.js';
 
 const CANCELLABLE = ['PENDING', 'QUOTE_RECEIVED'];
-const QUOTE_ORDER = { ACCEPTED: 0, PENDING: 1, REJECTED: 2 };
+const OPEN = ['PENDING', 'QUOTE_RECEIVED'];
 
-function nextStepText(request) {
+function statusText(request) {
   switch (request.status) {
     case 'PENDING':
-      return 'Your request is visible to service providers. You will see quotes here as they arrive.';
+      return 'Your request is live. Providers are reviewing it — quotes will appear here as they come in.';
     case 'QUOTE_RECEIVED':
-      return 'Compare the quotes below and accept the one that suits you.';
+      return 'You have quotes. Compare providers below and accept the one you like.';
     case 'QUOTE_ACCEPTED':
-      return `${request.selectedProvider?.name || 'Your provider'} will confirm a date and time for the visit.`;
+      return 'Provider chosen. Review the booking details and confirm to lock it in.';
     case 'SCHEDULED':
-      return `${request.selectedProvider?.name || 'Your provider'} is booked for ${formatSlot(
-        request.scheduledDate,
-        request.scheduledTime,
-      )}.`;
+      return `Your visit is scheduled for ${formatSlot(request.scheduledDate, request.scheduledTime)}.`;
     case 'IN_PROGRESS':
-      return 'Work on your request has started.';
+      return 'Work on your request is in progress.';
     case 'COMPLETED':
       return 'This job is complete.';
+    case 'CANCELLED':
+      return 'This request was cancelled.';
     default:
       return '';
   }
@@ -48,22 +48,27 @@ function nextStepText(request) {
 function RequestDetailsPage({ requestId }) {
   const justCreated = useQueryParam('created') === '1';
   const data = useApi(async () => {
-    const [requestResult, quotesResult] = await Promise.all([
-      requestsApi.get(requestId),
+    const requestResult = await requestsApi.get(requestId);
+    const request = requestResult.request;
+    const [quotesResult, providersResult] = await Promise.all([
       requestsApi.quotes(requestId),
+      request.status === 'CANCELLED' ? { providers: [] } : requestsApi.providers(requestId),
     ]);
-    return { request: requestResult.request, quotes: quotesResult.quotes };
+    return { request, quotes: quotesResult.quotes, providers: providersResult.providers };
   }, [requestId]);
   const action = useAction();
   const [dialog, setDialog] = useState(null);
   const [success, setSuccess] = useState('');
 
-  const back = { to: '/requests', label: 'My requests' };
+  const request = data.data?.request;
+  usePolling(() => data.refresh(), 15000, Boolean(request) && OPEN.includes(request.status));
+
+  const back = { to: '/bookings', label: 'My bookings' };
 
   if (data.loading) {
     return (
       <AppShell>
-        <LoadingState label="Loading request…" />
+        <LoadingState label="Loading your request…" />
       </AppShell>
     );
   }
@@ -84,14 +89,14 @@ function RequestDetailsPage({ requestId }) {
     );
   }
 
-  const { request, quotes } = data.data;
+  const { quotes, providers } = data.data;
   const canCancel = CANCELLABLE.includes(request.status);
-  const canDecideQuotes = request.status === 'QUOTE_RECEIVED';
-  const sortedQuotes = [...quotes].sort(
-    (left, right) => (QUOTE_ORDER[left.status] ?? 9) - (QUOTE_ORDER[right.status] ?? 9),
-  );
+  const canDecide = request.status === 'QUOTE_RECEIVED';
   const pendingQuotes = quotes.filter((quote) => quote.status === 'PENDING');
   const acceptedQuote = request.acceptedQuote || quotes.find((quote) => quote.status === 'ACCEPTED');
+  const listedProviderIds = new Set(providers.map((provider) => provider.id));
+  const orphanQuotes = quotes.filter((quote) => !listedProviderIds.has(quote.providerId));
+  const stepCurrent = request.status === 'QUOTE_ACCEPTED' ? 'confirm' : 'provider';
 
   async function perform(key, operation, message) {
     setSuccess('');
@@ -102,7 +107,7 @@ function RequestDetailsPage({ requestId }) {
       setSuccess(message);
     }
 
-    // Refresh either way so a conflict (e.g. state changed elsewhere) shows the real state.
+    // Refresh either way so a conflict (state changed elsewhere) shows the real state.
     await data.refresh();
   }
 
@@ -117,7 +122,7 @@ function RequestDetailsPage({ requestId }) {
       perform(
         `accept-${dialog.quote.id}`,
         () => quotesApi.accept(dialog.quote.id),
-        `You accepted ${dialog.quote.provider?.name || 'the provider'}’s quote. They will schedule the visit next.`,
+        `${dialog.providerName} is now your provider. Confirm the booking to lock it in.`,
       );
     }
 
@@ -130,47 +135,66 @@ function RequestDetailsPage({ requestId }) {
     }
   }
 
-  const dialogContent = {
-    cancel: {
-      title: 'Cancel this request?',
-      message: 'Providers will no longer be able to quote. This cannot be undone.',
-      confirmLabel: 'Cancel request',
-      confirmVariant: 'danger',
-    },
-    accept: {
-      title: 'Accept this quote?',
-      message: dialog?.quote
-        ? `${dialog.quote.provider?.name || 'This provider'} will do the job for ${formatMoney(
-            dialog.quote.amount,
-          )}.${pendingQuotes.length > 1 ? ' Your other pending quotes will be declined.' : ''}`
-        : '',
-      confirmLabel: 'Accept quote',
-      confirmVariant: 'primary',
-    },
-    reject: {
-      title: 'Decline this quote?',
-      message: dialog?.quote
-        ? `Decline ${dialog.quote.provider?.name || 'this provider'}’s quote of ${formatMoney(
-            dialog.quote.amount,
-          )}?`
-        : '',
-      confirmLabel: 'Decline quote',
-      confirmVariant: 'danger',
-    },
-  }[dialog?.type] || {};
+  const dialogContent =
+    {
+      cancel: {
+        title: 'Cancel this request?',
+        message: 'Providers will no longer be able to quote. This cannot be undone.',
+        confirmLabel: 'Cancel request',
+        confirmVariant: 'danger',
+      },
+      accept: {
+        title: 'Choose this provider?',
+        message: dialog?.quote
+          ? `${dialog.providerName} will do the job for ${formatMoney(dialog.quote.amount)}.${
+              pendingQuotes.length > 1 ? ' Your other quotes will be declined.' : ''
+            }`
+          : '',
+        confirmLabel: 'Choose provider',
+        confirmVariant: 'primary',
+      },
+      reject: {
+        title: 'Decline this quote?',
+        message: dialog?.quote
+          ? `Decline ${dialog.providerName}’s quote of ${formatMoney(dialog.quote.amount)}?`
+          : '',
+        confirmLabel: 'Decline quote',
+        confirmVariant: 'danger',
+      },
+    }[dialog?.type] || {};
+
+  const quoteActions = (quote, providerName) =>
+    canDecide && quote?.status === 'PENDING' ? (
+      <>
+        <Button
+          variant="secondary"
+          onClick={() => setDialog({ type: 'reject', quote, providerName })}
+          disabled={Boolean(action.pending)}
+        >
+          Decline
+        </Button>
+        <Button
+          onClick={() => setDialog({ type: 'accept', quote, providerName })}
+          disabled={Boolean(action.pending)}
+        >
+          Choose · {formatMoney(quote.amount)}
+        </Button>
+      </>
+    ) : null;
 
   return (
     <AppShell>
+      {request.status !== 'CANCELLED' && !request.booking ? <StepIndicator current={stepCurrent} /> : null}
       <PageHeader
         back={back}
-        title={request.service?.name || 'Service request'}
-        subtitle={`Requested ${formatTimestamp(request.createdAt)}`}
+        title={request.status === 'QUOTE_ACCEPTED' ? 'Provider chosen' : 'Choose a provider'}
+        subtitle={`${request.service?.name || 'Service'}${request.issueLabel ? ` · ${request.issueLabel}` : ''} · requested ${formatTimestamp(request.createdAt)}`}
         actions={<StatusBadge status={request.status} />}
       />
 
       <div className="stack">
         {justCreated && !success ? (
-          <Notice tone="success">Request sent. We’ll show quotes here as providers respond.</Notice>
+          <Notice tone="success">Request sent. Providers can now see it and send you quotes.</Notice>
         ) : null}
         <Notice tone="success">{success}</Notice>
         <Notice>{action.error}</Notice>
@@ -179,10 +203,18 @@ function RequestDetailsPage({ requestId }) {
 
       <div className="detail-layout">
         <div className="detail-layout__main">
-          <Card>
-            <h2 className="card__title">Status</h2>
-            <p className="body-text">{nextStepText(request)}</p>
-            <RequestProgress status={request.status} />
+          <Card className={request.status === 'QUOTE_ACCEPTED' && !request.booking ? 'card--accent' : ''}>
+            <h2 className="card__title">What happens next</h2>
+            <p className="body-text">{statusText(request)}</p>
+            {request.booking ? (
+              <ButtonLink to={`/bookings/${request.booking.id}`} block>
+                Open your booking
+              </ButtonLink>
+            ) : request.status === 'QUOTE_ACCEPTED' ? (
+              <ButtonLink to={`/requests/${request.id}/confirm`} block size="lg">
+                Review &amp; confirm booking
+              </ButtonLink>
+            ) : null}
             {canCancel ? (
               <div className="card__actions">
                 <Button
@@ -196,93 +228,86 @@ function RequestDetailsPage({ requestId }) {
             ) : null}
           </Card>
 
-          {request.selectedProvider ? (
-            <Card className="card--accent">
+          {request.selectedProvider && acceptedQuote ? (
+            <Card>
               <h2 className="card__title">Your provider</h2>
               <DetailList
                 items={[
                   { label: 'Provider', value: request.selectedProvider.name },
-                  { label: 'Agreed price', value: acceptedQuote ? formatMoney(acceptedQuote.amount) : '' },
-                  { label: 'Work', value: acceptedQuote?.description },
-                  {
-                    label: 'Visit',
-                    value: request.scheduledDate
-                      ? formatSlot(request.scheduledDate, request.scheduledTime)
-                      : 'Waiting for the provider to schedule',
-                  },
+                  { label: 'Agreed price', value: formatMoney(acceptedQuote.amount) },
+                  { label: 'Work', value: acceptedQuote.description },
                 ]}
               />
             </Card>
           ) : null}
 
-          <section className="section section--tight" aria-labelledby="quotes-heading">
-            <div className="section__header">
-              <h2 id="quotes-heading" className="section__title">
-                Quotes {quotes.length > 0 ? <span className="count">{quotes.length}</span> : null}
-              </h2>
-            </div>
+          {request.status !== 'CANCELLED' ? (
+            <section className="section section--tight" aria-labelledby="providers-heading">
+              <div className="section__header">
+                <h2 id="providers-heading" className="section__title">
+                  {request.selectedProvider ? 'Providers' : 'Available providers'}
+                  {providers.length > 0 ? <span className="count">{providers.length}</span> : null}
+                </h2>
+              </div>
 
-            {quotes.length === 0 ? (
-              <EmptyState
-                title={request.status === 'CANCELLED' ? 'No quotes' : 'No quotes yet'}
-                message={
-                  request.status === 'PENDING'
-                    ? 'Providers are reviewing your request. Check back soon.'
-                    : undefined
-                }
-              />
-            ) : (
-              <div className="list">
-                {sortedQuotes.map((quote) => {
-                  const actionable = canDecideQuotes && quote.status === 'PENDING';
-
-                  return (
+              {providers.length === 0 && orphanQuotes.length === 0 ? (
+                <EmptyState
+                  title="No providers are available right now"
+                  message="Your request stays open. We’ll show providers here as soon as one is available — check back in a while."
+                  action={<ButtonLink to="/bookings" variant="secondary">Back to bookings</ButtonLink>}
+                />
+              ) : (
+                <div className="list">
+                  {providers.map((provider) => (
+                    <ProviderCard
+                      key={provider.id}
+                      provider={provider}
+                      actions={quoteActions(provider.quote, provider.name)}
+                    >
+                      {provider.quote ? (
+                        <div className="provider-card__quote">
+                          <span className="provider-card__price">{formatMoney(provider.quote.amount)}</span>
+                          <span className="provider-card__quote-text">{provider.quote.description}</span>
+                          {provider.quote.status !== 'PENDING' ? (
+                            <StatusBadge status={provider.quote.status} audience="quote" />
+                          ) : null}
+                        </div>
+                      ) : OPEN.includes(request.status) ? (
+                        <p className="provider-card__waiting">Hasn’t quoted yet</p>
+                      ) : null}
+                    </ProviderCard>
+                  ))}
+                  {orphanQuotes.map((quote) => (
                     <QuoteCard
                       key={quote.id}
                       quote={quote}
                       highlight={quote.status === 'ACCEPTED'}
-                      actions={
-                        actionable ? (
-                          <>
-                            <Button
-                              variant="secondary"
-                              onClick={() => setDialog({ type: 'reject', quote })}
-                              disabled={Boolean(action.pending)}
-                            >
-                              Decline
-                            </Button>
-                            <Button
-                              onClick={() => setDialog({ type: 'accept', quote })}
-                              disabled={Boolean(action.pending)}
-                            >
-                              Accept quote
-                            </Button>
-                          </>
-                        ) : null
-                      }
+                      actions={quoteActions(quote, quote.provider?.name || 'This provider')}
                     />
-                  );
-                })}
-              </div>
-            )}
-          </section>
+                  ))}
+                </div>
+              )}
+              {OPEN.includes(request.status) ? (
+                <p className="field-hint" style={{ marginTop: 10 }}>
+                  This page refreshes automatically while quotes come in.
+                </p>
+              ) : null}
+            </section>
+          ) : null}
         </div>
 
         <aside className="detail-layout__side">
           <Card>
-            <h2 className="card__title">Request details</h2>
+            <h2 className="card__title">Your request</h2>
             <DetailList
               items={[
-                { label: 'Problem', value: request.description },
-                {
-                  label: 'Preferred time',
-                  value: formatSlot(request.preferredDate, request.preferredTime),
-                },
+                { label: 'Service', value: request.service?.name },
+                { label: 'Issue', value: request.issueLabel },
+                { label: 'Details', value: request.description },
+                { label: 'Preferred time', value: formatSlot(request.preferredDate, request.preferredTime) },
                 {
                   label: 'Scheduled visit',
-                  value: request.scheduledDate
-                    ? formatSlot(request.scheduledDate, request.scheduledTime)
-                    : '',
+                  value: request.scheduledDate ? formatSlot(request.scheduledDate, request.scheduledTime) : '',
                 },
               ]}
             />
@@ -295,16 +320,6 @@ function RequestDetailsPage({ requestId }) {
               </>
             ) : null}
           </Card>
-
-          {request.status === 'COMPLETED' ? (
-            <Card>
-              <h2 className="card__title">Payment</h2>
-              <p className="body-text">See how payment for this job will work.</p>
-              <ButtonLink to={`/requests/${request.id}/payment`} variant="secondary" block>
-                View payment
-              </ButtonLink>
-            </Card>
-          ) : null}
         </aside>
       </div>
 

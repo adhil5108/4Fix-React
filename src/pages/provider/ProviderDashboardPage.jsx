@@ -12,7 +12,8 @@ import {
 import { useApi } from '../../hooks/useApi.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { providerApi } from '../../services/fixApi.js';
-import { useProviderJobs } from './useProviderJobs.js';
+import { firstName } from '../../utils/format.js';
+import { JobCard, splitJobs } from './ProviderJobsPage.jsx';
 
 function StatTile({ label, value, to }) {
   return (
@@ -20,31 +21,6 @@ function StatTile({ label, value, to }) {
       <span className="stat__value">{value ?? '–'}</span>
       <span className="stat__label">{label}</span>
     </Link>
-  );
-}
-
-function RequestSection({ title, requests, emptyTitle, emptyMessage, action }) {
-  return (
-    <section className="section section--tight">
-      <div className="section__header">
-        <h2 className="section__title">{title}</h2>
-        {action}
-      </div>
-      {requests.length === 0 ? (
-        <EmptyState title={emptyTitle} message={emptyMessage} />
-      ) : (
-        <div className="list">
-          {requests.map((request) => (
-            <RequestCard
-              key={request.id}
-              request={request}
-              audience="provider"
-              to={`/provider/requests/${request.id}`}
-            />
-          ))}
-        </div>
-      )}
-    </section>
   );
 }
 
@@ -57,14 +33,15 @@ function ProviderDashboardPage() {
     ]);
     return { pending: pending.requests, quoted: quoted.requests };
   }, []);
-  const jobs = useProviderJobs();
+  const jobs = useApi(() => providerApi.jobs(), []);
 
   const loading = open.loading || jobs.loading;
+  const grouped = jobs.data ? splitJobs(jobs.data.jobs) : null;
 
   return (
     <AppShell>
       <PageHeader
-        title={`Hi ${user.name.split(' ')[0]}`}
+        title={`Hi ${firstName(user.name)}`}
         subtitle="Find new work and keep your jobs moving."
         actions={
           <ButtonLink to="/provider/requests" size="sm" className="hide-mobile">
@@ -94,46 +71,63 @@ function ProviderDashboardPage() {
               value={open.data?.quoted.length}
               to="/provider/requests?status=QUOTE_RECEIVED"
             />
-            <StatTile label="Active jobs" value={jobs.data?.active.length} to="/provider/requests?tab=jobs" />
-            <StatTile label="Completed" value={jobs.data?.completed.length} to="/provider/requests?tab=jobs" />
+            <StatTile label="Active jobs" value={grouped?.active.length} to="/provider/jobs" />
+            <StatTile label="Completed" value={grouped?.completed.length} to="/provider/jobs?tab=completed" />
           </div>
 
           {jobs.error ? <Notice>{`Couldn’t load your jobs: ${jobs.error.message}`}</Notice> : null}
-          {jobs.data?.partial ? (
-            <Notice tone="info">Some of your jobs couldn’t be loaded. Try again in a moment.</Notice>
-          ) : null}
 
-          {jobs.data ? (
-            <RequestSection
-              title="Active jobs"
-              requests={jobs.data.active}
-              emptyTitle="No active jobs"
-              emptyMessage="Jobs appear here when a customer accepts your quote."
-            />
-          ) : null}
-
-          {jobs.data?.awaiting.length ? (
-            <RequestSection
-              title="Waiting for the customer"
-              requests={jobs.data.awaiting}
-              emptyTitle=""
-            />
+          {grouped ? (
+            <section className="section section--tight">
+              <div className="section__header">
+                <h2 className="section__title">Active jobs</h2>
+                <Link to="/provider/jobs" className="text-link">
+                  All jobs
+                </Link>
+              </div>
+              {grouped.active.length === 0 ? (
+                <EmptyState
+                  title="No active jobs"
+                  message="Jobs appear here when a customer chooses your quote."
+                />
+              ) : (
+                <div className="list">
+                  {grouped.active.slice(0, 5).map((job) => (
+                    <JobCard key={job.id} job={job} />
+                  ))}
+                </div>
+              )}
+            </section>
           ) : null}
 
           {open.error ? (
             <ErrorState error={open.error} onRetry={open.reload} />
           ) : (
-            <RequestSection
-              title="Latest requests"
-              requests={open.data.pending.slice(0, 5)}
-              emptyTitle="No new requests right now"
-              emptyMessage="New customer requests will show up here."
-              action={
+            <section className="section section--tight">
+              <div className="section__header">
+                <h2 className="section__title">Latest requests</h2>
                 <Link to="/provider/requests" className="text-link">
                   See all
                 </Link>
-              }
-            />
+              </div>
+              {open.data.pending.length === 0 ? (
+                <EmptyState
+                  title="No new requests right now"
+                  message="New customer requests will show up here."
+                />
+              ) : (
+                <div className="list">
+                  {open.data.pending.slice(0, 5).map((request) => (
+                    <RequestCard
+                      key={request.id}
+                      request={request}
+                      audience="provider"
+                      to={`/provider/requests/${request.id}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
           )}
         </>
       ) : null}

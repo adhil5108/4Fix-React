@@ -8,10 +8,12 @@ export const REQUEST_STATUSES = [
   'CANCELLED',
 ];
 
+export const BOOKING_GROUPS = ['UPCOMING', 'ACTIVE', 'COMPLETED', 'CANCELLED'];
+
 const STATUS_LABELS = {
   PENDING: 'Waiting for quotes',
   QUOTE_RECEIVED: 'Quotes received',
-  QUOTE_ACCEPTED: 'Quote accepted',
+  QUOTE_ACCEPTED: 'Provider chosen',
   SCHEDULED: 'Scheduled',
   IN_PROGRESS: 'In progress',
   COMPLETED: 'Completed',
@@ -24,6 +26,7 @@ const PROVIDER_STATUS_LABELS = {
   ...STATUS_LABELS,
   PENDING: 'Open',
   QUOTE_RECEIVED: 'Open · quoted',
+  QUOTE_ACCEPTED: 'You got the job',
 };
 
 const QUOTE_STATUS_LABELS = {
@@ -32,12 +35,33 @@ const QUOTE_STATUS_LABELS = {
   REJECTED: 'Declined',
 };
 
-export function statusLabel(status, { audience = 'customer' } = {}) {
-  if (audience === 'quote') {
-    return QUOTE_STATUS_LABELS[status] || status;
-  }
+const BOOKING_STATUS_LABELS = {
+  CONFIRMED: 'Booking confirmed',
+  ASSIGNED: 'Technician assigned',
+  ON_THE_WAY: 'On the way',
+  ARRIVED: 'Technician arrived',
+  IN_SERVICE: 'Service in progress',
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled',
+};
 
-  const labels = audience === 'provider' ? PROVIDER_STATUS_LABELS : STATUS_LABELS;
+const PAYMENT_STATUS_LABELS = {
+  PENDING: 'Payment pending',
+  PAID: 'Paid',
+  FAILED: 'Failed',
+  CANCELLED: 'Cancelled',
+  REFUNDED: 'Refunded',
+};
+
+export function statusLabel(status, { audience = 'customer' } = {}) {
+  const labels =
+    {
+      quote: QUOTE_STATUS_LABELS,
+      booking: BOOKING_STATUS_LABELS,
+      payment: PAYMENT_STATUS_LABELS,
+      provider: PROVIDER_STATUS_LABELS,
+    }[audience] || STATUS_LABELS;
+
   return labels[status] || status;
 }
 
@@ -46,14 +70,22 @@ export function statusTone(status) {
     case 'QUOTE_RECEIVED':
     case 'QUOTE_ACCEPTED':
     case 'SCHEDULED':
+    case 'CONFIRMED':
+    case 'ASSIGNED':
       return 'info';
     case 'IN_PROGRESS':
+    case 'ON_THE_WAY':
+    case 'ARRIVED':
+    case 'IN_SERVICE':
       return 'active';
     case 'COMPLETED':
     case 'ACCEPTED':
+    case 'PAID':
       return 'success';
     case 'CANCELLED':
     case 'REJECTED':
+    case 'FAILED':
+    case 'REFUNDED':
       return 'muted';
     default:
       return 'neutral';
@@ -114,13 +146,42 @@ export function formatTimestamp(value) {
   });
 }
 
+export function formatDateTime(value) {
+  if (!value) {
+    return '';
+  }
+
+  return new Date(value).toLocaleString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+export function formatClock(value) {
+  if (!value) {
+    return '';
+  }
+
+  return new Date(value).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+}
+
 export function formatMoney(amount) {
+  if (amount === null || amount === undefined) {
+    return '';
+  }
+
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
     minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
     maximumFractionDigits: 2,
   }).format(amount);
+}
+
+export function formatRating(rating) {
+  return rating === null || rating === undefined ? null : rating.toFixed(1);
 }
 
 export function formatAddress(address) {
@@ -131,6 +192,19 @@ export function formatAddress(address) {
   return [address.addressLine, address.city, address.state, address.pincode]
     .filter(Boolean)
     .join(', ');
+}
+
+export function firstName(name) {
+  return (name || '').trim().split(' ')[0] || 'there';
+}
+
+export function initials(name) {
+  return (name || '')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
 }
 
 export function todayDateOnly() {

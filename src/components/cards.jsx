@@ -2,21 +2,123 @@ import {
   formatAddress,
   formatCategory,
   formatMoney,
+  formatRating,
   formatSlot,
   formatTimestamp,
+  initials,
 } from '../utils/format.js';
 import { Link, StatusBadge } from './ui.jsx';
 
 export function ServiceCard({ service }) {
   return (
     <Link to={`/services/${service.id}`} className="card card--link service-card">
+      {service.image ? (
+        <img className="service-card__image" src={service.image} alt="" loading="lazy" />
+      ) : null}
       <span className="service-card__category">{formatCategory(service.category)}</span>
       <span className="service-card__name">{service.name}</span>
       <span className="service-card__description">{service.description}</span>
-      <span className="service-card__cta" aria-hidden="true">
-        View details →
+      <span className="service-card__footer">
+        {service.startingPrice !== null && service.startingPrice !== undefined ? (
+          <span className="service-card__price">From {formatMoney(service.startingPrice)}</span>
+        ) : (
+          <span />
+        )}
+        <span className="service-card__cta" aria-hidden="true">
+          Book →
+        </span>
       </span>
     </Link>
+  );
+}
+
+export function IssueCard({ issue, selected = false, onSelect }) {
+  return (
+    <button
+      type="button"
+      className={`issue-card${selected ? ' is-selected' : ''}`}
+      aria-pressed={selected}
+      onClick={() => onSelect(issue)}
+    >
+      <span className="issue-card__label">{issue.label}</span>
+      {issue.description ? <span className="issue-card__description">{issue.description}</span> : null}
+    </button>
+  );
+}
+
+export function Avatar({ name, image, size = 'md' }) {
+  return image ? (
+    <img className={`avatar avatar--${size}`} src={image} alt="" />
+  ) : (
+    <span className={`avatar avatar--${size}`} aria-hidden="true">
+      {initials(name)}
+    </span>
+  );
+}
+
+export function RatingSummary({ rating, reviewCount }) {
+  const value = formatRating(rating);
+
+  return (
+    <span className="rating-summary">
+      <span className="rating-summary__star" aria-hidden="true">
+        ★
+      </span>
+      {value ? (
+        <>
+          <strong>{value}</strong>
+          <span className="rating-summary__count">
+            ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
+          </span>
+        </>
+      ) : (
+        <span className="rating-summary__count">No reviews yet</span>
+      )}
+    </span>
+  );
+}
+
+// Facts a provider profile exposes; only fields the API actually returns are shown.
+export function ProviderFacts({ provider }) {
+  const facts = [
+    provider.experienceYears !== null && provider.experienceYears !== undefined
+      ? `${provider.experienceYears} yrs experience`
+      : null,
+    `${provider.completedJobs} ${provider.completedJobs === 1 ? 'job' : 'jobs'} completed`,
+    provider.serviceCategories?.length
+      ? provider.serviceCategories.map(formatCategory).join(' · ')
+      : null,
+  ].filter(Boolean);
+
+  return (
+    <ul className="provider-facts">
+      {facts.map((fact) => (
+        <li key={fact}>{fact}</li>
+      ))}
+    </ul>
+  );
+}
+
+export function ProviderCard({ provider, actions, children }) {
+  return (
+    <article className={`card provider-card${provider.isSelected ? ' provider-card--selected' : ''}`}>
+      <div className="provider-card__head">
+        <Avatar name={provider.name} image={provider.profileImage} />
+        <div className="provider-card__identity">
+          <Link to={`/providers/${provider.id}`} className="provider-card__name">
+            {provider.name}
+          </Link>
+          <RatingSummary rating={provider.rating} reviewCount={provider.reviewCount} />
+        </div>
+        {provider.isSelected ? <span className="badge badge--success">Your provider</span> : null}
+        {!provider.isSelected && !provider.isAvailable ? (
+          <span className="badge badge--muted">Unavailable</span>
+        ) : null}
+      </div>
+      <ProviderFacts provider={provider} />
+      {children}
+      {actions ? <div className="provider-card__actions">{actions}</div> : null}
+    </article>
   );
 }
 
@@ -30,7 +132,10 @@ export function RequestCard({ request, to, audience = 'customer' }) {
   return (
     <Link to={to} className="card card--link request-card">
       <span className="request-card__top">
-        <span className="request-card__service">{request.service?.name || 'Service request'}</span>
+        <span className="request-card__service">
+          {request.service?.name || 'Service request'}
+          {request.issueLabel ? <span className="request-card__issue"> · {request.issueLabel}</span> : null}
+        </span>
         <StatusBadge status={request.status} audience={audience} />
       </span>
       <span className="request-card__description">{request.description}</span>
@@ -47,6 +152,48 @@ export function RequestCard({ request, to, audience = 'customer' }) {
         {audience === 'customer' && !request.selectedProvider ? (
           <span>Requested {formatTimestamp(request.createdAt)}</span>
         ) : null}
+      </span>
+    </Link>
+  );
+}
+
+// Booking list card for both roles; the counterpart shown depends on who is looking.
+export function BookingCard({ booking, to, audience = 'customer' }) {
+  const counterpart = audience === 'provider' ? booking.customer : booking.provider;
+  const slot = booking.scheduledDate
+    ? `Scheduled: ${formatSlot(booking.scheduledDate, booking.scheduledTime)}`
+    : booking.request?.preferredDate
+      ? `Preferred: ${formatSlot(booking.request.preferredDate, booking.request.preferredTime)}`
+      : '';
+
+  return (
+    <Link to={to} className="card card--link booking-card">
+      <span className="request-card__top">
+        <span className="request-card__service">
+          {booking.service?.name || 'Booking'}
+          {booking.request?.issueLabel ? (
+            <span className="request-card__issue"> · {booking.request.issueLabel}</span>
+          ) : null}
+        </span>
+        <StatusBadge status={booking.status} audience="booking" />
+      </span>
+      <span className="booking-card__row">
+        {counterpart ? (
+          <span className="booking-card__person">
+            <Avatar name={counterpart.name} image={counterpart.profileImage} size="sm" />
+            {counterpart.name}
+          </span>
+        ) : null}
+        {booking.amount !== null ? (
+          <span className="booking-card__amount">{formatMoney(booking.amount)}</span>
+        ) : null}
+      </span>
+      <span className="request-card__meta">
+        {slot ? <span>{slot}</span> : null}
+        {audience === 'provider' && booking.request?.address ? (
+          <span>{booking.request.address.city}</span>
+        ) : null}
+        <span>Booked {formatTimestamp(booking.createdAt)}</span>
       </span>
     </Link>
   );

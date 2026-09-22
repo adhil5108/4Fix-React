@@ -26,6 +26,15 @@ export function buildLoginPath(returnTo) {
   return safeReturnTo ? `/login?returnTo=${encodeURIComponent(safeReturnTo)}` : '/login';
 }
 
+function isProviderPath(path) {
+  return path === '/provider' || path.startsWith('/provider/');
+}
+
+// Booking chat is shared by both roles, so a provider may return to it after login.
+function isSharedPath(path) {
+  return /^\/bookings\/[^/]+\/chat/.test(path);
+}
+
 // A returnTo into the other role's area would just bounce, so fall back to home.
 export function resolvePostAuthRoute(role, returnTo) {
   const safeReturnTo = getSafeReturnTo(returnTo);
@@ -34,14 +43,13 @@ export function resolvePostAuthRoute(role, returnTo) {
     return getHomeRouteForRole(role);
   }
 
-  const isProviderPath = safeReturnTo === '/provider' || safeReturnTo.startsWith('/provider/');
   const isAdminPath = safeReturnTo.startsWith('/app/');
 
-  if (role === 'CUSTOMER' && (isProviderPath || isAdminPath)) {
+  if (role === 'CUSTOMER' && (isProviderPath(safeReturnTo) || isAdminPath)) {
     return getHomeRouteForRole(role);
   }
 
-  if (role === 'PROVIDER' && !isProviderPath) {
+  if (role === 'PROVIDER' && !isProviderPath(safeReturnTo) && !isSharedPath(safeReturnTo)) {
     return getHomeRouteForRole(role);
   }
 

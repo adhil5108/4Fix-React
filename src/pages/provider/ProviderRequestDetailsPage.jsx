@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import AppShell from '../../components/AppShell.jsx';
-import { AddressBlock, AttachmentList, QuoteCard } from '../../components/cards.jsx';
+import { LifecycleActions } from '../../components/JobActions.jsx';
 import TextField, { TextArea } from '../../components/TextField.jsx';
+import { AddressBlock, AttachmentList, QuoteCard } from '../../components/cards.jsx';
 import {
   Button,
+  ButtonLink,
   Card,
   ConfirmDialog,
   DetailList,
@@ -16,8 +18,7 @@ import {
 import { useAction, useApi } from '../../hooks/useApi.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { providerApi, requestsApi } from '../../services/fixApi.js';
-import { formatMoney, formatSlot, formatTimestamp, todayDateOnly } from '../../utils/format.js';
-import { trackRequest, untrackRequest } from '../../utils/providerJobs.js';
+import { formatMoney, formatSlot, formatTimestamp } from '../../utils/format.js';
 
 const QUOTABLE = ['PENDING', 'QUOTE_RECEIVED'];
 const MAX_AMOUNT = 10000000;
@@ -108,122 +109,6 @@ function QuoteForm({ previouslyRejected, busy, onSubmit }) {
   );
 }
 
-function ScheduleForm({ request, busy, onSubmit }) {
-  const today = todayDateOnly();
-  const [form, setForm] = useState({
-    scheduledDate: request.preferredDate >= today ? request.preferredDate : '',
-    scheduledTime: request.preferredTime || '',
-  });
-  const [errors, setErrors] = useState({});
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-    const nextErrors = {};
-
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(form.scheduledDate)) {
-      nextErrors.scheduledDate = 'Choose a date.';
-    } else if (form.scheduledDate < today) {
-      nextErrors.scheduledDate = 'Date cannot be in the past.';
-    }
-
-    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(form.scheduledTime)) {
-      nextErrors.scheduledTime = 'Choose a time.';
-    }
-
-    if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors);
-      return;
-    }
-
-    await onSubmit(form);
-  }
-
-  return (
-    <form className="form-stack" onSubmit={handleSubmit} noValidate>
-      <div className="form-row">
-        <TextField
-          id="scheduledDate"
-          label="Visit date"
-          type="date"
-          min={today}
-          value={form.scheduledDate}
-          error={errors.scheduledDate}
-          onChange={(event) => {
-            setForm((current) => ({ ...current, scheduledDate: event.target.value }));
-            setErrors((current) => ({ ...current, scheduledDate: '' }));
-          }}
-        />
-        <TextField
-          id="scheduledTime"
-          label="Visit time"
-          type="time"
-          value={form.scheduledTime}
-          error={errors.scheduledTime}
-          onChange={(event) => {
-            setForm((current) => ({ ...current, scheduledTime: event.target.value }));
-            setErrors((current) => ({ ...current, scheduledTime: '' }));
-          }}
-        />
-      </div>
-      <Button type="submit" block loading={busy} loadingText="Scheduling…">
-        Confirm visit
-      </Button>
-    </form>
-  );
-}
-
-function JobActions({ request, action, onSchedule, onRequestConfirm }) {
-  if (request.status === 'QUOTE_ACCEPTED') {
-    return (
-      <Card className="card--accent">
-        <h2 className="card__title">You got the job</h2>
-        <p className="body-text">
-          Confirm when you’ll visit. The customer asked for{' '}
-          {formatSlot(request.preferredDate, request.preferredTime)}.
-        </p>
-        <ScheduleForm request={request} busy={action.pending === 'schedule'} onSubmit={onSchedule} />
-      </Card>
-    );
-  }
-
-  if (request.status === 'SCHEDULED') {
-    return (
-      <Card className="card--accent">
-        <h2 className="card__title">Visit scheduled</h2>
-        <p className="body-text">
-          {formatSlot(request.scheduledDate, request.scheduledTime)}. Start the job when you arrive.
-        </p>
-        <Button block onClick={() => onRequestConfirm('start')} disabled={Boolean(action.pending)}>
-          Start job
-        </Button>
-      </Card>
-    );
-  }
-
-  if (request.status === 'IN_PROGRESS') {
-    return (
-      <Card className="card--accent">
-        <h2 className="card__title">Job in progress</h2>
-        <p className="body-text">Mark the job complete once the work is done.</p>
-        <Button block onClick={() => onRequestConfirm('complete')} disabled={Boolean(action.pending)}>
-          Mark as complete
-        </Button>
-      </Card>
-    );
-  }
-
-  if (request.status === 'COMPLETED') {
-    return (
-      <Card>
-        <h2 className="card__title">Job completed</h2>
-        <p className="body-text">Nice work — this job is finished.</p>
-      </Card>
-    );
-  }
-
-  return null;
-}
-
 function ProviderRequestDetailsPage({ requestId }) {
   const { user } = useAuth();
   const data = useApi(async () => {
@@ -231,26 +116,17 @@ function ProviderRequestDetailsPage({ requestId }) {
       providerApi.getRequest(requestId),
       requestsApi.quotes(requestId),
     ]);
-    return { request: requestResult.request, quotes: quotesResult.quotes };
+    const request = requestResult.request;
+    // Once the customer confirms, the booking-centric job page takes over.
+    const isSelected = request.selectedProviderId === user.id;
+    const job = isSelected
+      ? (await providerApi.jobs()).jobs.find((item) => item.id === request.id) || null
+      : null;
+    return { request, quotes: quotesResult.quotes, job };
   }, [requestId]);
   const action = useAction();
   const [confirm, setConfirm] = useState(null);
   const [success, setSuccess] = useState('');
-
-  const request = data.data?.request;
-  const isSelected = request?.selectedProviderId === user.id;
-
-  useEffect(() => {
-    if (isSelected) {
-      trackRequest(user.id, requestId);
-    }
-  }, [isSelected, requestId, user.id]);
-
-  useEffect(() => {
-    if ([400, 403, 404].includes(data.error?.status)) {
-      untrackRequest(user.id, requestId);
-    }
-  }, [data.error, requestId, user.id]);
 
   const back = { to: '/provider/requests', label: 'Requests' };
 
@@ -278,12 +154,12 @@ function ProviderRequestDetailsPage({ requestId }) {
     );
   }
 
-  const quotes = data.data.quotes;
+  const { request, quotes, job } = data.data;
+  const isSelected = request.selectedProviderId === user.id;
   const activeQuote = quotes.find((quote) => quote.status === 'PENDING' || quote.status === 'ACCEPTED');
   const hasRejectedQuote = quotes.some((quote) => quote.status === 'REJECTED');
   const canQuote = QUOTABLE.includes(request.status) && !activeQuote && !isSelected;
-  const lostJob =
-    !isSelected && Boolean(request.selectedProviderId) && request.status !== 'CANCELLED';
+  const lostJob = !isSelected && Boolean(request.selectedProviderId) && request.status !== 'CANCELLED';
 
   async function perform(key, operation, message) {
     setSuccess('');
@@ -298,37 +174,18 @@ function ProviderRequestDetailsPage({ requestId }) {
     return ok;
   }
 
-  function submitQuote(payload) {
-    return perform(
-      'quote',
-      async () => {
-        await providerApi.submitQuote(request.id, payload);
-        trackRequest(user.id, request.id);
-      },
-      'Quote sent. The customer will review it.',
-    );
-  }
-
-  function schedule(payload) {
-    return perform(
-      'schedule',
-      () => providerApi.schedule(request.id, payload),
-      'Visit scheduled. The customer can now see the date and time.',
-    );
-  }
-
   const confirmContent = {
     start: {
-      title: 'Start this job?',
+      title: 'Start this service?',
       message: 'The customer will see that work is in progress. This can’t be undone.',
-      confirmLabel: 'Start job',
-      run: () => perform('start', () => providerApi.start(request.id), 'Job started.'),
+      confirmLabel: 'Start service',
+      run: () => perform('start', () => providerApi.start(request.id), 'Service started.'),
     },
     complete: {
-      title: 'Mark job as complete?',
+      title: 'Mark service as complete?',
       message: 'Only do this once the work is finished. This can’t be undone.',
       confirmLabel: 'Mark complete',
-      run: () => perform('complete', () => providerApi.complete(request.id), 'Job marked as complete.'),
+      run: () => perform('complete', () => providerApi.complete(request.id), 'Service marked as complete.'),
     },
   }[confirm];
 
@@ -337,7 +194,7 @@ function ProviderRequestDetailsPage({ requestId }) {
       <PageHeader
         back={back}
         title={request.service?.name || 'Service request'}
-        subtitle={`Posted ${formatTimestamp(request.createdAt)}`}
+        subtitle={`${request.issueLabel ? `${request.issueLabel} · ` : ''}posted ${formatTimestamp(request.createdAt)}`}
         actions={<StatusBadge status={request.status} audience="provider" />}
       />
 
@@ -349,13 +206,40 @@ function ProviderRequestDetailsPage({ requestId }) {
 
       <div className="detail-layout">
         <div className="detail-layout__main">
-          {isSelected ? (
-            <JobActions
-              request={request}
-              action={action}
-              onSchedule={schedule}
-              onRequestConfirm={setConfirm}
-            />
+          {isSelected && job?.bookingId ? (
+            <Card className="card--accent">
+              <h2 className="card__title">Booking confirmed</h2>
+              <p className="body-text">
+                The customer confirmed this booking. Manage the visit, tracking and chat from the job page.
+              </p>
+              <ButtonLink to={`/provider/jobs/${job.bookingId}`} block>
+                Open job
+              </ButtonLink>
+            </Card>
+          ) : null}
+
+          {isSelected && !job?.bookingId ? (
+            <>
+              {request.status === 'QUOTE_ACCEPTED' ? (
+                <Notice tone="info">
+                  The customer chose your quote and is confirming the booking. You can already propose a visit time.
+                </Notice>
+              ) : null}
+              <LifecycleActions
+                request={request}
+                pending={action.pending}
+                onSchedule={(payload) =>
+                  perform('schedule', () => providerApi.schedule(request.id, payload), 'Visit scheduled.')
+                }
+                onRequestConfirm={setConfirm}
+              />
+              {request.status === 'COMPLETED' ? (
+                <Card>
+                  <h2 className="card__title">Job completed</h2>
+                  <p className="body-text">Nice work — this job is finished.</p>
+                </Card>
+              ) : null}
+            </>
           ) : null}
 
           {request.status === 'CANCELLED' ? (
@@ -380,7 +264,9 @@ function ProviderRequestDetailsPage({ requestId }) {
             <QuoteForm
               previouslyRejected={hasRejectedQuote}
               busy={action.pending === 'quote'}
-              onSubmit={submitQuote}
+              onSubmit={(payload) =>
+                perform('quote', () => providerApi.submitQuote(request.id, payload), 'Quote sent. The customer will review it.')
+              }
             />
           ) : null}
 
@@ -391,12 +277,7 @@ function ProviderRequestDetailsPage({ requestId }) {
               </h2>
               <div className="list">
                 {quotes.map((quote) => (
-                  <QuoteCard
-                    key={quote.id}
-                    quote={quote}
-                    showProvider={false}
-                    highlight={quote.status === 'ACCEPTED'}
-                  />
+                  <QuoteCard key={quote.id} quote={quote} showProvider={false} highlight={quote.status === 'ACCEPTED'} />
                 ))}
               </div>
             </section>
@@ -409,21 +290,14 @@ function ProviderRequestDetailsPage({ requestId }) {
             <DetailList
               items={[
                 { label: 'Customer', value: request.customer?.name },
+                { label: 'Issue', value: request.issueLabel },
                 { label: 'Problem', value: request.description },
-                {
-                  label: 'Preferred time',
-                  value: formatSlot(request.preferredDate, request.preferredTime),
-                },
+                { label: 'Preferred time', value: formatSlot(request.preferredDate, request.preferredTime) },
                 {
                   label: 'Scheduled visit',
-                  value: request.scheduledDate
-                    ? formatSlot(request.scheduledDate, request.scheduledTime)
-                    : '',
+                  value: request.scheduledDate ? formatSlot(request.scheduledDate, request.scheduledTime) : '',
                 },
-                {
-                  label: 'Your price',
-                  value: isSelected && activeQuote ? formatMoney(activeQuote.amount) : '',
-                },
+                { label: 'Your price', value: isSelected && activeQuote ? formatMoney(activeQuote.amount) : '' },
               ]}
             />
             <h3 className="card__subtitle">Service address</h3>

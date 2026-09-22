@@ -18,7 +18,12 @@ const icons = {
       <path d="M12 8v8M8 12h8" />
     </>
   ),
-  list: <path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01" />,
+  calendar: (
+    <>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 10h18M8 3v4M16 3v4" />
+    </>
+  ),
   user: (
     <>
       <circle cx="12" cy="8" r="4" />
@@ -29,6 +34,15 @@ const icons = {
     <>
       <rect x="3" y="7" width="18" height="13" rx="2" />
       <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+    </>
+  ),
+  wrench: (
+    <path d="M14.7 6.3a4 4 0 0 0 5 5L13 18l-3-3 6.7-8.7zM4 20l4-4" />
+  ),
+  info: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8h.01M11 12h1v4h1" />
     </>
   ),
 };
@@ -49,23 +63,24 @@ function Icon({ name }) {
   );
 }
 
+// Mobile keeps to Home / Book / Bookings / Profile; desktop adds Services.
 const NAV_BY_ROLE = {
   PUBLIC: [
     { to: '/', label: 'Home', icon: 'home', exact: true },
     { to: '/services', label: 'Services', icon: 'grid' },
-    { to: '/about', label: 'About', icon: 'list' },
+    { to: '/about', label: 'About', icon: 'info' },
   ],
   CUSTOMER: [
     { to: '/', label: 'Home', icon: 'home', exact: true },
-    { to: '/services', label: 'Services', icon: 'grid' },
-    { to: '/report', label: 'Report', icon: 'plus', mobileOnly: true },
-    { to: '/requests', label: 'My requests', shortLabel: 'Requests', icon: 'list' },
-    { to: '/history', label: 'History', desktopOnly: true },
+    { to: '/services', label: 'Services', icon: 'grid', desktopOnly: true },
+    { to: '/services', label: 'Book', icon: 'plus', mobileOnly: true },
+    { to: '/bookings', label: 'Bookings', icon: 'calendar' },
     { to: '/profile', label: 'Profile', icon: 'user' },
   ],
   PROVIDER: [
     { to: '/provider', label: 'Dashboard', icon: 'home', exact: true },
     { to: '/provider/requests', label: 'Requests', icon: 'briefcase' },
+    { to: '/provider/jobs', label: 'My jobs', shortLabel: 'Jobs', icon: 'wrench' },
     { to: '/provider/profile', label: 'Profile', icon: 'user' },
   ],
   ADMIN: [{ to: '/app/admin', label: 'Admin', icon: 'home', exact: true }],
@@ -100,7 +115,7 @@ function Header({ navItems, path }) {
             .filter((item) => !item.mobileOnly)
             .map((item) => (
               <Link
-                key={item.to}
+                key={item.label}
                 to={item.to}
                 className={`site-nav__link${isActive(item, path) ? ' is-active' : ''}`}
                 aria-current={isActive(item, path) ? 'page' : undefined}
@@ -116,14 +131,14 @@ function Header({ navItems, path }) {
               <Link to="/login" className="text-link site-header__login">
                 Log in
               </Link>
-              <ButtonLink to="/signup/customer" size="sm">
-                Sign up
+              <ButtonLink to="/services" size="sm">
+                Book a service
               </ButtonLink>
             </>
           ) : null}
           {isAuthenticated && user.role === 'CUSTOMER' ? (
-            <ButtonLink to="/report" size="sm" className="hide-mobile">
-              Report an issue
+            <ButtonLink to="/services" size="sm" className="hide-mobile">
+              Book a service
             </ButtonLink>
           ) : null}
           {isAuthenticated && user.role === 'ADMIN' ? (
@@ -144,9 +159,9 @@ function MobileNav({ navItems, path }) {
     <nav className="mobile-nav" aria-label="Main">
       {items.map((item) => (
         <Link
-          key={item.to}
+          key={item.label}
           to={item.to}
-          className={`mobile-nav__link${isActive(item, path) ? ' is-active' : ''}${
+          className={`mobile-nav__link${isActive(item, path) && !item.mobileOnly ? ' is-active' : ''}${
             item.icon === 'plus' ? ' mobile-nav__link--primary' : ''
           }`}
           aria-current={isActive(item, path) ? 'page' : undefined}

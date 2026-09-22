@@ -27,6 +27,7 @@ export function Link({ to, className, children, ...props }) {
 }
 
 export function Button({
+  ref,
   variant = 'primary',
   size,
   block = false,
@@ -49,7 +50,7 @@ export function Button({
     .join(' ');
 
   return (
-    <button type={type} className={classes} disabled={disabled || loading} {...props}>
+    <button ref={ref} type={type} className={classes} disabled={disabled || loading} {...props}>
       {loading ? loadingText || 'Please wait…' : children}
     </button>
   );

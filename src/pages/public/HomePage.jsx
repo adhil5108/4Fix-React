@@ -1,45 +1,90 @@
 import AppShell from '../../components/AppShell.jsx';
-import { ServiceCard } from '../../components/cards.jsx';
+import SearchBar from '../../components/SearchBar.jsx';
+import { BookingCard, ServiceCard } from '../../components/cards.jsx';
 import { ButtonLink, EmptyState, ErrorState, Link, LoadingState } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
-import { servicesApi } from '../../services/fixApi.js';
-import { useReportIssuePath } from './publicLinks.js';
+import { navigate } from '../../hooks/useRoute.js';
+import { bookingsApi, servicesApi } from '../../services/fixApi.js';
+import { firstName, formatCategory } from '../../utils/format.js';
 
 const STEPS = [
-  { title: 'Report the issue', text: 'Pick a service, describe the problem and choose a time that suits you.' },
-  { title: 'Compare quotes', text: 'Service providers review your request and send you their price.' },
-  { title: 'Get it fixed', text: 'Accept the quote you like and your provider schedules the visit.' },
+  { title: 'Tell us what’s wrong', text: 'Pick a service, choose the problem and a time that suits you.' },
+  { title: 'Choose your provider', text: 'Compare providers and their quotes, then confirm your booking.' },
+  { title: 'Track, chat, pay, rate', text: 'Follow the technician, chat in the app, pay after the job and leave a review.' },
 ];
+
+function NextBooking() {
+  const next = useApi(async () => {
+    const active = await bookingsApi.list({ status: 'ACTIVE' });
+    if (active.bookings.length > 0) return active.bookings[0];
+    const upcoming = await bookingsApi.list({ status: 'UPCOMING' });
+    return upcoming.bookings[0] || null;
+  }, []);
+
+  if (next.loading || next.error || !next.data) {
+    return null;
+  }
+
+  return (
+    <section className="section section--tight" aria-labelledby="next-heading">
+      <div className="section__header">
+        <h2 id="next-heading" className="section__title">
+          Your next booking
+        </h2>
+        <Link to="/bookings" className="text-link">
+          All bookings
+        </Link>
+      </div>
+      <BookingCard booking={next.data} to={`/bookings/${next.data.id}`} />
+    </section>
+  );
+}
 
 function HomePage() {
   const { isAuthenticated, user } = useAuth();
-  const reportPath = useReportIssuePath();
   const services = useApi(() => servicesApi.list(), []);
-  const popularServices = services.data?.services.slice(0, 6) || [];
+  const all = services.data?.services || [];
+  const popular = all.filter((service) => service.isPopular);
+  const featured = (popular.length > 0 ? popular : all).slice(0, 6);
+  const categories = [...new Set(all.map((service) => service.category))].sort();
+  const isCustomer = isAuthenticated && user.role === 'CUSTOMER';
 
   return (
     <AppShell>
       <section className="hero">
         <p className="hero__eyebrow">
-          {isAuthenticated ? `Hi ${user.name.split(' ')[0]},` : 'Repairs, maintenance and home services'}
+          {isAuthenticated ? `Hi ${firstName(user.name)},` : 'Repairs, maintenance and home services'}
         </p>
         <h1 className="hero__title">Something broken? Get it fixed with 4Fix.</h1>
         <p className="hero__text">
-          Tell us what needs fixing, compare quotes from service providers and book the one that
-          works for you.
+          Choose a service, tell us what’s wrong, pick a provider and track the technician to
+          your door.
         </p>
-        <div className="hero__actions">
-          {reportPath ? (
-            <ButtonLink to={reportPath} size="lg">
-              Report an issue
-            </ButtonLink>
-          ) : null}
-          <ButtonLink to="/services" variant="secondary" size="lg">
-            Browse services
-          </ButtonLink>
+        <div className="hero__search">
+          <SearchBar
+            size="lg"
+            onSearch={(query) =>
+              navigate(query ? `/services?search=${encodeURIComponent(query)}` : '/services')
+            }
+          />
         </div>
+        {categories.length > 0 ? (
+          <div className="chip-row chip-row--scroll hero__categories" aria-label="Categories">
+            {categories.map((category) => (
+              <Link
+                key={category}
+                to={`/services?category=${encodeURIComponent(category)}`}
+                className="chip"
+              >
+                {formatCategory(category)}
+              </Link>
+            ))}
+          </div>
+        ) : null}
       </section>
+
+      {isCustomer ? <NextBooking /> : null}
 
       <section className="section" aria-labelledby="popular-heading">
         <div className="section__header">
@@ -53,15 +98,15 @@ function HomePage() {
 
         {services.loading ? <LoadingState label="Loading services…" /> : null}
         {services.error ? <ErrorState error={services.error} onRetry={services.reload} /> : null}
-        {!services.loading && !services.error && popularServices.length === 0 ? (
+        {!services.loading && !services.error && featured.length === 0 ? (
           <EmptyState
             title="No services yet"
             message="Services will appear here as soon as they are available."
           />
         ) : null}
-        {popularServices.length > 0 && !services.error ? (
+        {featured.length > 0 && !services.error ? (
           <div className="card-grid">
-            {popularServices.map((service) => (
+            {featured.map((service) => (
               <ServiceCard key={service.id} service={service} />
             ))}
           </div>
@@ -83,6 +128,11 @@ function HomePage() {
             </li>
           ))}
         </ol>
+        <div className="section__cta">
+          <ButtonLink to="/services" size="lg">
+            Book a service
+          </ButtonLink>
+        </div>
       </section>
 
       {!isAuthenticated ? (

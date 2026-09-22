@@ -13,6 +13,7 @@ import { navigate, useQueryParam } from '../../hooks/useRoute.js';
 import { requestsApi } from '../../services/fixApi.js';
 import { REQUEST_STATUSES, statusLabel } from '../../utils/format.js';
 
+// Requests that have not become bookings yet (waiting for quotes / a provider choice).
 function RequestsPage() {
   const rawStatus = (useQueryParam('status') || '').toUpperCase();
   const status = REQUEST_STATUSES.includes(rawStatus) ? rawStatus : '';
@@ -27,10 +28,10 @@ function RequestsPage() {
     <AppShell>
       <PageHeader
         title="My requests"
-        subtitle="Track quotes and bookings for the issues you reported."
+        subtitle="Everything you’ve asked for, including requests still waiting for quotes."
         actions={
-          <ButtonLink to="/report" size="sm" className="hide-mobile">
-            Report an issue
+          <ButtonLink to="/services" size="sm" className="hide-mobile">
+            Book a service
           </ButtonLink>
         }
       />
@@ -72,8 +73,8 @@ function RequestsPage() {
         ) : (
           <EmptyState
             title="No requests yet"
-            message="Report an issue and service providers will send you quotes."
-            action={<ButtonLink to="/report">Report an issue</ButtonLink>}
+            message="Book a service and providers will send you quotes."
+            action={<ButtonLink to="/services">Book a service</ButtonLink>}
           />
         )
       ) : null}
@@ -86,9 +87,9 @@ function RequestsPage() {
       ) : null}
 
       <p className="page-footnote">
-        Looking for finished jobs?{' '}
-        <Link to="/history" className="text-link">
-          View history
+        Confirmed bookings live in{' '}
+        <Link to="/bookings" className="text-link">
+          My bookings
         </Link>
       </p>
     </AppShell>
