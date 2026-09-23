@@ -53,6 +53,16 @@ const PAYMENT_STATUS_LABELS = {
   REFUNDED: 'Refunded',
 };
 
+// A provider-recorded job's own lifecycle — no CONFIRMED/ASSIGNED step, since it's
+// already theirs the moment they add it.
+const EXTERNAL_JOB_STATUS_LABELS = {
+  SCHEDULED: 'Scheduled',
+  ON_THE_WAY: 'On the way',
+  ARRIVED: 'Arrived',
+  IN_PROGRESS: 'In progress',
+  COMPLETED: 'Completed',
+};
+
 export function statusLabel(status, { audience = 'customer' } = {}) {
   const labels =
     {
@@ -60,6 +70,7 @@ export function statusLabel(status, { audience = 'customer' } = {}) {
       booking: BOOKING_STATUS_LABELS,
       payment: PAYMENT_STATUS_LABELS,
       provider: PROVIDER_STATUS_LABELS,
+      externalJob: EXTERNAL_JOB_STATUS_LABELS,
     }[audience] || STATUS_LABELS;
 
   return labels[status] || status;

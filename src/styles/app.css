@@ -550,6 +550,13 @@ section.card.callout {
   gap: 12px;
 }
 
+.job-card__badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .request-card__service {
   color: var(--ink);
   font-size: 1.02rem;
@@ -603,6 +610,43 @@ section.card.callout {
 .quote-card--highlight {
   border-color: #9cc8b4;
   background: #f6fbf8;
+}
+
+/* Provider job notes — private to the provider viewing them */
+
+.job-notes__list {
+  display: grid;
+  gap: 12px;
+}
+
+.job-note {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  background: var(--surface);
+}
+
+.job-note__content {
+  margin: 0 0 10px;
+  color: var(--text);
+  font-size: 0.94rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.job-note__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.job-note__actions {
+  display: flex;
+  gap: 8px;
 }
 
 .stat-grid {

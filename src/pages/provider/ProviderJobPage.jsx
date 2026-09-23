@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import AppShell from '../../components/AppShell.jsx';
 import { ScheduleForm } from '../../components/JobActions.jsx';
+import JobNotes from '../../components/JobNotes.jsx';
 import PaymentCard from '../../components/PaymentCard.jsx';
 import TextField, { Select } from '../../components/TextField.jsx';
 import TrackingTimeline from '../../components/TrackingTimeline.jsx';
@@ -318,6 +319,15 @@ function ProviderJobPage({ bookingId }) {
               <LocationShare bookingId={booking.id} onUpdated={() => data.refresh()} disabled={Boolean(action.pending)} />
             </Card>
           ) : null}
+
+          <Card>
+            <h2 className="card__title">Private Notes</h2>
+            <p className="field-hint">
+              Visible only to you — work details, materials used, offline work, or reminders for this
+              job.
+            </p>
+            <JobNotes jobId={booking.id} notesApi={bookingsApi.notes} />
+          </Card>
         </div>
 
         <aside className="detail-layout__side">

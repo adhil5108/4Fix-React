@@ -1,6 +1,6 @@
 import { formatDateTime } from '../utils/format.js';
 
-const STAGES = [
+const BOOKING_STAGES = [
   { status: 'CONFIRMED', label: 'Booking confirmed', at: 'confirmedAt' },
   { status: 'ON_THE_WAY', label: 'Technician on the way', at: 'onTheWayAt' },
   { status: 'ARRIVED', label: 'Technician arrived', at: 'arrivedAt' },
@@ -9,7 +9,7 @@ const STAGES = [
 ];
 
 // ASSIGNED sits between confirmed and on-the-way; it shares the "confirmed" stage.
-const RANK = {
+const BOOKING_RANK = {
   CONFIRMED: 0,
   ASSIGNED: 0,
   ON_THE_WAY: 1,
@@ -18,16 +18,18 @@ const RANK = {
   COMPLETED: 4,
 };
 
-function TrackingTimeline({ status, timeline = {}, compact = false }) {
+// `stages`/`rank` default to a Booking's own lifecycle; an external job passes its own
+// (SCHEDULED/ON_THE_WAY/ARRIVED/IN_PROGRESS/COMPLETED) instead of a separate component.
+function TrackingTimeline({ status, timeline = {}, compact = false, stages = BOOKING_STAGES, rank = BOOKING_RANK }) {
   if (status === 'CANCELLED') {
     return <p className="progress-cancelled">This booking was cancelled.</p>;
   }
 
-  const currentRank = RANK[status] ?? 0;
+  const currentRank = rank[status] ?? 0;
 
   return (
     <ol className={`timeline${compact ? ' timeline--compact' : ''}`} aria-label="Booking progress">
-      {STAGES.map((stage, index) => {
+      {stages.map((stage, index) => {
         const state = index < currentRank ? 'done' : index === currentRank ? 'current' : 'upcoming';
         const reachedAt = timeline[stage.at];
 

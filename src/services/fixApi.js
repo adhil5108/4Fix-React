@@ -73,6 +73,20 @@ export const bookingsApi = {
       method: 'POST',
       body: { rating, comment: comment || undefined },
     }),
+
+  // Private to the provider — never returned in the customer/admin booking payload.
+  notes: {
+    list: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}/notes`),
+    create: (bookingId, content) =>
+      apiRequest(`/api/bookings/${id(bookingId)}/notes`, { method: 'POST', body: { content } }),
+    update: (bookingId, noteId, content) =>
+      apiRequest(`/api/bookings/${id(bookingId)}/notes/${id(noteId)}`, {
+        method: 'PATCH',
+        body: { content },
+      }),
+    remove: (bookingId, noteId) =>
+      apiRequest(`/api/bookings/${id(bookingId)}/notes/${id(noteId)}`, { method: 'DELETE' }),
+  },
 };
 
 export const adminApi = {
@@ -133,4 +147,32 @@ export const providerApi = {
   start: (requestId) => apiRequest(`/api/requests/${id(requestId)}/start`, { method: 'POST' }),
   complete: (requestId) =>
     apiRequest(`/api/requests/${id(requestId)}/complete`, { method: 'POST' }),
+};
+
+// Jobs a provider records themselves — work that came in outside 4Fix. Provider-only;
+// never visible to customers or other providers.
+export const providerExternalJobsApi = {
+  create: (payload) => apiRequest('/api/provider/external-jobs', { method: 'POST', body: payload }),
+  get: (jobId) => apiRequest(`/api/provider/external-jobs/${id(jobId)}`),
+  update: (jobId, payload) =>
+    apiRequest(`/api/provider/external-jobs/${id(jobId)}`, { method: 'PATCH', body: payload }),
+  remove: (jobId) => apiRequest(`/api/provider/external-jobs/${id(jobId)}`, { method: 'DELETE' }),
+
+  onTheWay: (jobId) => apiRequest(`/api/provider/external-jobs/${id(jobId)}/on-the-way`, { method: 'POST' }),
+  arrived: (jobId) => apiRequest(`/api/provider/external-jobs/${id(jobId)}/arrived`, { method: 'POST' }),
+  start: (jobId) => apiRequest(`/api/provider/external-jobs/${id(jobId)}/start`, { method: 'POST' }),
+  complete: (jobId) => apiRequest(`/api/provider/external-jobs/${id(jobId)}/complete`, { method: 'POST' }),
+
+  notes: {
+    list: (jobId) => apiRequest(`/api/provider/external-jobs/${id(jobId)}/notes`),
+    create: (jobId, content) =>
+      apiRequest(`/api/provider/external-jobs/${id(jobId)}/notes`, { method: 'POST', body: { content } }),
+    update: (jobId, noteId, content) =>
+      apiRequest(`/api/provider/external-jobs/${id(jobId)}/notes/${id(noteId)}`, {
+        method: 'PATCH',
+        body: { content },
+      }),
+    remove: (jobId, noteId) =>
+      apiRequest(`/api/provider/external-jobs/${id(jobId)}/notes/${id(noteId)}`, { method: 'DELETE' }),
+  },
 };

@@ -1,5 +1,13 @@
 import AppShell from '../../components/AppShell.jsx';
-import { EmptyState, ErrorState, Link, LoadingState, PageHeader, StatusBadge } from '../../components/ui.jsx';
+import {
+  ButtonLink,
+  EmptyState,
+  ErrorState,
+  Link,
+  LoadingState,
+  PageHeader,
+  StatusBadge,
+} from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { navigate, useQueryParam } from '../../hooks/useRoute.js';
 import { providerApi } from '../../services/fixApi.js';
@@ -24,33 +32,42 @@ export function splitJobs(jobs) {
 }
 
 export function jobPath(job) {
+  if (job.source === 'EXTERNAL') return `/provider/jobs/external/${job.id}`;
   return job.bookingId ? `/provider/jobs/${job.bookingId}` : `/provider/requests/${job.id}`;
 }
 
 export function JobCard({ job }) {
+  const isExternal = job.source === 'EXTERNAL';
   const slot = job.scheduledDate
     ? `Scheduled: ${formatSlot(job.scheduledDate, job.scheduledTime)}`
-    : `Preferred: ${formatSlot(job.preferredDate, job.preferredTime)}`;
+    : isExternal
+      ? 'Not scheduled'
+      : `Preferred: ${formatSlot(job.preferredDate, job.preferredTime)}`;
 
   return (
     <Link to={jobPath(job)} className="card card--link request-card">
       <span className="request-card__top">
         <span className="request-card__service">
-          {job.service?.name || 'Job'}
+          {job.service?.name || job.serviceLabel || 'Job'}
           {job.issueLabel ? <span className="request-card__issue"> · {job.issueLabel}</span> : null}
         </span>
-        {job.bookingStatus ? (
-          <StatusBadge status={job.bookingStatus} audience="booking" />
-        ) : (
-          <StatusBadge status={job.status} audience="provider" />
-        )}
+        <span className="job-card__badges">
+          {isExternal ? <span className="badge badge--muted">External</span> : null}
+          {isExternal ? (
+            <StatusBadge status={job.status} audience="externalJob" />
+          ) : job.bookingStatus ? (
+            <StatusBadge status={job.bookingStatus} audience="booking" />
+          ) : (
+            <StatusBadge status={job.status} audience="provider" />
+          )}
+        </span>
       </span>
       <span className="request-card__description">{job.description}</span>
       <span className="request-card__meta">
         <span>{slot}</span>
         {job.address ? <span>{[job.address.city, job.address.pincode].filter(Boolean).join(' · ')}</span> : null}
         {job.amount !== null ? <span>{formatMoney(job.amount)}</span> : null}
-        {!job.bookingId ? <span>Awaiting customer confirmation</span> : null}
+        {!isExternal && !job.bookingId ? <span>Awaiting customer confirmation</span> : null}
       </span>
     </Link>
   );
@@ -65,7 +82,15 @@ function ProviderJobsPage() {
 
   return (
     <AppShell>
-      <PageHeader title="My jobs" subtitle="Jobs customers have awarded to you." />
+      <PageHeader
+        title="My jobs"
+        subtitle="Jobs customers have awarded to you, plus jobs you've added yourself."
+        actions={
+          <ButtonLink to="/provider/jobs/new" size="sm">
+            + Add Job
+          </ButtonLink>
+        }
+      />
 
       <div className="tabs" role="tablist" aria-label="Jobs">
         {TABS.map((item) => (

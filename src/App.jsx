@@ -31,7 +31,9 @@ import AdminReviewDetailPage from './pages/admin/AdminReviewDetailPage.jsx';
 import AdminReviewsPage from './pages/admin/AdminReviewsPage.jsx';
 import AdminServiceFormPage from './pages/admin/AdminServiceFormPage.jsx';
 import AdminServicesPage from './pages/admin/AdminServicesPage.jsx';
+import ExternalJobFormPage from './pages/provider/ExternalJobFormPage.jsx';
 import ProviderDashboardPage from './pages/provider/ProviderDashboardPage.jsx';
+import ProviderExternalJobPage from './pages/provider/ProviderExternalJobPage.jsx';
 import ProviderJobPage from './pages/provider/ProviderJobPage.jsx';
 import ProviderJobsPage from './pages/provider/ProviderJobsPage.jsx';
 import ProviderRequestDetailsPage from './pages/provider/ProviderRequestDetailsPage.jsx';
@@ -148,6 +150,23 @@ const ROUTES = [
     path: '/provider/jobs',
     access: ['PROVIDER', 'ADMIN'],
     render: () => <ProviderJobsPage />,
+  },
+  // Must come before '/provider/jobs/:bookingId' below — both are 3 segments, and
+  // route matching is order-based, not specificity-based (see matchPath).
+  {
+    path: '/provider/jobs/new',
+    access: 'PROVIDER',
+    render: () => <ExternalJobFormPage />,
+  },
+  {
+    path: '/provider/jobs/external/:jobId',
+    access: 'PROVIDER',
+    render: ({ jobId }) => <ProviderExternalJobPage key={jobId} jobId={jobId} />,
+  },
+  {
+    path: '/provider/jobs/external/:jobId/edit',
+    access: 'PROVIDER',
+    render: ({ jobId }) => <ExternalJobFormPage key={jobId} jobId={jobId} />,
   },
   {
     path: '/provider/jobs/:bookingId',
