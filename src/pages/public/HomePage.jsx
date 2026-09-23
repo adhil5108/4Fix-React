@@ -105,7 +105,7 @@ function HomePage() {
           />
         ) : null}
         {featured.length > 0 && !services.error ? (
-          <div className="card-grid">
+          <div className="card-grid card-grid--popular">
             {featured.map((service) => (
               <ServiceCard key={service.id} service={service} />
             ))}

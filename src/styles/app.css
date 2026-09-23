@@ -478,6 +478,11 @@ section.card.callout {
   gap: 12px;
 }
 
+.card-grid--popular {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 10px;
+}
+
 .card-grid .card + .card,
 .list .card + .card,
 .stat-grid .card + .card,
