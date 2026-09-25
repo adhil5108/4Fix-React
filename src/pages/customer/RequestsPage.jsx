@@ -13,7 +13,7 @@ import { navigate, useQueryParam } from '../../hooks/useRoute.js';
 import { requestsApi } from '../../services/fixApi.js';
 import { REQUEST_STATUSES, statusLabel } from '../../utils/format.js';
 
-// Requests that have not become bookings yet (waiting for quotes / a provider choice).
+// Every request the customer made, including ones still waiting for a provider.
 function RequestsPage() {
   const rawStatus = (useQueryParam('status') || '').toUpperCase();
   const status = REQUEST_STATUSES.includes(rawStatus) ? rawStatus : '';
@@ -28,7 +28,7 @@ function RequestsPage() {
     <AppShell>
       <PageHeader
         title="My requests"
-        subtitle="Everything you’ve asked for, including requests still waiting for quotes."
+        subtitle="Everything you’ve asked for, including requests still waiting for a provider."
         actions={
           <ButtonLink to="/services" size="sm" className="hide-mobile">
             Book a service
@@ -73,7 +73,7 @@ function RequestsPage() {
         ) : (
           <EmptyState
             title="No requests yet"
-            message="Book a service and providers will send you quotes."
+            message="Book a service and a nearby provider will accept the job."
             action={<ButtonLink to="/services">Book a service</ButtonLink>}
           />
         )

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { AddressForm, DateTimePicker, validateAddress, validateDateTime } from '../../components/AddressForm.jsx';
+import { AddressForm, validateAddress } from '../../components/AddressForm.jsx';
 import AppShell from '../../components/AppShell.jsx';
+import LocationCapture from '../../components/LocationCapture.jsx';
 import ImageAttachments, { MAX_ATTACHMENTS } from '../../components/ImageAttachments.jsx';
 import StepIndicator from '../../components/StepIndicator.jsx';
 import { TextArea } from '../../components/TextField.jsx';
@@ -26,16 +27,17 @@ const initialForm = {
   city: '',
   state: '',
   pincode: '',
-  preferredDate: '',
-  preferredTime: '',
 };
 
-function validate(form, attachments) {
+const geolocationSupported = typeof navigator !== 'undefined' && Boolean(navigator.geolocation);
+
+function validate(form, attachments, { location, manualAddress }) {
   const length = form.description.trim().length;
-  const errors = {
-    ...validateAddress(form),
-    ...validateDateTime(form.preferredDate, form.preferredTime),
-  };
+  const errors = manualAddress ? validateAddress(form) : {};
+
+  if (!manualAddress && !location) {
+    errors.location = 'Share your location so the provider can find you, or enter your address manually.';
+  }
 
   if (length === 0) errors.description = 'Describe the problem.';
   else if (length < 5) errors.description = 'Add a few more words (at least 5 characters).';
@@ -54,6 +56,8 @@ function BookPage({ serviceId }) {
   const [form, setForm] = useState(initialForm);
   const [attachments, setAttachments] = useState([]);
   const [voiceNote, setVoiceNote] = useState(null);
+  const [location, setLocation] = useState(null);
+  const [manualAddress, setManualAddress] = useState(!geolocationSupported);
   const [errors, setErrors] = useState({});
   const submit = useAction();
 
@@ -93,7 +97,7 @@ function BookPage({ serviceId }) {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    const nextErrors = validate(form, attachments);
+    const nextErrors = validate(form, attachments, { location, manualAddress });
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
@@ -108,14 +112,23 @@ function BookPage({ serviceId }) {
         description: form.description.trim(),
         attachments,
         voiceNote: voiceNote || undefined,
-        address: {
-          addressLine: form.addressLine.trim(),
-          city: form.city.trim(),
-          state: form.state.trim(),
-          pincode: form.pincode.trim(),
-        },
-        preferredDate: form.preferredDate,
-        preferredTime: form.preferredTime,
+        // Coordinates are the navigation target; the typed address is only a fallback.
+        ...(manualAddress
+          ? {
+              address: {
+                addressLine: form.addressLine.trim(),
+                city: form.city.trim(),
+                state: form.state.trim(),
+                pincode: form.pincode.trim(),
+              },
+            }
+          : {
+              location: {
+                latitude: location.latitude,
+                longitude: location.longitude,
+                address: location.address?.trim() || undefined,
+              },
+            }),
       });
 
       navigate(`/requests/${result.request.id}?created=1`);
@@ -151,7 +164,7 @@ function BookPage({ serviceId }) {
       <StepIndicator current="details" />
       <PageHeader
         back={{ to: bookPath(serviceId), label: 'Change issue' }}
-        title="Tell us more"
+        title="Tell us about the issue"
         subtitle={
           <>
             {details.name} · <strong>{issue.label}</strong>{' '}
@@ -182,6 +195,12 @@ function BookPage({ serviceId }) {
               }
               onChange={(event) => updateField('description', event.target.value)}
             />
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="card__title">Photos &amp; voice note <span className="field-hint">(optional)</span></h2>
+          <div className="form-stack">
             <ImageAttachments
               attachments={attachments}
               setAttachments={setAttachments}
@@ -193,26 +212,41 @@ function BookPage({ serviceId }) {
         </Card>
 
         <Card>
-          <h2 className="card__title">Service address</h2>
-          <AddressForm form={form} errors={errors} onChange={updateField} />
-        </Card>
-
-        <Card>
-          <h2 className="card__title">Preferred time</h2>
-          <DateTimePicker
-            date={form.preferredDate}
-            time={form.preferredTime}
-            errors={errors}
-            onChange={updateField}
-          />
+          <h2 className="card__title">Service location</h2>
+          {manualAddress ? (
+            <>
+              <AddressForm form={form} errors={errors} onChange={updateField} />
+              {geolocationSupported ? (
+                <button type="button" className="text-link location-switch" onClick={() => setManualAddress(false)}>
+                  Use my current location instead
+                </button>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <LocationCapture
+                value={location}
+                error={errors.location}
+                disabled={submit.pending === 'create'}
+                onChange={(next) => {
+                  setLocation(next);
+                  setErrors((current) => ({ ...current, location: '' }));
+                  submit.setError('');
+                }}
+              />
+              <button type="button" className="text-link location-switch" onClick={() => setManualAddress(true)}>
+                Can’t share location? Enter address manually
+              </button>
+            </>
+          )}
         </Card>
 
         <div className="sticky-actions">
           <Button type="submit" block size="lg" loading={submit.pending === 'create'} loadingText="Sending…">
-            Find providers
+            Submit request
           </Button>
           <p className="field-hint" style={{ textAlign: 'center', marginTop: 10 }}>
-            Next: see available providers and their quotes. Nothing is booked yet.
+            Nearby providers see your request and the first to accept takes the job.
           </p>
         </div>
       </form>

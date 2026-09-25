@@ -1,28 +1,20 @@
-import { useState } from 'react';
 import AdminShell from '../../components/admin/AdminShell.jsx';
-import { AddressBlock, AttachmentList, QuoteCard, VoiceNoteBlock } from '../../components/cards.jsx';
+import { AddressBlock, ServiceLocationBlock, AttachmentList, VoiceNoteBlock } from '../../components/cards.jsx';
 import {
-  Button,
   Card,
-  ConfirmDialog,
   DetailList,
-  EmptyState,
   ErrorState,
   Link,
   LoadingState,
-  Notice,
   PageHeader,
   StatusBadge,
 } from '../../components/ui.jsx';
-import { useAction, useApi } from '../../hooks/useApi.js';
+import { useApi } from '../../hooks/useApi.js';
 import { adminApi } from '../../services/fixApi.js';
-import { formatMoney, formatSlot, formatTimestamp } from '../../utils/format.js';
+import { formatSlot, formatTimestamp } from '../../utils/format.js';
 
 function AdminRequestDetailsPage({ requestId }) {
   const data = useApi(() => adminApi.request(requestId), [requestId]);
-  const action = useAction();
-  const [confirmQuote, setConfirmQuote] = useState(null);
-  const [success, setSuccess] = useState('');
   const back = { to: '/app/admin/requests', label: 'Requests' };
 
   if (data.loading) {
@@ -42,22 +34,7 @@ function AdminRequestDetailsPage({ requestId }) {
     );
   }
 
-  const { request, quotes, booking, payment, review } = data.data;
-  const canAssign = request.status === 'QUOTE_RECEIVED';
-
-  async function handleAssign() {
-    setSuccess('');
-    const ok = await action.run(`assign-${confirmQuote.id}`, () => adminApi.assignQuote(confirmQuote.id));
-    setConfirmQuote(null);
-
-    if (ok) {
-      setSuccess(
-        `${confirmQuote.provider?.name || 'This provider'} was assigned to the request. The customer still needs to confirm the booking.`,
-      );
-    }
-
-    await data.refresh();
-  }
+  const { request, booking, review } = data.data;
 
   return (
     <AdminShell>
@@ -67,11 +44,6 @@ function AdminRequestDetailsPage({ requestId }) {
         subtitle={`${request.customer?.name || 'Customer'} · requested ${formatTimestamp(request.createdAt)}`}
         actions={<StatusBadge status={request.status} />}
       />
-
-      <div className="stack">
-        <Notice tone="success">{success}</Notice>
-        <Notice>{action.error}</Notice>
-      </div>
 
       <div className="admin-detail">
         <div>
@@ -83,15 +55,20 @@ function AdminRequestDetailsPage({ requestId }) {
                 { label: 'Service', value: request.service?.name },
                 { label: 'Issue', value: request.issueLabel },
                 { label: 'Description', value: request.description },
-                { label: 'Preferred time', value: formatSlot(request.preferredDate, request.preferredTime) },
+                {
+                  label: 'Preferred time',
+                  value: request.preferredDate ? formatSlot(request.preferredDate, request.preferredTime) : '',
+                },
+                { label: 'Accepted', value: request.acceptedAt ? formatTimestamp(request.acceptedAt) : '' },
                 {
                   label: 'Scheduled visit',
                   value: request.scheduledDate ? formatSlot(request.scheduledDate, request.scheduledTime) : '',
                 },
               ]}
             />
-            <h3 className="card__subtitle">Address</h3>
+            <h3 className="card__subtitle">Location</h3>
             <AddressBlock address={request.address} />
+            <ServiceLocationBlock location={request.location} fallback={null} />
             {request.attachments?.length ? (
               <>
                 <h3 className="card__subtitle">Attachments</h3>
@@ -114,36 +91,6 @@ function AdminRequestDetailsPage({ requestId }) {
             </Card>
           ) : null}
 
-          <section className="section section--tight" aria-labelledby="quotes-heading">
-            <h2 id="quotes-heading" className="section__title">
-              Quotes {quotes.length > 0 ? <span className="count">{quotes.length}</span> : null}
-            </h2>
-            {quotes.length === 0 ? (
-              <EmptyState title="No quotes yet" message="Providers haven't quoted on this request." />
-            ) : (
-              <div className="list">
-                {quotes.map((quote) => (
-                  <QuoteCard
-                    key={quote.id}
-                    quote={quote}
-                    highlight={quote.status === 'ACCEPTED'}
-                    actions={
-                      canAssign && quote.status === 'PENDING' ? (
-                        <Button
-                          block
-                          onClick={() => setConfirmQuote(quote)}
-                          disabled={Boolean(action.pending)}
-                        >
-                          Assign this quote
-                        </Button>
-                      ) : null
-                    }
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-
           {booking ? (
             <Card>
               <div className="card__heading-row">
@@ -163,16 +110,6 @@ function AdminRequestDetailsPage({ requestId }) {
               <Link to={`/app/admin/bookings/${booking.id}`} className="text-link">
                 View booking →
               </Link>
-            </Card>
-          ) : null}
-
-          {payment ? (
-            <Card>
-              <div className="card__heading-row">
-                <h2 className="card__title">Payment</h2>
-                <StatusBadge status={payment.status} audience="payment" />
-              </div>
-              <DetailList items={[{ label: 'Amount', value: formatMoney(payment.amount) }]} />
             </Card>
           ) : null}
 
@@ -200,16 +137,11 @@ function AdminRequestDetailsPage({ requestId }) {
             ) : null}
           </Card>
           <Card>
-            <h2 className="card__title">Selected provider</h2>
+            <h2 className="card__title">Assigned provider</h2>
             {request.selectedProvider ? (
-              <DetailList
-                items={[
-                  { label: 'Provider', value: request.selectedProvider.name },
-                  { label: 'Agreed price', value: request.acceptedQuote ? formatMoney(request.acceptedQuote.amount) : '' },
-                ]}
-              />
+              <DetailList items={[{ label: 'Provider', value: request.selectedProvider.name }]} />
             ) : (
-              <p className="body-text">No provider selected yet.</p>
+              <p className="body-text">No provider has accepted this request yet.</p>
             )}
             {request.selectedProvider ? (
               <Link to={`/app/admin/providers/${request.selectedProviderId}`} className="text-link">
@@ -220,21 +152,6 @@ function AdminRequestDetailsPage({ requestId }) {
         </aside>
       </div>
 
-      <ConfirmDialog
-        open={Boolean(confirmQuote)}
-        title="Assign this quote?"
-        message={
-          confirmQuote
-            ? `${confirmQuote.provider?.name || 'This provider'} will be assigned to the request for ${formatMoney(
-                confirmQuote.amount,
-              )}. Any other pending quotes will be declined.`
-            : ''
-        }
-        confirmLabel="Assign quote"
-        busy={Boolean(action.pending)}
-        onConfirm={handleAssign}
-        onCancel={() => setConfirmQuote(null)}
-      />
     </AdminShell>
   );
 }

@@ -11,7 +11,7 @@ import {
 import { useApi } from '../../hooks/useApi.js';
 import { navigate, useQueryParam } from '../../hooks/useRoute.js';
 import { providerApi } from '../../services/fixApi.js';
-import { formatMoney, formatSlot } from '../../utils/format.js';
+import { formatSlot } from '../../utils/format.js';
 
 const TABS = [
   { key: 'active', label: 'Active' },
@@ -40,9 +40,9 @@ export function JobCard({ job }) {
   const isExternal = job.source === 'EXTERNAL';
   const slot = job.scheduledDate
     ? `Scheduled: ${formatSlot(job.scheduledDate, job.scheduledTime)}`
-    : isExternal
-      ? 'Not scheduled'
-      : `Preferred: ${formatSlot(job.preferredDate, job.preferredTime)}`;
+    : job.preferredDate
+      ? `Preferred: ${formatSlot(job.preferredDate, job.preferredTime)}`
+      : 'Not scheduled yet';
 
   return (
     <Link to={jobPath(job)} className="card card--link request-card">
@@ -66,8 +66,6 @@ export function JobCard({ job }) {
       <span className="request-card__meta">
         <span>{slot}</span>
         {job.address ? <span>{[job.address.city, job.address.pincode].filter(Boolean).join(' · ')}</span> : null}
-        {job.amount !== null ? <span>{formatMoney(job.amount)}</span> : null}
-        {!isExternal && !job.bookingId ? <span>Awaiting customer confirmation</span> : null}
       </span>
     </Link>
   );
@@ -113,7 +111,7 @@ function ProviderJobsPage() {
       {grouped && list.length === 0 ? (
         <EmptyState
           title={tab === 'active' ? 'No active jobs' : `No ${tab} jobs`}
-          message={tab === 'active' ? 'Quote on open requests — jobs appear here when a customer chooses you.' : undefined}
+          message={tab === 'active' ? 'Accept open requests — jobs you accept appear here.' : undefined}
         />
       ) : null}
       {grouped && list.length > 0 ? (

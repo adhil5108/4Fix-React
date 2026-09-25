@@ -1,7 +1,6 @@
 export const REQUEST_STATUSES = [
   'PENDING',
-  'QUOTE_RECEIVED',
-  'QUOTE_ACCEPTED',
+  'ACCEPTED',
   'SCHEDULED',
   'IN_PROGRESS',
   'COMPLETED',
@@ -11,28 +10,18 @@ export const REQUEST_STATUSES = [
 export const BOOKING_GROUPS = ['UPCOMING', 'ACTIVE', 'COMPLETED', 'CANCELLED'];
 
 const STATUS_LABELS = {
-  PENDING: 'Waiting for quotes',
-  QUOTE_RECEIVED: 'Quotes received',
-  QUOTE_ACCEPTED: 'Provider chosen',
+  PENDING: 'Finding a provider',
+  ACCEPTED: 'Provider assigned',
   SCHEDULED: 'Scheduled',
   IN_PROGRESS: 'In progress',
   COMPLETED: 'Completed',
   CANCELLED: 'Cancelled',
-  ACCEPTED: 'Accepted',
-  REJECTED: 'Rejected',
 };
 
 const PROVIDER_STATUS_LABELS = {
   ...STATUS_LABELS,
   PENDING: 'Open',
-  QUOTE_RECEIVED: 'Open · quoted',
-  QUOTE_ACCEPTED: 'You got the job',
-};
-
-const QUOTE_STATUS_LABELS = {
-  PENDING: 'Awaiting decision',
-  ACCEPTED: 'Accepted',
-  REJECTED: 'Declined',
+  ACCEPTED: 'Accepted by you',
 };
 
 const BOOKING_STATUS_LABELS = {
@@ -43,14 +32,6 @@ const BOOKING_STATUS_LABELS = {
   IN_SERVICE: 'Service in progress',
   COMPLETED: 'Completed',
   CANCELLED: 'Cancelled',
-};
-
-const PAYMENT_STATUS_LABELS = {
-  PENDING: 'Payment pending',
-  PAID: 'Paid',
-  FAILED: 'Failed',
-  CANCELLED: 'Cancelled',
-  REFUNDED: 'Refunded',
 };
 
 // A provider-recorded job's own lifecycle — no CONFIRMED/ASSIGNED step, since it's
@@ -66,9 +47,7 @@ const EXTERNAL_JOB_STATUS_LABELS = {
 export function statusLabel(status, { audience = 'customer' } = {}) {
   const labels =
     {
-      quote: QUOTE_STATUS_LABELS,
       booking: BOOKING_STATUS_LABELS,
-      payment: PAYMENT_STATUS_LABELS,
       provider: PROVIDER_STATUS_LABELS,
       externalJob: EXTERNAL_JOB_STATUS_LABELS,
     }[audience] || STATUS_LABELS;
@@ -78,8 +57,7 @@ export function statusLabel(status, { audience = 'customer' } = {}) {
 
 export function statusTone(status) {
   switch (status) {
-    case 'QUOTE_RECEIVED':
-    case 'QUOTE_ACCEPTED':
+    case 'ACCEPTED':
     case 'SCHEDULED':
     case 'CONFIRMED':
     case 'ASSIGNED':
@@ -90,13 +68,8 @@ export function statusTone(status) {
     case 'IN_SERVICE':
       return 'active';
     case 'COMPLETED':
-    case 'ACCEPTED':
-    case 'PAID':
       return 'success';
     case 'CANCELLED':
-    case 'REJECTED':
-    case 'FAILED':
-    case 'REFUNDED':
       return 'muted';
     default:
       return 'neutral';

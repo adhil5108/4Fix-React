@@ -99,35 +99,12 @@ export function ProviderFacts({ provider }) {
   );
 }
 
-export function ProviderCard({ provider, actions, children }) {
-  return (
-    <article className={`card provider-card${provider.isSelected ? ' provider-card--selected' : ''}`}>
-      <div className="provider-card__head">
-        <Avatar name={provider.name} image={provider.profileImage} />
-        <div className="provider-card__identity">
-          <Link to={`/providers/${provider.id}`} className="provider-card__name">
-            {provider.name}
-          </Link>
-          <RatingSummary rating={provider.rating} reviewCount={provider.reviewCount} />
-        </div>
-        {provider.isSelected ? <span className="badge badge--success">Your provider</span> : null}
-        {!provider.isSelected && !provider.isAvailable ? (
-          <span className="badge badge--muted">Unavailable</span>
-        ) : null}
-      </div>
-      <ProviderFacts provider={provider} />
-      {children}
-      {actions ? <div className="provider-card__actions">{actions}</div> : null}
-    </article>
-  );
-}
-
 export function RequestCard({ request, to, audience = 'customer' }) {
-  const isScheduled = Boolean(request.scheduledDate);
-  const slotLabel = isScheduled ? 'Scheduled' : 'Preferred';
-  const slot = isScheduled
-    ? formatSlot(request.scheduledDate, request.scheduledTime)
-    : formatSlot(request.preferredDate, request.preferredTime);
+  const slot = request.scheduledDate
+    ? `Scheduled: ${formatSlot(request.scheduledDate, request.scheduledTime)}`
+    : request.preferredDate
+      ? `Preferred: ${formatSlot(request.preferredDate, request.preferredTime)}`
+      : '';
 
   return (
     <Link to={to} className="card card--link request-card">
@@ -140,16 +117,14 @@ export function RequestCard({ request, to, audience = 'customer' }) {
       </span>
       <span className="request-card__description">{request.description}</span>
       <span className="request-card__meta">
-        <span>
-          {slotLabel}: {slot}
-        </span>
+        {slot ? <span>{slot}</span> : null}
         {audience === 'provider' && request.address ? (
           <span>{[request.address.city, request.address.pincode].filter(Boolean).join(' · ')}</span>
         ) : null}
         {audience === 'customer' && request.selectedProvider ? (
           <span>Provider: {request.selectedProvider.name}</span>
         ) : null}
-        {audience === 'customer' && !request.selectedProvider ? (
+        {audience === 'provider' || !request.selectedProvider ? (
           <span>Requested {formatTimestamp(request.createdAt)}</span>
         ) : null}
       </span>
@@ -184,9 +159,6 @@ export function BookingCard({ booking, to, audience = 'customer' }) {
             {counterpart.name}
           </span>
         ) : null}
-        {booking.amount !== null ? (
-          <span className="booking-card__amount">{formatMoney(booking.amount)}</span>
-        ) : null}
       </span>
       <span className="request-card__meta">
         {slot ? <span>{slot}</span> : null}
@@ -196,25 +168,6 @@ export function BookingCard({ booking, to, audience = 'customer' }) {
         <span>Booked {formatTimestamp(booking.createdAt)}</span>
       </span>
     </Link>
-  );
-}
-
-export function QuoteCard({ quote, showProvider = true, highlight = false, actions }) {
-  return (
-    <article className={`card quote-card${highlight ? ' quote-card--highlight' : ''}`}>
-      <div className="quote-card__top">
-        <div>
-          {showProvider ? (
-            <p className="quote-card__provider">{quote.provider?.name || 'Provider'}</p>
-          ) : null}
-          <p className="quote-card__amount">{formatMoney(quote.amount)}</p>
-        </div>
-        <StatusBadge status={quote.status} audience="quote" />
-      </div>
-      <p className="quote-card__description">{quote.description}</p>
-      <p className="quote-card__date">Quoted {formatTimestamp(quote.createdAt)}</p>
-      {actions ? <div className="quote-card__actions">{actions}</div> : null}
-    </article>
   );
 }
 
@@ -245,6 +198,36 @@ export function AddressBlock({ address }) {
       {address.label ? <strong>{address.label}</strong> : null}
       <span>{formatAddress(address)}</span>
     </address>
+  );
+}
+
+// Pinned customer location. Providers get turn-by-turn via Google Maps (`navigate`);
+// everyone else just views the pin. Without coordinates, no link is rendered at all.
+export function ServiceLocationBlock({ location, navigate = false, fallback = 'Exact location not shared.' }) {
+  const hasCoordinates = Number.isFinite(location?.latitude) && Number.isFinite(location?.longitude);
+
+  if (!hasCoordinates) {
+    return fallback ? <p className="field-hint">{fallback}</p> : null;
+  }
+
+  const coordinates = `${location.latitude},${location.longitude}`;
+  const href = navigate
+    ? location.navigationUrl || `https://www.google.com/maps/dir/?api=1&destination=${coordinates}`
+    : `https://www.google.com/maps/search/?api=1&query=${coordinates}`;
+
+  return (
+    <div className="service-location">
+      <span className="service-location__label">📍 Pinned location</span>
+      {location.address ? <span>{location.address}</span> : null}
+      <a
+        className={`btn ${navigate ? 'btn--primary' : 'btn--secondary'} btn--sm`}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {navigate ? 'Navigate' : 'Open in Maps'}
+      </a>
+    </div>
   );
 }
 

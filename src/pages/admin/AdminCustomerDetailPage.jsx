@@ -3,7 +3,7 @@ import { Card, DetailList, ErrorState, LoadingState, PageHeader, StatusBadge } f
 import { useApi } from '../../hooks/useApi.js';
 import { navigate } from '../../hooks/useRoute.js';
 import { adminApi } from '../../services/fixApi.js';
-import { formatMoney, formatTimestamp } from '../../utils/format.js';
+import { formatSlot, formatTimestamp } from '../../utils/format.js';
 
 function AdminCustomerDetailPage({ customerId }) {
   const data = useApi(() => adminApi.customer(customerId), [customerId]);
@@ -26,7 +26,7 @@ function AdminCustomerDetailPage({ customerId }) {
     );
   }
 
-  const { customer, requests, bookings, payments, reviews } = data.data;
+  const { customer, requests, bookings, reviews } = data.data;
 
   return (
     <AdminShell>
@@ -93,7 +93,7 @@ function AdminCustomerDetailPage({ customerId }) {
                       <th>Service</th>
                       <th>Provider</th>
                       <th>Status</th>
-                      <th>Amount</th>
+                      <th>Visit</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -108,39 +108,7 @@ function AdminCustomerDetailPage({ customerId }) {
                         <td>
                           <StatusBadge status={booking.status} audience="booking" />
                         </td>
-                        <td>{formatMoney(booking.amount)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-
-          <section className="section section--tight" aria-labelledby="customer-payments-heading">
-            <h2 id="customer-payments-heading" className="section__title">
-              Payments {payments.length > 0 ? <span className="count">{payments.length}</span> : null}
-            </h2>
-            {payments.length === 0 ? (
-              <p className="body-text">No payments yet.</p>
-            ) : (
-              <div className="admin-table-wrap">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Amount</th>
-                      <th>Status</th>
-                      <th>Paid</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {payments.map((payment) => (
-                      <tr key={payment.id}>
-                        <td>{formatMoney(payment.amount)}</td>
-                        <td>
-                          <StatusBadge status={payment.status} audience="payment" />
-                        </td>
-                        <td>{payment.paidAt ? formatTimestamp(payment.paidAt) : '—'}</td>
+                        <td>{booking.scheduledDate ? formatSlot(booking.scheduledDate, booking.scheduledTime) : '—'}</td>
                       </tr>
                     ))}
                   </tbody>

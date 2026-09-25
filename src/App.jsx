@@ -8,8 +8,6 @@ import BookPage from './pages/customer/BookPage.jsx';
 import BookingPage from './pages/customer/BookingPage.jsx';
 import BookingsPage from './pages/customer/BookingsPage.jsx';
 import ChatPage from './pages/customer/ChatPage.jsx';
-import ConfirmPage from './pages/customer/ConfirmPage.jsx';
-import PaymentPage from './pages/customer/PaymentPage.jsx';
 import RequestDetailsPage from './pages/customer/RequestDetailsPage.jsx';
 import RequestsPage from './pages/customer/RequestsPage.jsx';
 import ReviewPage from './pages/customer/ReviewPage.jsx';
@@ -19,12 +17,8 @@ import AdminBookingsPage from './pages/admin/AdminBookingsPage.jsx';
 import AdminCustomerDetailPage from './pages/admin/AdminCustomerDetailPage.jsx';
 import AdminCustomersPage from './pages/admin/AdminCustomersPage.jsx';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage.jsx';
-import AdminPaymentDetailPage from './pages/admin/AdminPaymentDetailPage.jsx';
-import AdminPaymentsPage from './pages/admin/AdminPaymentsPage.jsx';
 import AdminProviderDetailPage from './pages/admin/AdminProviderDetailPage.jsx';
 import AdminProvidersPage from './pages/admin/AdminProvidersPage.jsx';
-import AdminQuoteDetailPage from './pages/admin/AdminQuoteDetailPage.jsx';
-import AdminQuotesPage from './pages/admin/AdminQuotesPage.jsx';
 import AdminRequestDetailsPage from './pages/admin/AdminRequestDetailsPage.jsx';
 import AdminRequestsPage from './pages/admin/AdminRequestsPage.jsx';
 import AdminReviewDetailPage from './pages/admin/AdminReviewDetailPage.jsx';
@@ -87,11 +81,6 @@ const ROUTES = [
     render: ({ requestId }) => <RequestDetailsPage key={requestId} requestId={requestId} />,
   },
   {
-    path: '/requests/:requestId/confirm',
-    access: 'CUSTOMER',
-    render: ({ requestId }) => <ConfirmPage key={requestId} requestId={requestId} />,
-  },
-  {
     path: '/bookings',
     access: ['CUSTOMER', 'ADMIN'],
     render: () => <BookingsPage />,
@@ -110,11 +99,6 @@ const ROUTES = [
     path: '/bookings/:bookingId/chat',
     access: ['CUSTOMER', 'PROVIDER'],
     render: ({ bookingId }) => <ChatPage key={bookingId} bookingId={bookingId} />,
-  },
-  {
-    path: '/bookings/:bookingId/payment',
-    access: 'CUSTOMER',
-    render: ({ bookingId }) => <PaymentPage key={bookingId} bookingId={bookingId} />,
   },
   {
     path: '/bookings/:bookingId/review',
@@ -138,8 +122,8 @@ const ROUTES = [
     render: () => <ProviderRequestsPage />,
   },
   {
-    // Discovery data (open requests any provider can see), not owner-scoped — safe to
-    // let admin open from the Provider View list without exposing anything private.
+    // Open requests any provider can see (area only, no coordinates) — safe to let
+    // admin open from the Provider View list without exposing anything private.
     path: '/provider/requests/:requestId',
     access: ['PROVIDER', 'ADMIN'],
     render: ({ requestId }) => (
@@ -205,23 +189,11 @@ const ROUTES = [
     access: 'ADMIN',
     render: ({ requestId }) => <AdminRequestDetailsPage key={requestId} requestId={requestId} />,
   },
-  { path: '/app/admin/quotes', access: 'ADMIN', render: () => <AdminQuotesPage /> },
-  {
-    path: '/app/admin/quotes/:quoteId',
-    access: 'ADMIN',
-    render: ({ quoteId }) => <AdminQuoteDetailPage key={quoteId} quoteId={quoteId} />,
-  },
   { path: '/app/admin/bookings', access: 'ADMIN', render: () => <AdminBookingsPage /> },
   {
     path: '/app/admin/bookings/:bookingId',
     access: 'ADMIN',
     render: ({ bookingId }) => <AdminBookingDetailPage key={bookingId} bookingId={bookingId} />,
-  },
-  { path: '/app/admin/payments', access: 'ADMIN', render: () => <AdminPaymentsPage /> },
-  {
-    path: '/app/admin/payments/:paymentId',
-    access: 'ADMIN',
-    render: ({ paymentId }) => <AdminPaymentDetailPage key={paymentId} paymentId={paymentId} />,
   },
   { path: '/app/admin/reviews', access: 'ADMIN', render: () => <AdminReviewsPage /> },
   {
@@ -248,6 +220,17 @@ const ROUTES = [
     path: '/requests/:requestId/payment',
     access: PUBLIC,
     redirect: ({ requestId }) => `/requests/${encodeURIComponent(requestId)}`,
+  },
+  // Pre-V1 quote/payment steps no longer exist; old links land on the live page.
+  {
+    path: '/requests/:requestId/confirm',
+    access: PUBLIC,
+    redirect: ({ requestId }) => `/requests/${encodeURIComponent(requestId)}`,
+  },
+  {
+    path: '/bookings/:bookingId/payment',
+    access: PUBLIC,
+    redirect: ({ bookingId }) => `/bookings/${encodeURIComponent(bookingId)}`,
   },
   { path: '/app/customer', access: PUBLIC, redirect: '/' },
   { path: '/app/provider', access: PUBLIC, redirect: '/provider' },

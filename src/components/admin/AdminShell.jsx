@@ -10,9 +10,7 @@ const NAV_ITEMS = [
   { to: '/app/admin/providers', label: 'Providers' },
   { to: '/app/admin/customers', label: 'Customers' },
   { to: '/app/admin/requests', label: 'Requests' },
-  { to: '/app/admin/quotes', label: 'Quotes' },
   { to: '/app/admin/bookings', label: 'Bookings' },
-  { to: '/app/admin/payments', label: 'Payments' },
   { to: '/app/admin/reviews', label: 'Reviews' },
 ];
 

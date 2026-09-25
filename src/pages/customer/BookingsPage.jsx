@@ -78,7 +78,7 @@ function BookingsPage() {
       ) : null}
 
       <p className="page-footnote">
-        Waiting on quotes?{' '}
+        Waiting for a provider to accept?{' '}
         <Link to="/requests" className="text-link">
           View open requests
         </Link>

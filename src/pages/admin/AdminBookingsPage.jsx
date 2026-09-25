@@ -6,7 +6,7 @@ import { PageHeader, StatusBadge } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { navigate, useQueryParam } from '../../hooks/useRoute.js';
 import { adminApi } from '../../services/fixApi.js';
-import { formatMoney, formatSlot } from '../../utils/format.js';
+import { formatSlot } from '../../utils/format.js';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All statuses' },
@@ -26,7 +26,6 @@ const COLUMNS = [
     label: 'Scheduled',
     render: (row) => (row.scheduledDate ? formatSlot(row.scheduledDate, row.scheduledTime) : '—'),
   },
-  { key: 'amount', label: 'Amount', render: (row) => formatMoney(row.amount) },
 ];
 
 function AdminBookingsPage() {

@@ -2,10 +2,8 @@ import { useState } from 'react';
 import AppShell from '../../components/AppShell.jsx';
 import { ScheduleForm } from '../../components/JobActions.jsx';
 import JobNotes from '../../components/JobNotes.jsx';
-import PaymentCard from '../../components/PaymentCard.jsx';
-import TextField, { Select } from '../../components/TextField.jsx';
 import TrackingTimeline from '../../components/TrackingTimeline.jsx';
-import { AddressBlock, AttachmentList, VoiceNoteBlock } from '../../components/cards.jsx';
+import { AddressBlock, ServiceLocationBlock, AttachmentList, VoiceNoteBlock } from '../../components/cards.jsx';
 import {
   Button,
   ButtonLink,
@@ -19,17 +17,11 @@ import {
   StatusBadge,
 } from '../../components/ui.jsx';
 import { useAction, useApi } from '../../hooks/useApi.js';
+import { useQueryParam } from '../../hooks/useRoute.js';
 import { bookingsApi, providerApi } from '../../services/fixApi.js';
-import { formatDateTime, formatMoney, formatSlot } from '../../utils/format.js';
+import { formatDateTime, formatSlot } from '../../utils/format.js';
 
 const TERMINAL = ['COMPLETED', 'CANCELLED'];
-
-const PAYMENT_METHODS = [
-  { value: 'CASH', label: 'Cash' },
-  { value: 'UPI', label: 'UPI' },
-  { value: 'CARD', label: 'Card' },
-  { value: 'OTHER', label: 'Other' },
-];
 
 // The next action is derived from both the request lifecycle and the booking status;
 // nothing here changes state locally — every button calls the backend and refreshes.
@@ -37,22 +29,17 @@ function nextAction(booking) {
   const { requestStatus, status } = booking;
 
   if (status === 'CANCELLED' || requestStatus === 'CANCELLED') return null;
-  if (requestStatus === 'QUOTE_ACCEPTED') return 'schedule';
+  if (requestStatus === 'ACCEPTED') return 'schedule';
   if (requestStatus === 'COMPLETED' || status === 'COMPLETED') return null;
   if (requestStatus === 'IN_PROGRESS') return 'complete';
-  if (status === 'CONFIRMED') return 'assign';
-  if (status === 'ASSIGNED') return 'on-the-way';
+  // CONFIRMED only exists on pre-V1 bookings; both mean "accepted, not yet travelling".
+  if (status === 'CONFIRMED' || status === 'ASSIGNED') return 'on-the-way';
   if (status === 'ON_THE_WAY') return 'arrived';
   if (status === 'ARRIVED') return 'start';
   return null;
 }
 
 const ACTION_COPY = {
-  assign: {
-    title: 'Booking confirmed',
-    text: 'Let the customer know you’re handling this job.',
-    button: 'Accept assignment',
-  },
   'on-the-way': {
     title: 'Ready to go?',
     text: 'Tell the customer you’re on your way. Sharing your location helps them track you.',
@@ -70,7 +57,7 @@ const ACTION_COPY = {
   },
   complete: {
     title: 'Service in progress',
-    text: 'Mark the service complete once the work is done. Payment opens for the customer.',
+    text: 'Mark the service complete once the work is done. The customer can then leave a review.',
     button: 'Mark as complete',
   },
 };
@@ -120,59 +107,9 @@ function LocationShare({ bookingId, onUpdated, disabled }) {
   );
 }
 
-function RecordPayment({ bookingId, onRecorded }) {
-  const record = useAction();
-  const [method, setMethod] = useState('CASH');
-  const [reference, setReference] = useState('');
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-    const ok = await record.run('paid', () =>
-      bookingsApi.markPaid(bookingId, { method, transactionReference: reference.trim() }),
-    );
-    if (ok) onRecorded();
-  }
-
-  return (
-    <form className="form-stack" onSubmit={handleSubmit} noValidate>
-      <Notice>{record.error}</Notice>
-      <Select
-        id="method"
-        label="How did the customer pay?"
-        value={method}
-        options={PAYMENT_METHODS}
-        onChange={(event) => setMethod(event.target.value)}
-      />
-      <TextField
-        id="reference"
-        label="Reference (optional)"
-        maxLength={120}
-        value={reference}
-        placeholder="UPI / card reference"
-        onChange={(event) => setReference(event.target.value)}
-      />
-      <Button type="submit" block loading={record.pending === 'paid'} loadingText="Recording…">
-        Record payment received
-      </Button>
-    </form>
-  );
-}
-
 function ProviderJobPage({ bookingId }) {
-  const data = useApi(async () => {
-    const { booking } = await bookingsApi.get(bookingId);
-    let payment = null;
-
-    if (booking.status === 'COMPLETED') {
-      try {
-        payment = (await bookingsApi.payment(bookingId)).payment;
-      } catch (error) {
-        if (error.status !== 404) throw error;
-      }
-    }
-
-    return { booking, payment };
-  }, [bookingId]);
+  const justAccepted = useQueryParam('accepted') === '1';
+  const data = useApi(() => bookingsApi.get(bookingId), [bookingId]);
   const action = useAction();
   const [confirm, setConfirm] = useState(null);
   const [success, setSuccess] = useState('');
@@ -199,7 +136,7 @@ function ProviderJobPage({ bookingId }) {
     );
   }
 
-  const { booking, payment } = data.data;
+  const { booking } = data.data;
   const request = booking.request;
   const step = nextAction(booking);
   const isLive = !TERMINAL.includes(booking.status);
@@ -214,7 +151,6 @@ function ProviderJobPage({ bookingId }) {
   }
 
   const runners = {
-    assign: () => perform('assign', () => bookingsApi.assign(booking.id), 'You’re assigned to this job.'),
     'on-the-way': () => perform('on-the-way', () => bookingsApi.onTheWay(booking.id), 'The customer can see you’re on the way.'),
     arrived: () => perform('arrived', () => bookingsApi.arrived(booking.id), 'Marked as arrived.'),
     start: () => perform('start', () => providerApi.start(booking.requestId), 'Service started.'),
@@ -229,7 +165,7 @@ function ProviderJobPage({ bookingId }) {
     },
     complete: {
       title: 'Mark service as complete?',
-      message: 'Only do this once the work is finished. The customer will be asked to pay and review.',
+      message: 'Only do this once the work is finished. The customer will be asked to leave a review.',
       confirmLabel: 'Mark complete',
     },
   }[confirm];
@@ -244,6 +180,9 @@ function ProviderJobPage({ bookingId }) {
       />
 
       <div className="stack">
+        {justAccepted && !success ? (
+          <Notice tone="success">Job accepted. It’s yours — schedule the visit and navigate to the customer.</Notice>
+        ) : null}
         <Notice tone="success">{success}</Notice>
         <Notice>{action.error}</Notice>
         {data.error ? <Notice>{data.error.message}</Notice> : null}
@@ -255,7 +194,9 @@ function ProviderJobPage({ bookingId }) {
             <Card className="card--accent">
               <h2 className="card__title">Schedule the visit</h2>
               <p className="body-text">
-                The customer asked for {formatSlot(request.preferredDate, request.preferredTime)}.
+                {request?.preferredDate
+                  ? `The customer asked for ${formatSlot(request.preferredDate, request.preferredTime)}.`
+                  : 'Agree a time with the customer in chat, then confirm it here.'}
               </p>
               <ScheduleForm
                 request={request}
@@ -280,25 +221,17 @@ function ProviderJobPage({ bookingId }) {
               >
                 {ACTION_COPY[step].button}
               </Button>
+              {['on-the-way', 'arrived'].includes(step) ? (
+                <ServiceLocationBlock location={request?.location} navigate fallback={null} />
+              ) : null}
             </Card>
           ) : null}
 
           {booking.status === 'COMPLETED' ? (
-            <>
-              <Card>
-                <h2 className="card__title">Service completed</h2>
-                <p className="body-text">
-                  Completed {formatDateTime(booking.timeline.completedAt)}. Collect payment and you’re done.
-                </p>
-              </Card>
-              {payment ? (
-                <PaymentCard payment={payment} audience="provider">
-                  {payment.status === 'PENDING' ? (
-                    <RecordPayment bookingId={booking.id} onRecorded={() => data.refresh()} />
-                  ) : null}
-                </PaymentCard>
-              ) : null}
-            </>
+            <Card>
+              <h2 className="card__title">Service completed</h2>
+              <p className="body-text">Completed {formatDateTime(booking.timeline.completedAt)}. Nice work.</p>
+            </Card>
           ) : null}
 
           {booking.status === 'CANCELLED' ? (
@@ -338,19 +271,21 @@ function ProviderJobPage({ bookingId }) {
                 { label: 'Customer', value: booking.customer?.name },
                 { label: 'Issue', value: request?.issueLabel },
                 { label: 'Problem', value: request?.description },
-                { label: 'Agreed price', value: formatMoney(booking.amount) },
                 {
-                  label: booking.scheduledDate ? 'Scheduled visit' : 'Preferred time',
+                  label: 'Scheduled visit',
                   value: booking.scheduledDate
                     ? formatSlot(booking.scheduledDate, booking.scheduledTime)
-                    : request
-                      ? formatSlot(request.preferredDate, request.preferredTime)
-                      : '',
+                    : 'Not scheduled yet',
                 },
               ]}
             />
-            <h3 className="card__subtitle">Service address</h3>
+            <h3 className="card__subtitle">Service location</h3>
             <AddressBlock address={request?.address} />
+            <ServiceLocationBlock
+              location={request?.location}
+              navigate
+              fallback="No map pin for this job. Use the address above or ask the customer in chat."
+            />
             {request?.attachments?.length ? (
               <>
                 <h3 className="card__subtitle">Attachments</h3>

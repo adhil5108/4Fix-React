@@ -13,7 +13,7 @@ import {
 import { useAction, useApi } from '../../hooks/useApi.js';
 import { navigate } from '../../hooks/useRoute.js';
 import { adminApi } from '../../services/fixApi.js';
-import { formatCategory, formatMoney, formatTimestamp } from '../../utils/format.js';
+import { formatCategory, formatSlot, formatTimestamp } from '../../utils/format.js';
 
 function AdminProviderDetailPage({ providerId }) {
   const data = useApi(() => adminApi.provider(providerId), [providerId]);
@@ -37,7 +37,7 @@ function AdminProviderDetailPage({ providerId }) {
     );
   }
 
-  const { provider, quotes, bookings, reviews } = data.data;
+  const { provider, bookings, reviews } = data.data;
 
   async function toggleStatus() {
     await action.run('status', async () => {
@@ -84,38 +84,6 @@ function AdminProviderDetailPage({ providerId }) {
             <ProviderFacts provider={provider} />
           </Card>
 
-          <section className="section section--tight" aria-labelledby="provider-quotes-heading">
-            <h2 id="provider-quotes-heading" className="section__title">
-              Quotes {quotes.length > 0 ? <span className="count">{quotes.length}</span> : null}
-            </h2>
-            {quotes.length === 0 ? (
-              <p className="body-text">No quotes yet.</p>
-            ) : (
-              <div className="admin-table-wrap">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Amount</th>
-                      <th>Status</th>
-                      <th>Created</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {quotes.map((quote) => (
-                      <tr key={quote.id}>
-                        <td>{formatMoney(quote.amount)}</td>
-                        <td>
-                          <StatusBadge status={quote.status} audience="quote" />
-                        </td>
-                        <td>{formatTimestamp(quote.createdAt)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-
           <section className="section section--tight" aria-labelledby="provider-bookings-heading">
             <h2 id="provider-bookings-heading" className="section__title">
               Bookings {bookings.length > 0 ? <span className="count">{bookings.length}</span> : null}
@@ -130,7 +98,7 @@ function AdminProviderDetailPage({ providerId }) {
                       <th>Customer</th>
                       <th>Service</th>
                       <th>Status</th>
-                      <th>Amount</th>
+                      <th>Visit</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -145,7 +113,7 @@ function AdminProviderDetailPage({ providerId }) {
                         <td>
                           <StatusBadge status={booking.status} audience="booking" />
                         </td>
-                        <td>{formatMoney(booking.amount)}</td>
+                        <td>{booking.scheduledDate ? formatSlot(booking.scheduledDate, booking.scheduledTime) : '—'}</td>
                       </tr>
                     ))}
                   </tbody>

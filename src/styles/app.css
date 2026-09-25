@@ -542,8 +542,7 @@ section.card.callout {
   gap: 8px;
 }
 
-.request-card__top,
-.quote-card__top {
+.request-card__top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -571,46 +570,11 @@ section.card.callout {
   font-size: 0.85rem;
 }
 
-.quote-card__provider {
-  margin: 0 0 2px;
-  color: var(--text);
-  font-size: 0.9rem;
-  font-weight: 700;
-}
 
-.quote-card__amount {
-  margin: 0;
-  color: var(--ink);
-  font-size: 1.45rem;
-  font-weight: 850;
-  letter-spacing: -0.02em;
-}
 
-.quote-card__description {
-  margin: 10px 0 6px;
-  color: var(--text);
-  font-size: 0.94rem;
-  line-height: 1.55;
-  overflow-wrap: anywhere;
-}
 
-.quote-card__date {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.8rem;
-}
 
-.quote-card__actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 16px;
-}
 
-.quote-card--highlight {
-  border-color: #9cc8b4;
-  background: #f6fbf8;
-}
 
 /* Provider job notes — private to the provider viewing them */
 

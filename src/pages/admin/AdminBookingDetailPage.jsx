@@ -1,11 +1,11 @@
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import AdminConversationView from '../../components/admin/AdminConversationView.jsx';
 import TrackingTimeline from '../../components/TrackingTimeline.jsx';
-import { AddressBlock, AttachmentList, VoiceNoteBlock } from '../../components/cards.jsx';
+import { AddressBlock, ServiceLocationBlock, AttachmentList, VoiceNoteBlock } from '../../components/cards.jsx';
 import { Card, DetailList, ErrorState, Link, LoadingState, PageHeader, StatusBadge } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { adminApi } from '../../services/fixApi.js';
-import { formatMoney, formatSlot } from '../../utils/format.js';
+import { formatSlot } from '../../utils/format.js';
 
 function AdminBookingDetailPage({ bookingId }) {
   const data = useApi(() => adminApi.booking(bookingId), [bookingId]);
@@ -55,11 +55,11 @@ function AdminBookingDetailPage({ bookingId }) {
                   label: 'Scheduled visit',
                   value: booking.scheduledDate ? formatSlot(booking.scheduledDate, booking.scheduledTime) : '',
                 },
-                { label: 'Amount', value: formatMoney(booking.amount) },
               ]}
             />
-            <h3 className="card__subtitle">Address</h3>
+            <h3 className="card__subtitle">Location</h3>
             <AddressBlock address={booking.request?.address} />
+            <ServiceLocationBlock location={booking.request?.location} fallback={null} />
             {booking.request?.attachments?.length ? (
               <>
                 <h3 className="card__subtitle">Attachments</h3>

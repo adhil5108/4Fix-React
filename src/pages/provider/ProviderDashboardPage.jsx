@@ -26,13 +26,7 @@ function StatTile({ label, value, to }) {
 
 function ProviderDashboardPage() {
   const { user } = useAuth();
-  const open = useApi(async () => {
-    const [pending, quoted] = await Promise.all([
-      providerApi.listRequests('PENDING'),
-      providerApi.listRequests('QUOTE_RECEIVED'),
-    ]);
-    return { pending: pending.requests, quoted: quoted.requests };
-  }, []);
+  const open = useApi(async () => ({ pending: (await providerApi.listRequests()).requests }), []);
   const jobs = useApi(() => providerApi.jobs(), []);
 
   const loading = open.loading || jobs.loading;
@@ -65,12 +59,7 @@ function ProviderDashboardPage() {
       {!loading && !(open.error && jobs.error) ? (
         <>
           <div className="stat-grid">
-            <StatTile label="New requests" value={open.data?.pending.length} to="/provider/requests" />
-            <StatTile
-              label="Open with quotes"
-              value={open.data?.quoted.length}
-              to="/provider/requests?status=QUOTE_RECEIVED"
-            />
+            <StatTile label="Available requests" value={open.data?.pending.length} to="/provider/requests" />
             <StatTile label="Active jobs" value={grouped?.active.length} to="/provider/jobs" />
             <StatTile label="Completed" value={grouped?.completed.length} to="/provider/jobs?tab=completed" />
           </div>
@@ -88,7 +77,7 @@ function ProviderDashboardPage() {
               {grouped.active.length === 0 ? (
                 <EmptyState
                   title="No active jobs"
-                  message="Jobs appear here when a customer chooses your quote."
+                  message="Jobs appear here when you accept a request."
                 />
               ) : (
                 <div className="list">

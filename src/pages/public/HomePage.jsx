@@ -9,9 +9,9 @@ import { bookingsApi, servicesApi } from '../../services/fixApi.js';
 import { firstName, formatCategory } from '../../utils/format.js';
 
 const STEPS = [
-  { title: 'Tell us what’s wrong', text: 'Pick a service, choose the problem and a time that suits you.' },
-  { title: 'Choose your provider', text: 'Compare providers and their quotes, then confirm your booking.' },
-  { title: 'Track, chat, pay, rate', text: 'Follow the technician, chat in the app, pay after the job and leave a review.' },
+  { title: 'Tell us what’s wrong', text: 'Pick a service, describe the problem and share your location.' },
+  { title: 'A provider accepts', text: 'A nearby provider takes the job — no quotes to compare.' },
+  { title: 'Track, chat, rate', text: 'Follow the technician, chat in the app and leave a review when it’s done.' },
 ];
 
 function NextBooking() {
@@ -139,7 +139,7 @@ function HomePage() {
         <section className="card callout">
           <div>
             <p className="callout__title">Are you a service provider?</p>
-            <p className="callout__text">Find customers who need your skills and send them quotes.</p>
+            <p className="callout__text">Find customers who need your skills and accept jobs near you.</p>
           </div>
           <ButtonLink to="/signup/provider" variant="secondary">
             Join as a provider

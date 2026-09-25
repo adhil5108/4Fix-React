@@ -60,7 +60,7 @@ function ServiceDetailsPage({ serviceId }) {
         {details.startingPrice !== null ? (
           <p className="service-price">
             Starting at <strong>{formatMoney(details.startingPrice)}</strong>
-            <span className="field-hint"> · final price comes from your provider’s quote</span>
+            <span className="field-hint"> · you agree the final price directly with your provider</span>
           </p>
         ) : null}
       </Card>

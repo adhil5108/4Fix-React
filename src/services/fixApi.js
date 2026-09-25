@@ -23,14 +23,6 @@ export const requestsApi = {
   list: (status) => apiRequest(`/api/requests${toQueryString({ status })}`),
   get: (requestId) => apiRequest(`/api/requests/${id(requestId)}`),
   cancel: (requestId) => apiRequest(`/api/requests/${id(requestId)}/cancel`, { method: 'POST' }),
-  quotes: (requestId) => apiRequest(`/api/requests/${id(requestId)}/quotes`),
-  providers: (requestId) => apiRequest(`/api/requests/${id(requestId)}/providers`),
-  confirm: (requestId) => apiRequest(`/api/requests/${id(requestId)}/confirm`, { method: 'POST' }),
-};
-
-export const quotesApi = {
-  accept: (quoteId) => apiRequest(`/api/quotes/${id(quoteId)}/accept`, { method: 'POST' }),
-  reject: (quoteId) => apiRequest(`/api/quotes/${id(quoteId)}/reject`, { method: 'POST' }),
 };
 
 export const bookingsApi = {
@@ -38,7 +30,6 @@ export const bookingsApi = {
   get: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}`),
   tracking: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}/tracking`),
 
-  assign: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}/assign`, { method: 'POST' }),
   onTheWay: (bookingId) =>
     apiRequest(`/api/bookings/${id(bookingId)}/on-the-way`, { method: 'POST' }),
   arrived: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}/arrived`, { method: 'POST' }),
@@ -59,13 +50,6 @@ export const bookingsApi = {
     apiRequest(`/api/bookings/${id(bookingId)}/messages`, { method: 'POST', body: { message } }),
   markRead: (bookingId) =>
     apiRequest(`/api/bookings/${id(bookingId)}/messages/read`, { method: 'POST' }),
-
-  payment: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}/payment`),
-  markPaid: (bookingId, { method, transactionReference }) =>
-    apiRequest(`/api/bookings/${id(bookingId)}/payment/mark-paid`, {
-      method: 'POST',
-      body: { method, transactionReference: transactionReference || undefined },
-    }),
 
   review: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}/review`),
   createReview: (bookingId, { rating, comment }) =>
@@ -114,16 +98,8 @@ export const adminApi = {
   requests: (params = {}) => apiRequest(`/api/admin/requests${toQueryString(params)}`),
   request: (requestId) => apiRequest(`/api/admin/requests/${id(requestId)}`),
 
-  quotes: (params = {}) => apiRequest(`/api/admin/quotes${toQueryString(params)}`),
-  quote: (quoteId) => apiRequest(`/api/admin/quotes/${id(quoteId)}`),
-  assignQuote: (quoteId) =>
-    apiRequest(`/api/admin/quotes/${id(quoteId)}/assign`, { method: 'POST' }),
-
   bookings: (params = {}) => apiRequest(`/api/admin/bookings${toQueryString(params)}`),
   booking: (bookingId) => apiRequest(`/api/admin/bookings/${id(bookingId)}`),
-
-  payments: (params = {}) => apiRequest(`/api/admin/payments${toQueryString(params)}`),
-  payment: (paymentId) => apiRequest(`/api/admin/payments/${id(paymentId)}`),
 
   reviews: (params = {}) => apiRequest(`/api/admin/reviews${toQueryString(params)}`),
   review: (reviewId) => apiRequest(`/api/admin/reviews/${id(reviewId)}`),
@@ -134,11 +110,8 @@ export const providerApi = {
   getRequest: (requestId) => apiRequest(`/api/provider/requests/${id(requestId)}`),
   jobs: ({ status, bookingStatus } = {}) =>
     apiRequest(`/api/provider/jobs${toQueryString({ status, bookingStatus })}`),
-  submitQuote: (requestId, { amount, description }) =>
-    apiRequest(`/api/requests/${id(requestId)}/quotes`, {
-      method: 'POST',
-      body: { amount, description },
-    }),
+  // Atomically claims an open request; 409 when another provider got there first.
+  accept: (requestId) => apiRequest(`/api/requests/${id(requestId)}/accept`, { method: 'POST' }),
   schedule: (requestId, { scheduledDate, scheduledTime }) =>
     apiRequest(`/api/requests/${id(requestId)}/schedule`, {
       method: 'POST',

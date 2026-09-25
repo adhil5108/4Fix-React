@@ -1,9 +1,7 @@
 export const BOOKING_STEPS = [
   { key: 'service', label: 'Service' },
   { key: 'issue', label: 'Issue' },
-  { key: 'details', label: 'Details' },
-  { key: 'provider', label: 'Provider' },
-  { key: 'confirm', label: 'Confirm' },
+  { key: 'details', label: 'Details & location' },
 ];
 
 // Guided-flow progress: steps before `current` are done, `current` is highlighted.

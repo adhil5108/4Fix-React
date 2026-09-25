@@ -1,6 +1,6 @@
 import AppShell from '../../components/AppShell.jsx';
 import TrackingTimeline from '../../components/TrackingTimeline.jsx';
-import { AddressBlock, Avatar, RatingSummary } from '../../components/cards.jsx';
+import { AddressBlock, ServiceLocationBlock, Avatar, RatingSummary } from '../../components/cards.jsx';
 import {
   ButtonLink,
   Card,
@@ -13,21 +13,19 @@ import {
   StatusBadge,
 } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
-import { useQueryParam } from '../../hooks/useRoute.js';
 import { usePolling } from '../../hooks/usePolling.js';
 import { bookingsApi, providersApi } from '../../services/fixApi.js';
-import { formatMoney, formatSlot } from '../../utils/format.js';
+import { formatSlot } from '../../utils/format.js';
 
 const LIVE = ['CONFIRMED', 'ASSIGNED', 'ON_THE_WAY', 'ARRIVED', 'IN_SERVICE'];
 
 function nextStep(booking) {
   switch (booking.status) {
     case 'CONFIRMED':
+    case 'ASSIGNED':
       return booking.scheduledDate
         ? `Your technician is booked for ${formatSlot(booking.scheduledDate, booking.scheduledTime)}.`
-        : 'Your provider will confirm the visit date and time shortly.';
-    case 'ASSIGNED':
-      return 'Your technician has been assigned and will set off soon.';
+        : 'Your provider accepted the job and will confirm the visit date and time shortly.';
     case 'ON_THE_WAY':
       return 'Your technician is on the way. Keep your arrival code handy.';
     case 'ARRIVED':
@@ -35,7 +33,7 @@ function nextStep(booking) {
     case 'IN_SERVICE':
       return 'The service is in progress.';
     case 'COMPLETED':
-      return 'Service completed. Settle the payment and rate your experience.';
+      return 'Service completed. Rate your experience to help other customers.';
     case 'CANCELLED':
       return 'This booking was cancelled.';
     default:
@@ -54,18 +52,15 @@ async function optional(promise) {
 }
 
 function BookingPage({ bookingId }) {
-  const justConfirmed = useQueryParam('confirmed') === '1';
   const data = useApi(async () => {
     const { booking } = await bookingsApi.get(bookingId);
-    const [provider, payment, review] = await Promise.all([
+    const [provider, review] = await Promise.all([
       booking.providerId ? optional(providersApi.get(booking.providerId)) : null,
-      booking.status === 'COMPLETED' ? optional(bookingsApi.payment(bookingId)) : null,
       booking.status === 'COMPLETED' ? optional(bookingsApi.review(bookingId)) : null,
     ]);
     return {
       booking,
       provider: provider?.provider || booking.provider,
-      payment: payment?.payment || null,
       review: review?.review || null,
     };
   }, [bookingId]);
@@ -95,7 +90,7 @@ function BookingPage({ bookingId }) {
     );
   }
 
-  const { provider, payment, review } = data.data;
+  const { provider, review } = data.data;
   const isCompleted = booking.status === 'COMPLETED';
   const isLive = LIVE.includes(booking.status);
 
@@ -103,21 +98,12 @@ function BookingPage({ bookingId }) {
     <AppShell>
       <PageHeader
         back={back}
-        title={justConfirmed ? 'Booking confirmed' : booking.service?.name || 'Booking'}
-        subtitle={
-          justConfirmed
-            ? `${booking.service?.name || 'Service'}${booking.request?.issueLabel ? ` · ${booking.request.issueLabel}` : ''}`
-            : booking.request?.issueLabel
-        }
+        title={booking.service?.name || 'Booking'}
+        subtitle={booking.request?.issueLabel}
         actions={<StatusBadge status={booking.status} audience="booking" />}
       />
 
       <div className="stack">
-        {justConfirmed ? (
-          <Notice tone="success">
-            You’re all set. {provider?.name || 'Your provider'} has been notified of your booking.
-          </Notice>
-        ) : null}
         {data.error ? <Notice>{data.error.message}</Notice> : null}
       </div>
 
@@ -136,12 +122,7 @@ function BookingPage({ bookingId }) {
                 </ButtonLink>
               ) : null}
               {isCompleted ? (
-                <ButtonLink to={`/bookings/${booking.id}/payment`} variant={payment?.status === 'PAID' ? 'secondary' : 'primary'}>
-                  {payment?.status === 'PAID' ? 'View payment' : 'Pay for this service'}
-                </ButtonLink>
-              ) : null}
-              {isCompleted ? (
-                <ButtonLink to={`/bookings/${booking.id}/review`} variant="secondary">
+                <ButtonLink to={`/bookings/${booking.id}/review`} variant={review ? 'secondary' : 'primary'}>
                   {review ? 'Your review' : 'Rate your experience'}
                 </ButtonLink>
               ) : null}
@@ -183,20 +164,18 @@ function BookingPage({ bookingId }) {
               items={[
                 { label: 'Service', value: booking.service?.name },
                 { label: 'Issue', value: booking.request?.issueLabel },
-                { label: 'Price', value: formatMoney(booking.amount) },
                 {
-                  label: booking.scheduledDate ? 'Scheduled visit' : 'Preferred time',
+                  label: 'Scheduled visit',
                   value: booking.scheduledDate
                     ? formatSlot(booking.scheduledDate, booking.scheduledTime)
-                    : booking.request
-                      ? formatSlot(booking.request.preferredDate, booking.request.preferredTime)
-                      : '',
+                    : 'Provider will confirm',
                 },
                 { label: 'Details', value: booking.request?.description },
               ]}
             />
-            <h3 className="card__subtitle">Service address</h3>
+            <h3 className="card__subtitle">Service location</h3>
             <AddressBlock address={booking.request?.address} />
+            <ServiceLocationBlock location={booking.request?.location} fallback={null} />
             <p className="card__links">
               <Link to={`/requests/${booking.requestId}`} className="text-link">
                 View original request

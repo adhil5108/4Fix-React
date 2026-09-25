@@ -4,16 +4,15 @@ import { useApi } from '../../hooks/useApi.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { navigate } from '../../hooks/useRoute.js';
 import { adminApi } from '../../services/fixApi.js';
-import { firstName, formatMoney, formatTimestamp } from '../../utils/format.js';
+import { firstName, formatSlot, formatTimestamp } from '../../utils/format.js';
 
 const STAT_TILES = [
   { key: 'totalCustomers', label: 'Customers', to: '/app/admin/customers' },
   { key: 'totalProviders', label: 'Providers', to: '/app/admin/providers' },
   { key: 'totalServices', label: 'Services', to: '/app/admin/services' },
-  { key: 'openRequests', label: 'Open requests', to: '/app/admin/requests?status=QUOTE_RECEIVED' },
-  { key: 'openQuotes', label: 'Open quotes', to: '/app/admin/quotes?status=PENDING' },
+  { key: 'openRequests', label: 'Open requests', to: '/app/admin/requests?status=PENDING' },
+  { key: 'acceptedRequests', label: 'Accepted requests', to: '/app/admin/requests?status=ACCEPTED' },
   { key: 'activeBookings', label: 'Active bookings', to: '/app/admin/bookings' },
-  { key: 'pendingPayments', label: 'Pending payments', to: '/app/admin/payments?status=PENDING' },
   { key: 'completedBookings', label: 'Completed bookings', to: '/app/admin/bookings?status=COMPLETED' },
 ];
 
@@ -88,42 +87,6 @@ function AdminDashboardPage() {
             )}
           </section>
 
-          <section className="section section--tight" aria-labelledby="recent-quotes-heading">
-            <h2 id="recent-quotes-heading" className="section__title">
-              Recent quotes
-            </h2>
-            {dashboard.data.recent.quotes.length === 0 ? (
-              <p className="body-text">No quotes yet.</p>
-            ) : (
-              <div className="admin-table-wrap">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Provider</th>
-                      <th>Service</th>
-                      <th>Amount</th>
-                      <th>Status</th>
-                      <th>Created</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dashboard.data.recent.quotes.map((quote) => (
-                      <tr key={quote.id}>
-                        <td>{quote.provider?.name || '—'}</td>
-                        <td>{quote.request?.service?.name || '—'}</td>
-                        <td>{formatMoney(quote.amount)}</td>
-                        <td>
-                          <StatusBadge status={quote.status} audience="quote" />
-                        </td>
-                        <td>{formatTimestamp(quote.createdAt)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-
           <section className="section section--tight" aria-labelledby="recent-bookings-heading">
             <h2 id="recent-bookings-heading" className="section__title">
               Recent bookings
@@ -138,7 +101,7 @@ function AdminDashboardPage() {
                       <th>Service</th>
                       <th>Provider</th>
                       <th>Status</th>
-                      <th>Amount</th>
+                      <th>Visit</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -153,7 +116,7 @@ function AdminDashboardPage() {
                         <td>
                           <StatusBadge status={booking.status} audience="booking" />
                         </td>
-                        <td>{formatMoney(booking.amount)}</td>
+                        <td>{booking.scheduledDate ? formatSlot(booking.scheduledDate, booking.scheduledTime) : '—'}</td>
                       </tr>
                     ))}
                   </tbody>
