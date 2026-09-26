@@ -79,9 +79,14 @@ function AdminBookingDetailPage({ bookingId }) {
         <aside>
           <Card>
             <h2 className="card__title">{t('admin.fields.customer')}</h2>
-            <DetailList items={[{ label: t('admin.fields.name'), value: booking.customer?.name }]} />
-            {booking.customer ? (
-              <Link to={`/app/admin/customers/${booking.customer.id}`} className="text-link">
+            <DetailList
+              items={[
+                { label: t('admin.fields.name'), value: booking.customer?.name },
+                { label: t('admin.fields.phone'), value: booking.customer?.phone },
+              ]}
+            />
+            {booking.customerId ? (
+              <Link to={`/app/admin/customers/${booking.customerId}`} className="text-link">
                 {t('admin.shared.viewCustomer')}
               </Link>
             ) : null}

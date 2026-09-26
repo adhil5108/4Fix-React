@@ -8,7 +8,6 @@ import { useAuth } from '../../hooks/useAuth.jsx';
 import { navigate } from '../../hooks/useRoute.js';
 import { servicesApi } from '../../services/fixApi.js';
 import { formatCategory, formatMoney } from '../../utils/format.js';
-import { buildLoginPath } from '../../utils/roles.js';
 import { bookPath } from './publicLinks.js';
 
 function ServiceDetailsPage({ serviceId }) {
@@ -18,9 +17,9 @@ function ServiceDetailsPage({ serviceId }) {
   const back = { to: '/services', label: t('public.allServices') };
   const isProvider = isAuthenticated && user.role === 'PROVIDER';
 
+  // Customers book without an account, so choosing an issue goes straight to booking.
   function chooseIssue(issue) {
-    const target = bookPath(serviceId, issue.key);
-    navigate(isAuthenticated ? target : buildLoginPath(target));
+    navigate(bookPath(serviceId, issue.key));
   }
 
   if (service.loading) {

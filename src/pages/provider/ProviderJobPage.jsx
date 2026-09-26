@@ -172,6 +172,14 @@ function ProviderJobPage({ bookingId }) {
             <DetailList
               items={[
                 { label: t('provider.shared.customer'), value: booking.customer?.name },
+                {
+                  label: t('provider.shared.phone'),
+                  value: booking.customer?.phone ? (
+                    <a href={`tel:${booking.customer.phone}`} className="text-link">
+                      {booking.customer.phone}
+                    </a>
+                  ) : null,
+                },
                 { label: t('provider.shared.issue'), value: formatIssueLabel(request?.issueKey, request?.issueLabel) },
                 { label: t('provider.shared.problem'), value: request?.description },
                 { label: t('provider.shared.accepted'), value: formatDateTime(booking.timeline?.acceptedAt) },

@@ -123,9 +123,14 @@ function AdminRequestDetailsPage({ requestId }) {
         <aside>
           <Card>
             <h2 className="card__title">{t('admin.fields.customer')}</h2>
-            <DetailList items={[{ label: t('admin.fields.name'), value: request.customer?.name }]} />
-            {request.customer ? (
-              <Link to={`/app/admin/customers/${request.customer.id}`} className="text-link">
+            <DetailList
+              items={[
+                { label: t('admin.fields.name'), value: request.customer?.name },
+                { label: t('admin.fields.phone'), value: request.customer?.phone },
+              ]}
+            />
+            {request.customerId ? (
+              <Link to={`/app/admin/customers/${request.customerId}`} className="text-link">
                 {t('admin.shared.viewCustomer')}
               </Link>
             ) : null}

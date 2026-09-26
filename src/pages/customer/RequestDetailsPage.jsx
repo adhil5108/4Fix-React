@@ -250,6 +250,17 @@ function RequestDetailsPage({ requestId }) {
                 },
               ]}
             />
+            {request.customerDetails ? (
+              <>
+                <h3 className="card__subtitle">{t('customer.request.yourDetails')}</h3>
+                <DetailList
+                  items={[
+                    { label: t('customer.book.details.name'), value: request.customerDetails.name },
+                    { label: t('customer.book.details.phone'), value: request.customerDetails.phone },
+                  ]}
+                />
+              </>
+            ) : null}
             <h3 className="card__subtitle">{t('customer.shared.serviceLocation')}</h3>
             <AddressBlock address={request.address} />
             <ServiceLocationBlock location={request.location} fallback={null} />

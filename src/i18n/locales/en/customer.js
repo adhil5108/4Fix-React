@@ -43,6 +43,19 @@ export default {
       descriptionShort: 'Add a few more words (at least 5 characters).',
       descriptionLong: 'Description must be 2000 characters or fewer.',
       attachments: 'Add at most {{max}} attachments.',
+      nameRequired: 'Enter your name.',
+      nameShort: 'Name must be at least 2 characters.',
+      nameLong: 'Name must be 120 characters or fewer.',
+      phoneRequired: 'Enter your phone number.',
+      phoneInvalid: 'Enter a valid phone number (8–15 digits).',
+    },
+    details: {
+      title: 'Your details',
+      hint: 'No account needed. The provider who takes your job uses these to reach you.',
+      name: 'Full name',
+      namePlaceholder: 'e.g. Asha Nair',
+      phone: 'Phone number',
+      phonePlaceholder: 'e.g. 98765 43210',
     },
   },
   request: {
@@ -80,6 +93,7 @@ export default {
       copied: 'Copied',
     },
     leaveReview: 'Rate your provider',
+    yourDetails: 'Your details',
   },
   requests: {
     title: 'My requests',

@@ -169,6 +169,8 @@ export default {
       'Rating must be a whole number from 1 to 5': '1 മുതൽ 5 വരെ ഒരു റേറ്റിംഗ് തിരഞ്ഞെടുക്കുക.',
       'Name must be at least 2 characters': 'പേരിൽ കുറഞ്ഞത് 2 അക്ഷരങ്ങൾ വേണം.',
       'Unsupported voice note format': 'ഈ വോയ്സ് നോട്ട് ഫോർമാറ്റ് പിന്തുണയ്ക്കുന്നില്ല.',
+      'Customer details are required': 'നിങ്ങളുടെ പേരും ഫോൺ നമ്പറും നൽകുക.',
+      'Customer name must be at least 2 characters': 'പേരിൽ കുറഞ്ഞത് 2 അക്ഷരങ്ങൾ വേണം.',
       'Shop location is required': 'നിങ്ങളുടെ ഷോപ്പ് ലൊക്കേഷൻ നൽകുക.',
     },
   },

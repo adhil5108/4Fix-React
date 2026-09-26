@@ -124,7 +124,16 @@ function ProviderRequestDetailsPage({ requestId }) {
             <h2 className="card__title">{t('provider.requestDetails.detailsTitle')}</h2>
             <DetailList
               items={[
+                // Contact details arrive only once this provider has accepted the job.
                 { label: t('provider.shared.customer'), value: request.customer?.name },
+                {
+                  label: t('provider.shared.phone'),
+                  value: request.customer?.phone ? (
+                    <a href={`tel:${request.customer.phone}`} className="text-link">
+                      {request.customer.phone}
+                    </a>
+                  ) : null,
+                },
                 { label: t('provider.shared.issue'), value: formatIssueLabel(request.issueKey, request.issueLabel) },
                 { label: t('provider.shared.problem'), value: request.description },
                 {

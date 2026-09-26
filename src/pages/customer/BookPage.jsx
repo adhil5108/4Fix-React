@@ -5,7 +5,7 @@ import AppShell from '../../components/AppShell.jsx';
 import LocationCapture from '../../components/LocationCapture.jsx';
 import ImageAttachments, { MAX_ATTACHMENTS } from '../../components/ImageAttachments.jsx';
 import StepIndicator from '../../components/StepIndicator.jsx';
-import { TextArea } from '../../components/TextField.jsx';
+import TextField, { TextArea } from '../../components/TextField.jsx';
 import VoiceRecorder from '../../components/VoiceRecorder.jsx';
 import { IssueCard } from '../../components/cards.jsx';
 import {
@@ -27,21 +27,27 @@ import { formatIssueLabel } from '../../utils/format.js';
 
 const initialForm = {
   description: '',
+  customerName: '',
+  customerPhone: '',
   addressLine: '',
   city: '',
   state: '',
   pincode: '',
 };
 
+// Same rule the server applies: 8–15 digits, optional leading +, spaces/dashes allowed.
+export function normalizePhone(value) {
+  return value.trim().replace(/[\s().-]/g, '');
+}
+
+const PHONE_PATTERN = /^\+?[1-9]\d{7,14}$/;
+
 const geolocationSupported = typeof navigator !== 'undefined' && Boolean(navigator.geolocation);
 
+// Errors are inserted in page order so the first one gets focus.
 function validate(form, attachments, { location, manualAddress }, t) {
+  const errors = {};
   const length = form.description.trim().length;
-  const errors = manualAddress ? validateAddress(form, t) : {};
-
-  if (!manualAddress && !location) {
-    errors.location = t('customer.book.errors.location');
-  }
 
   if (length === 0) errors.description = t('customer.book.errors.descriptionRequired');
   else if (length < 5) errors.description = t('customer.book.errors.descriptionShort');
@@ -51,7 +57,20 @@ function validate(form, attachments, { location, manualAddress }, t) {
     errors.attachments = t('customer.book.errors.attachments', { max: MAX_ATTACHMENTS });
   }
 
-  return errors;
+  const name = form.customerName.trim();
+  if (!name) errors.customerName = t('customer.book.errors.nameRequired');
+  else if (name.length < 2) errors.customerName = t('customer.book.errors.nameShort');
+  else if (name.length > 120) errors.customerName = t('customer.book.errors.nameLong');
+
+  const phone = normalizePhone(form.customerPhone);
+  if (!phone) errors.customerPhone = t('customer.book.errors.phoneRequired');
+  else if (!PHONE_PATTERN.test(phone)) errors.customerPhone = t('customer.book.errors.phoneInvalid');
+
+  if (!manualAddress && !location) {
+    errors.location = t('customer.book.errors.location');
+  }
+
+  return manualAddress ? { ...errors, ...validateAddress(form, t) } : errors;
 }
 
 function BookPage({ serviceId }) {
@@ -116,6 +135,11 @@ function BookPage({ serviceId }) {
         serviceId,
         issueKey: issue.key,
         description: form.description.trim(),
+        // Contact details for the provider who takes the job — not an account.
+        customerDetails: {
+          name: form.customerName.trim(),
+          phone: normalizePhone(form.customerPhone),
+        },
         attachments,
         voiceNote: voiceNote || undefined,
         // Coordinates are the navigation target; the typed address is only a fallback.
@@ -219,6 +243,35 @@ function BookPage({ serviceId }) {
               hint={t('customer.book.photosHint', { max: MAX_ATTACHMENTS })}
             />
             <VoiceRecorder value={voiceNote} onChange={setVoiceNote} disabled={submit.pending === 'create'} />
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="card__title">{t('customer.book.details.title')}</h2>
+          <p className="field-hint">{t('customer.book.details.hint')}</p>
+          <div className="form-stack">
+            <TextField
+              id="customerName"
+              label={t('customer.book.details.name')}
+              autoComplete="name"
+              maxLength={120}
+              value={form.customerName}
+              error={errors.customerName}
+              placeholder={t('customer.book.details.namePlaceholder')}
+              onChange={(event) => updateField('customerName', event.target.value)}
+            />
+            <TextField
+              id="customerPhone"
+              label={t('customer.book.details.phone')}
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              maxLength={20}
+              value={form.customerPhone}
+              error={errors.customerPhone}
+              placeholder={t('customer.book.details.phonePlaceholder')}
+              onChange={(event) => updateField('customerPhone', event.target.value)}
+            />
           </div>
         </Card>
 

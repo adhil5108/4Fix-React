@@ -173,6 +173,8 @@ export default {
       'Rating must be a whole number from 1 to 5': 'Choose a rating from 1 to 5.',
       'Name must be at least 2 characters': 'Name must be at least 2 characters.',
       'Unsupported voice note format': 'This voice note format isn’t supported.',
+      'Customer details are required': 'Enter your name and phone number.',
+      'Customer name must be at least 2 characters': 'Name must be at least 2 characters.',
       'Shop location is required': 'Set your shop location.',
     },
   },
