@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { uploadsApi } from '../services/fixApi.js';
 import { Button } from './ui.jsx';
 
@@ -32,6 +33,7 @@ function formatDuration(totalSeconds) {
 // Record); the resulting clip uploads immediately once recording stops, the same
 // eager-upload pattern ImageAttachments uses for photos.
 function VoiceRecorder({ value, onChange, disabled }) {
+  const { t } = useTranslation();
   const [status, setStatus] = useState('idle');
   const [elapsed, setElapsed] = useState(0);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -102,7 +104,8 @@ function VoiceRecorder({ value, onChange, disabled }) {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
       setStatus('denied');
-      setError('Microphone access was denied. Allow microphone access in your browser to record a voice message.');
+      // Stored as a key and translated at render; upload errors are already-translated API messages.
+      setError({ key: 'cards.voice.denied' });
       return;
     }
 
@@ -177,15 +180,15 @@ function VoiceRecorder({ value, onChange, disabled }) {
   if (status === 'unsupported') {
     return (
       <div className="field">
-        <label>Voice message (optional)</label>
-        <p className="field-hint">Voice recording isn’t supported in this browser.</p>
+        <label>{t('cards.voice.label')}</label>
+        <p className="field-hint">{t('cards.voice.unsupported')}</p>
       </div>
     );
   }
 
   return (
     <div className="field">
-      <label>Voice message (optional)</label>
+      <label>{t('cards.voice.label')}</label>
 
       {value ? (
         <div className="voice-recorder voice-recorder--done">
@@ -200,27 +203,27 @@ function VoiceRecorder({ value, onChange, disabled }) {
             onClick={removeRecording}
             disabled={disabled}
           >
-            Delete &amp; re-record
+            {t('cards.voice.deleteRerecord')}
           </Button>
         </div>
       ) : status === 'recording' ? (
         <div className="voice-recorder voice-recorder--recording">
           <span className="voice-recorder__dot" aria-hidden="true" />
-          <span aria-live="polite">Recording… {formatDuration(elapsed)}</span>
+          <span aria-live="polite">{t('cards.voice.recording', { time: formatDuration(elapsed) })}</span>
           <Button type="button" variant="secondary" size="sm" onClick={stopRecording}>
-            Stop
+            {t('cards.voice.stop')}
           </Button>
         </div>
       ) : status === 'requesting' ? (
         <div className="voice-recorder">
           <span className="spinner spinner--sm" aria-hidden="true" />
-          <span>Requesting microphone access…</span>
+          <span>{t('cards.voice.requesting')}</span>
         </div>
       ) : status === 'uploading' ? (
         <div className="voice-recorder">
           {previewUrl ? <audio controls preload="none" src={previewUrl} className="voice-recorder__player" /> : null}
           <span className="spinner spinner--sm" aria-hidden="true" />
-          <span>Uploading…</span>
+          <span>{t('cards.voice.uploading')}</span>
         </div>
       ) : (
         <div className="voice-recorder">
@@ -231,22 +234,20 @@ function VoiceRecorder({ value, onChange, disabled }) {
             onClick={status === 'error' ? retryUpload : startRecording}
             disabled={disabled}
           >
-            {status === 'error' ? 'Retry upload' : 'Record voice message'}
+            {status === 'error' ? t('cards.voice.retryUpload') : t('cards.voice.record')}
           </Button>
           {status === 'error' ? (
             <button type="button" className="text-link" onClick={removeRecording}>
-              Discard
+              {t('cards.voice.discard')}
             </button>
           ) : null}
         </div>
       )}
 
       {error ? (
-        <p className="field-error">{error}</p>
+        <p className="field-error">{error.key ? t(error.key) : error}</p>
       ) : (
-        <p className="field-hint">
-          Up to 2 minutes. Describe the problem out loud so the provider can hear it directly.
-        </p>
+        <p className="field-hint">{t('cards.voice.hint', { minutes: MAX_DURATION_SECONDS / 60 })}</p>
       )}
     </div>
   );

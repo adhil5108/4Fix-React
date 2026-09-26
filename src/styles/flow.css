@@ -1029,3 +1029,35 @@ a.provider-card__name:hover {
   color: var(--muted);
   font-size: 0.85rem;
 }
+
+/* Provider signup: shop location step */
+.auth-fieldset {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.auth-legend {
+  padding: 0 6px;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+
+.auth-footer--note {
+  margin-top: 10px;
+}
+
+/* Customer request: private tracking link */
+.tracking-link {
+  width: 100%;
+  margin-top: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+}

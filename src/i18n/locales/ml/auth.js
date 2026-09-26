@@ -1,0 +1,45 @@
+// auth UI text (ml). Keys mirror between en.js and ml.js modules.
+export default {
+  login: {
+    heading: 'വീണ്ടും സ്വാഗതം',
+    subtext: 'നിങ്ങളുടെ സേവനദാതാവ് അക്കൗണ്ടിലേക്ക് ലോഗിൻ ചെയ്യുക.',
+    submitting: 'ലോഗിൻ ചെയ്യുന്നു…',
+    newHere: '4Fix-ൽ സേവനങ്ങൾ നൽകണോ?',
+    createAccount: 'സേവനദാതാവായി ചേരുക',
+    customerNote: 'റിപ്പയർ വേണോ? അതിന് അക്കൗണ്ട് ആവശ്യമില്ല.',
+  },
+  signup: {
+    PROVIDER: {
+      heading: 'സേവനദാതാവായി 4Fix-ൽ ചേരുക',
+      subtext: 'നിങ്ങളുടെ സേവനങ്ങൾ നൽകൂ, അവ ആവശ്യമുള്ളവരുമായി ബന്ധപ്പെടൂ.',
+      cta: 'സേവനദാതാവ് അക്കൗണ്ട് ഉണ്ടാക്കുക',
+    },
+    submitting: 'അക്കൗണ്ട് ഉണ്ടാക്കുന്നു…',
+    haveAccount: 'ഇതിനകം അക്കൗണ്ട് ഉണ്ടോ?',
+    shopLocationTitle: 'ഷോപ്പ് ലൊക്കേഷൻ',
+    shopLocationHint: 'നിങ്ങളുടെ ഷോപ്പിന്റെയോ സ്ഥാപനത്തിന്റെയോ ലൊക്കേഷൻ, പ്രൊഫൈലിൽ സേവ് ചെയ്യും. 4Fix ഒരിക്കലും നിങ്ങളുടെ തത്സമയ ലൊക്കേഷൻ ട്രാക്ക് ചെയ്യില്ല.',
+  },
+  fields: {
+    phone: 'ഫോൺ നമ്പർ',
+    phonePlaceholder: 'നിങ്ങളുടെ ഫോൺ നമ്പർ നൽകുക',
+    password: 'പാസ്‌വേഡ്',
+    passwordPlaceholder: 'നിങ്ങളുടെ പാസ്‌വേഡ് നൽകുക',
+    newPasswordPlaceholder: 'പാസ്‌വേഡ് നൽകുക',
+    confirmPassword: 'പാസ്‌വേഡ് സ്ഥിരീകരിക്കുക',
+    confirmPasswordPlaceholder: 'പാസ്‌വേഡ് വീണ്ടും നൽകുക',
+    fullName: 'മുഴുവൻ പേര്',
+    fullNamePlaceholder: 'നിങ്ങളുടെ മുഴുവൻ പേര് നൽകുക',
+    show: '{{field}} കാണിക്കുക',
+    hide: '{{field}} മറയ്ക്കുക',
+  },
+  errors: {
+    phoneRequired: 'നിങ്ങളുടെ ഫോൺ നമ്പർ നൽകുക.',
+    passwordRequired: 'നിങ്ങളുടെ പാസ്‌വേഡ് നൽകുക.',
+    nameRequired: 'നിങ്ങളുടെ മുഴുവൻ പേര് നൽകുക.',
+    newPasswordRequired: 'ഒരു പാസ്‌വേഡ് നൽകുക.',
+    passwordTooShort: 'കുറഞ്ഞത് 8 അക്ഷരങ്ങൾ ഉപയോഗിക്കുക.',
+    confirmRequired: 'പാസ്‌വേഡ് സ്ഥിരീകരിക്കുക.',
+    passwordMismatch: 'പാസ്‌വേഡുകൾ പൊരുത്തപ്പെടുന്നില്ല.',
+    shopLocationRequired: 'നിങ്ങളുടെ ഷോപ്പ് ലൊക്കേഷൻ നൽകുക.',
+  },
+};

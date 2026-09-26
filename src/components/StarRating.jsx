@@ -1,16 +1,16 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TextArea } from './TextField.jsx';
 import { Button, Notice } from './ui.jsx';
 
-const LABELS = ['Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
-
 export function StarRating({ value, onChange, readOnly = false, size }) {
+  const { t } = useTranslation();
   const [hover, setHover] = useState(0);
   const shown = hover || value || 0;
 
   if (readOnly) {
     return (
-      <span className={`stars${size ? ` stars--${size}` : ''}`} aria-label={`${value} out of 5`}>
+      <span className={`stars${size ? ` stars--${size}` : ''}`} aria-label={t('cards.rating.outOf', { value })}>
         {[1, 2, 3, 4, 5].map((star) => (
           <span key={star} className={`stars__star${star <= value ? ' is-on' : ''}`} aria-hidden="true">
             ★
@@ -21,7 +21,7 @@ export function StarRating({ value, onChange, readOnly = false, size }) {
   }
 
   return (
-    <div className="stars-input" role="radiogroup" aria-label="Rating">
+    <div className="stars-input" role="radiogroup" aria-label={t('cards.rating.groupLabel')}>
       <span className={`stars${size ? ` stars--${size}` : ''}`} onMouseLeave={() => setHover(0)}>
         {[1, 2, 3, 4, 5].map((star) => (
           <button
@@ -29,7 +29,7 @@ export function StarRating({ value, onChange, readOnly = false, size }) {
             type="button"
             role="radio"
             aria-checked={value === star}
-            aria-label={`${star} star${star > 1 ? 's' : ''} – ${LABELS[star - 1]}`}
+            aria-label={t('cards.rating.starOption', { count: star, label: t(`cards.rating.labels.${star}`) })}
             className={`stars__star stars__star--button${star <= shown ? ' is-on' : ''}`}
             onMouseEnter={() => setHover(star)}
             onFocus={() => setHover(star)}
@@ -40,12 +40,13 @@ export function StarRating({ value, onChange, readOnly = false, size }) {
           </button>
         ))}
       </span>
-      <span className="stars-input__label">{shown ? LABELS[shown - 1] : 'Tap a star'}</span>
+      <span className="stars-input__label">{shown ? t(`cards.rating.labels.${shown}`) : t('cards.rating.tapStar')}</span>
     </div>
   );
 }
 
 export function ReviewForm({ providerName, busy, error, onSubmit }) {
+  const { t } = useTranslation();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [ratingError, setRatingError] = useState('');
@@ -54,7 +55,7 @@ export function ReviewForm({ providerName, busy, error, onSubmit }) {
     event.preventDefault();
 
     if (!rating) {
-      setRatingError('Choose a star rating.');
+      setRatingError('cards.review.chooseRating');
       return;
     }
 
@@ -65,7 +66,11 @@ export function ReviewForm({ providerName, busy, error, onSubmit }) {
     <form className="form-stack" onSubmit={handleSubmit} noValidate>
       <Notice>{error}</Notice>
       <div className="field">
-        <label>How was your experience{providerName ? ` with ${providerName}` : ''}?</label>
+        <label>
+          {providerName
+            ? t('cards.review.questionWith', { name: providerName })
+            : t('cards.review.question')}
+        </label>
         <StarRating
           value={rating}
           size="lg"
@@ -74,19 +79,19 @@ export function ReviewForm({ providerName, busy, error, onSubmit }) {
             setRatingError('');
           }}
         />
-        {ratingError ? <p className="field-error">{ratingError}</p> : null}
+        {ratingError ? <p className="field-error">{t(ratingError)}</p> : null}
       </div>
       <TextArea
         id="comment"
-        label="Comment (optional)"
+        label={t('cards.review.comment')}
         rows={4}
         maxLength={1000}
         value={comment}
-        placeholder="What went well? Anything the provider could improve?"
+        placeholder={t('cards.review.commentPlaceholder')}
         onChange={(event) => setComment(event.target.value)}
       />
-      <Button type="submit" block size="lg" loading={busy} loadingText="Submitting…">
-        Submit review
+      <Button type="submit" block size="lg" loading={busy} loadingText={t('cards.review.submitting')}>
+        {t('cards.review.submit')}
       </Button>
     </form>
   );

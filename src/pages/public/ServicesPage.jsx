@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import AppShell from '../../components/AppShell.jsx';
 import SearchBar from '../../components/SearchBar.jsx';
 import { ServiceCard } from '../../components/cards.jsx';
@@ -16,6 +17,7 @@ function buildPath({ search, category }) {
 }
 
 function ServicesPage() {
+  const { t } = useTranslation();
   const search = (useQueryParam('search') || '').trim();
   const category = (useQueryParam('category') || '').toUpperCase();
   const allServices = useApi(() => servicesApi.list(), []);
@@ -31,7 +33,7 @@ function ServicesPage() {
 
   return (
     <AppShell>
-      <PageHeader title="Services" subtitle="Choose a service, then tell us what’s wrong." />
+      <PageHeader title={t('public.services.title')} subtitle={t('public.services.subtitle')} />
 
       <SearchBar
         key={search}
@@ -40,14 +42,14 @@ function ServicesPage() {
       />
 
       {categories.length > 1 ? (
-        <div className="chip-row chip-row--scroll" role="group" aria-label="Filter by category">
+        <div className="chip-row chip-row--scroll" role="group" aria-label={t('public.services.filterLabel')}>
           <button
             type="button"
             className={`chip${!category ? ' is-active' : ''}`}
             aria-pressed={!category}
             onClick={() => navigate(buildPath({ search }), { replace: true })}
           >
-            All
+            {t('public.services.all')}
           </button>
           {categories.map((item) => (
             <button
@@ -63,16 +65,22 @@ function ServicesPage() {
         </div>
       ) : null}
 
-      {services.loading ? <LoadingState label="Loading services…" /> : null}
+      {services.loading ? <LoadingState label={t('public.services.loading')} /> : null}
       {services.error ? <ErrorState error={services.error} onRetry={services.reload} /> : null}
       {!services.loading && !services.error && list.length === 0 ? (
         <EmptyState
-          title={search ? `No services match “${search}”` : category ? 'No services in this category' : 'No services available'}
-          message={search || category ? 'Try a different search or category.' : 'Please check back soon.'}
+          title={
+            search
+              ? t('public.services.noMatch', { search })
+              : category
+                ? t('public.services.noneInCategory')
+                : t('public.services.noneAvailable')
+          }
+          message={search || category ? t('public.services.tryDifferent') : t('public.services.checkBack')}
           action={
             search || category ? (
               <button type="button" className="text-link" onClick={() => navigate('/services', { replace: true })}>
-                Show all services
+                {t('public.services.showAll')}
               </button>
             ) : null
           }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import TextField, { TextArea } from '../../components/TextField.jsx';
 import {
@@ -11,6 +12,7 @@ import {
   PageHeader,
 } from '../../components/ui.jsx';
 import { useAction, useApi } from '../../hooks/useApi.js';
+import { useTranslatedErrors } from '../../hooks/useTranslatedErrors.js';
 import { navigate } from '../../hooks/useRoute.js';
 import { adminApi, uploadsApi } from '../../services/fixApi.js';
 
@@ -44,15 +46,15 @@ function newIssueRow() {
   return { id: `new-${Date.now()}-${Math.random().toString(36).slice(2)}`, key: '', label: '', description: '', isActive: true };
 }
 
-function validate(form) {
+function validate(form, t) {
   const errors = {};
 
-  if (form.name.trim().length < 2) errors.name = 'Name must be at least 2 characters.';
-  if (form.description.trim().length < 5) errors.description = 'Description must be at least 5 characters.';
-  if (form.category.trim().length < 2) errors.category = 'Category is required.';
+  if (form.name.trim().length < 2) errors.name = t('admin.serviceForm.validation.name');
+  if (form.description.trim().length < 5) errors.description = t('admin.serviceForm.validation.description');
+  if (form.category.trim().length < 2) errors.category = t('admin.serviceForm.validation.category');
 
   if (form.startingPrice !== '' && (Number.isNaN(Number(form.startingPrice)) || Number(form.startingPrice) < 0)) {
-    errors.startingPrice = 'Starting price must be a non-negative number.';
+    errors.startingPrice = t('admin.serviceForm.validation.startingPrice');
   }
 
   return errors;
@@ -74,13 +76,13 @@ function buildPayload(form, issues) {
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
-function validateServiceImageFile(file) {
+function validateServiceImageFile(file, t) {
   if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-    return 'Only JPG, PNG or WebP images are allowed.';
+    return t('admin.serviceForm.image.invalidType');
   }
 
   if (file.size > MAX_IMAGE_BYTES) {
-    return 'Image must be 5MB or smaller.';
+    return t('admin.serviceForm.image.tooLarge');
   }
 
   return '';
@@ -91,6 +93,7 @@ function validateServiceImageFile(file) {
 // plug straight into the form's existing `image` field, so the rest of the form (and the
 // create/update payload) is unchanged from when this was a plain URL text input.
 function ServiceImageField({ value, onChange, onUploadingChange }) {
+  const { t } = useTranslation();
   const [previewUrl, setPreviewUrl] = useState(null);
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
@@ -103,7 +106,7 @@ function ServiceImageField({ value, onChange, onUploadingChange }) {
   }, [previewUrl]);
 
   async function handleFile(file) {
-    const validationError = validateServiceImageFile(file);
+    const validationError = validateServiceImageFile(file, t);
 
     if (validationError) {
       setError(validationError);
@@ -143,7 +146,7 @@ function ServiceImageField({ value, onChange, onUploadingChange }) {
 
   return (
     <div className="field">
-      <label htmlFor="serviceImageInput">Service image (optional)</label>
+      <label htmlFor="serviceImageInput">{t('admin.serviceForm.image.label')}</label>
       <input
         ref={inputRef}
         id="serviceImageInput"
@@ -164,7 +167,7 @@ function ServiceImageField({ value, onChange, onUploadingChange }) {
               {isUploading ? (
                 <span className="image-picker__overlay" aria-live="polite">
                   <span className="spinner spinner--sm" aria-hidden="true" />
-                  <span className="sr-only">Uploading…</span>
+                  <span className="sr-only">{t('admin.serviceForm.image.uploading')}</span>
                 </span>
               ) : null}
             </div>
@@ -173,7 +176,7 @@ function ServiceImageField({ value, onChange, onUploadingChange }) {
               className="image-picker__remove"
               onClick={handleRemove}
               disabled={isUploading}
-              aria-label="Remove image"
+              aria-label={t('admin.serviceForm.image.remove')}
             >
               ×
             </button>
@@ -186,34 +189,35 @@ function ServiceImageField({ value, onChange, onUploadingChange }) {
           disabled={isUploading}
         >
           <span aria-hidden="true">{displayUrl ? '↻' : '+'}</span>
-          <span>{displayUrl ? 'Replace' : 'Add image'}</span>
+          <span>{displayUrl ? t('admin.serviceForm.image.replace') : t('admin.serviceForm.image.add')}</span>
         </button>
       </div>
       {error ? (
         <p className="field-error">{error}</p>
       ) : (
-        <p className="field-hint">JPG, PNG or WebP, up to 5MB.</p>
+        <p className="field-hint">{t('admin.serviceForm.image.hint')}</p>
       )}
     </div>
   );
 }
 
 function IssueEditor({ issues, setIssues }) {
+  const { t } = useTranslation();
   function update(id, field, value) {
     setIssues((current) => current.map((row) => (row.id === id ? { ...row, [field]: value } : row)));
   }
 
   return (
     <div className="field">
-      <label>What's wrong? issues</label>
-      {issues.length === 0 ? <p className="field-hint">No issues yet. Customers will only see "Something else".</p> : null}
+      <label>{t('admin.serviceForm.issueEditor.label')}</label>
+      {issues.length === 0 ? <p className="field-hint">{t('admin.serviceForm.issueEditor.empty')}</p> : null}
       <div className="stack">
         {issues.map((row) => (
           <div key={row.id} className="card admin-issue-row">
             <div className="form-row">
               <TextField
                 id={`issue-key-${row.id}`}
-                label="Key"
+                label={t('admin.serviceForm.issueEditor.key')}
                 value={row.key}
                 maxLength={60}
                 placeholder="NOT_COOLING"
@@ -221,19 +225,19 @@ function IssueEditor({ issues, setIssues }) {
               />
               <TextField
                 id={`issue-label-${row.id}`}
-                label="Label"
+                label={t('admin.serviceForm.issueEditor.issueLabel')}
                 value={row.label}
                 maxLength={120}
-                placeholder="Not cooling"
+                placeholder={t('admin.serviceForm.issueEditor.labelPlaceholder')}
                 onChange={(event) => update(row.id, 'label', event.target.value)}
               />
             </div>
             <TextField
               id={`issue-description-${row.id}`}
-              label="Description (optional)"
+              label={t('admin.serviceForm.issueEditor.description')}
               value={row.description}
               maxLength={300}
-              placeholder="Runs but the air is not cold"
+              placeholder={t('admin.serviceForm.issueEditor.descriptionPlaceholder')}
               onChange={(event) => update(row.id, 'description', event.target.value)}
             />
             <div className="admin-issue-row__footer">
@@ -243,14 +247,14 @@ function IssueEditor({ issues, setIssues }) {
                   checked={row.isActive}
                   onChange={(event) => update(row.id, 'isActive', event.target.checked)}
                 />
-                <span>Active</span>
+                <span>{t('admin.serviceForm.issueEditor.active')}</span>
               </label>
               <button
                 type="button"
                 className="text-link"
                 onClick={() => setIssues((current) => current.filter((item) => item.id !== row.id))}
               >
-                Remove
+                {t('admin.serviceForm.issueEditor.remove')}
               </button>
             </div>
           </div>
@@ -261,13 +265,14 @@ function IssueEditor({ issues, setIssues }) {
         size="sm"
         onClick={() => setIssues((current) => [...current, newIssueRow()])}
       >
-        Add issue
+        {t('admin.serviceForm.issueEditor.add')}
       </Button>
     </div>
   );
 }
 
 function AdminServiceFormPage({ serviceId }) {
+  const { t } = useTranslation();
   const isEdit = Boolean(serviceId);
   const existing = useApi(
     () => (isEdit ? adminApi.service(serviceId) : Promise.resolve(null)),
@@ -276,6 +281,7 @@ function AdminServiceFormPage({ serviceId }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [issues, setIssues] = useState([]);
   const [errors, setErrors] = useState({});
+  useTranslatedErrors(setErrors, () => validate(form, t));
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
   const save = useAction();
@@ -308,7 +314,7 @@ function AdminServiceFormPage({ serviceId }) {
       return;
     }
 
-    const nextErrors = validate(form);
+    const nextErrors = validate(form, t);
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
@@ -336,12 +342,12 @@ function AdminServiceFormPage({ serviceId }) {
     }
   }
 
-  const back = { to: '/app/admin/services', label: 'Services' };
+  const back = { to: '/app/admin/services', label: t('common.adminNav.services') };
 
   if (isEdit && existing.loading) {
     return (
       <AdminShell>
-        <LoadingState label="Loading service…" />
+        <LoadingState label={t('admin.serviceForm.loading')} />
       </AdminShell>
     );
   }
@@ -349,7 +355,7 @@ function AdminServiceFormPage({ serviceId }) {
   if (isEdit && existing.error) {
     return (
       <AdminShell>
-        <PageHeader title="Service" back={back} />
+        <PageHeader title={t('admin.serviceForm.fallbackTitle')} back={back} />
         <ErrorState error={existing.error} onRetry={existing.reload} />
       </AdminShell>
     );
@@ -359,19 +365,19 @@ function AdminServiceFormPage({ serviceId }) {
     <AdminShell>
       <PageHeader
         back={back}
-        title={isEdit ? existing.data.service.name : 'New service'}
-        subtitle={isEdit ? 'Edit this service' : 'Add a service to the catalogue'}
+        title={isEdit ? existing.data.service.name : t('admin.serviceForm.newTitle')}
+        subtitle={isEdit ? t('admin.serviceForm.editSubtitle') : t('admin.serviceForm.newSubtitle')}
       />
 
       <form className="stack" onSubmit={handleSubmit} noValidate>
         <Notice>{save.error || remove.error}</Notice>
 
         <Card>
-          <h2 className="card__title">Details</h2>
+          <h2 className="card__title">{t('admin.serviceForm.details')}</h2>
           <div className="form-stack">
             <TextField
               id="name"
-              label="Name"
+              label={t('admin.serviceForm.name')}
               value={form.name}
               error={errors.name}
               maxLength={120}
@@ -379,7 +385,7 @@ function AdminServiceFormPage({ serviceId }) {
             />
             <TextArea
               id="description"
-              label="Description"
+              label={t('admin.serviceForm.description')}
               rows={3}
               value={form.description}
               error={errors.description}
@@ -389,7 +395,7 @@ function AdminServiceFormPage({ serviceId }) {
             <div className="form-row">
               <TextField
                 id="category"
-                label="Category"
+                label={t('admin.serviceForm.category')}
                 value={form.category}
                 error={errors.category}
                 maxLength={60}
@@ -398,7 +404,7 @@ function AdminServiceFormPage({ serviceId }) {
               />
               <TextField
                 id="startingPrice"
-                label="Starting price (optional)"
+                label={t('admin.serviceForm.startingPrice')}
                 type="text"
                 inputMode="decimal"
                 value={form.startingPrice}
@@ -419,8 +425,8 @@ function AdminServiceFormPage({ serviceId }) {
                 onChange={(event) => update('isPopular', event.target.checked)}
               />
               <span>
-                <strong>Popular</strong>
-                <span className="field-hint">Featured on the home page.</span>
+                <strong>{t('admin.serviceForm.popular')}</strong>
+                <span className="field-hint">{t('admin.serviceForm.popularHint')}</span>
               </span>
             </label>
             <label className="toggle">
@@ -430,15 +436,15 @@ function AdminServiceFormPage({ serviceId }) {
                 onChange={(event) => update('isActive', event.target.checked)}
               />
               <span>
-                <strong>Active</strong>
-                <span className="field-hint">Inactive services are hidden from customers.</span>
+                <strong>{t('admin.serviceForm.active')}</strong>
+                <span className="field-hint">{t('admin.serviceForm.activeHint')}</span>
               </span>
             </label>
           </div>
         </Card>
 
         <Card>
-          <h2 className="card__title">Issues</h2>
+          <h2 className="card__title">{t('admin.serviceForm.issues')}</h2>
           <IssueEditor issues={issues} setIssues={setIssues} />
         </Card>
 
@@ -446,14 +452,14 @@ function AdminServiceFormPage({ serviceId }) {
           <Button
             type="submit"
             loading={save.pending === 'save'}
-            loadingText="Saving…"
+            loadingText={t('admin.serviceForm.saving')}
             disabled={imageUploading}
           >
-            {isEdit ? 'Save changes' : 'Create service'}
+            {isEdit ? t('admin.serviceForm.saveChanges') : t('admin.serviceForm.create')}
           </Button>
           {isEdit ? (
             <Button variant="danger-ghost" onClick={() => setConfirmingDelete(true)}>
-              Delete service
+              {t('admin.serviceForm.delete')}
             </Button>
           ) : null}
         </div>
@@ -461,9 +467,9 @@ function AdminServiceFormPage({ serviceId }) {
 
       <ConfirmDialog
         open={confirmingDelete}
-        title="Delete this service?"
-        message="This only works if no request has ever used this service. Otherwise, deactivate it instead."
-        confirmLabel="Delete service"
+        title={t('admin.serviceForm.deleteTitle')}
+        message={t('admin.serviceForm.deleteMessage')}
+        confirmLabel={t('admin.serviceForm.delete')}
         confirmVariant="danger"
         busy={remove.pending === 'delete'}
         onConfirm={handleDelete}

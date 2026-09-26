@@ -1,4 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import AreaSwitcher from './admin/AreaSwitcher.jsx';
+import LanguageSwitcher from './LanguageSwitcher.jsx';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { navigate, useRoute } from '../hooks/useRoute.js';
 import { ButtonLink, Link } from './ui.jsx';
@@ -64,27 +66,24 @@ function Icon({ name }) {
   );
 }
 
-// Mobile keeps to Home / Book / Bookings / Profile; desktop adds Services.
+// Mobile keeps to Home / Book / My requests / About; desktop swaps Book for Services.
+// `label`/`shortLabel` are keys under common.nav.
 const NAV_BY_ROLE = {
+  // Customers never sign in: everyone who isn't a provider/admin sees this navigation.
   PUBLIC: [
-    { to: '/', label: 'Home', icon: 'home', exact: true },
-    { to: '/services', label: 'Services', icon: 'grid' },
-    { to: '/about', label: 'About', icon: 'info' },
-  ],
-  CUSTOMER: [
-    { to: '/', label: 'Home', icon: 'home', exact: true },
-    { to: '/services', label: 'Services', icon: 'grid', desktopOnly: true },
-    { to: '/services', label: 'Book', icon: 'plus', mobileOnly: true },
-    { to: '/bookings', label: 'Bookings', icon: 'calendar' },
-    { to: '/profile', label: 'Profile', icon: 'user' },
+    { to: '/', label: 'home', icon: 'home', exact: true },
+    { to: '/services', label: 'services', icon: 'grid', desktopOnly: true },
+    { to: '/services', label: 'book', icon: 'plus', mobileOnly: true },
+    { to: '/requests', label: 'myRequests', icon: 'calendar' },
+    { to: '/about', label: 'about', icon: 'info' },
   ],
   PROVIDER: [
-    { to: '/provider', label: 'Dashboard', icon: 'home', exact: true },
-    { to: '/provider/requests', label: 'Requests', icon: 'briefcase' },
-    { to: '/provider/jobs', label: 'My jobs', shortLabel: 'Jobs', icon: 'wrench' },
-    { to: '/provider/profile', label: 'Profile', icon: 'user' },
+    { to: '/provider', label: 'dashboard', icon: 'home', exact: true },
+    { to: '/provider/requests', label: 'requests', icon: 'briefcase' },
+    { to: '/provider/jobs', label: 'myJobs', shortLabel: 'jobs', icon: 'wrench' },
+    { to: '/provider/profile', label: 'profile', icon: 'user' },
   ],
-  ADMIN: [{ to: '/app/admin', label: 'Admin', icon: 'home', exact: true }],
+  ADMIN: [{ to: '/app/admin', label: 'admin', icon: 'home', exact: true }],
 };
 
 function isActive(item, path) {
@@ -96,6 +95,7 @@ function isActive(item, path) {
 }
 
 function Header({ navItems, path, previewRole }) {
+  const { t } = useTranslation();
   const { isAuthenticated, user, logout } = useAuth();
   const homeTarget = user?.role === 'PROVIDER' ? '/provider' : '/';
 
@@ -107,11 +107,11 @@ function Header({ navItems, path, previewRole }) {
   return (
     <header className="site-header">
       <div className="site-header__inner">
-        <Link to={homeTarget} className="brand-logo brand-logo--header" aria-label="4Fix home">
+        <Link to={homeTarget} className="brand-logo brand-logo--header" aria-label={t('common.brand.homeAria')}>
           <span className="brand-logo__mark">4</span>Fix
         </Link>
 
-        <nav className="site-nav" aria-label="Main">
+        <nav className="site-nav" aria-label={t('common.nav.main')}>
           {navItems
             .filter((item) => !item.mobileOnly)
             .map((item) => (
@@ -121,30 +121,26 @@ function Header({ navItems, path, previewRole }) {
                 className={`site-nav__link${isActive(item, path) ? ' is-active' : ''}`}
                 aria-current={isActive(item, path) ? 'page' : undefined}
               >
-                {item.label}
+                {t(`common.nav.${item.label}`)}
               </Link>
             ))}
         </nav>
 
         <div className="site-header__actions">
+          <LanguageSwitcher />
           {!isAuthenticated ? (
             <>
               <Link to="/login" className="text-link site-header__login">
-                Log in
+                {t('common.nav.providerLogin')}
               </Link>
-              <ButtonLink to="/services" size="sm">
-                Book a service
+              <ButtonLink to="/services" size="sm" className="hide-mobile">
+                {t('common.nav.bookService')}
               </ButtonLink>
             </>
           ) : null}
-          {isAuthenticated && user.role === 'CUSTOMER' ? (
-            <ButtonLink to="/services" size="sm" className="hide-mobile">
-              Book a service
-            </ButtonLink>
-          ) : null}
           {isAuthenticated && user.role === 'ADMIN' ? (
             <button type="button" className="text-link" onClick={handleLogout}>
-              Log out
+              {t('common.nav.logOut')}
             </button>
           ) : null}
         </div>
@@ -153,7 +149,9 @@ function Header({ navItems, path, previewRole }) {
       {previewRole ? (
         <div className="admin-preview-banner">
           <span className="admin-preview-banner__label">
-            Admin Preview — Viewing {previewRole === 'PROVIDER' ? 'Provider' : 'Customer'} Side as Admin
+            {t('common.areas.previewBanner', {
+              side: t(previewRole === 'PROVIDER' ? 'common.areas.providerSide' : 'common.areas.customerSide'),
+            })}
           </span>
           <AreaSwitcher current={previewRole} className="admin-preview-banner__areas" linkClassName="chip" />
         </div>
@@ -163,10 +161,11 @@ function Header({ navItems, path, previewRole }) {
 }
 
 function MobileNav({ navItems, path }) {
+  const { t } = useTranslation();
   const items = navItems.filter((item) => !item.desktopOnly && item.icon);
 
   return (
-    <nav className="mobile-nav" aria-label="Main">
+    <nav className="mobile-nav" aria-label={t('common.nav.main')}>
       {items.map((item) => (
         <Link
           key={item.label}
@@ -177,7 +176,7 @@ function MobileNav({ navItems, path }) {
           aria-current={isActive(item, path) ? 'page' : undefined}
         >
           <Icon name={item.icon} />
-          <span>{item.shortLabel || item.label}</span>
+          <span>{t(`common.navShort.${item.shortLabel || item.label}`)}</span>
         </Link>
       ))}
     </nav>
@@ -196,7 +195,7 @@ function AppShell({ children, width = 'default' }) {
   const { isAuthenticated, user } = useAuth();
   const isAdminPreview = isAuthenticated && user.role === 'ADMIN';
   const previewRole = isAdminPreview ? resolvePreviewRole(path) : null;
-  const navRole = isAdminPreview ? previewRole : isAuthenticated ? user.role : 'PUBLIC';
+  const navRole = isAdminPreview ? (previewRole === 'PROVIDER' ? 'PROVIDER' : 'PUBLIC') : isAuthenticated ? user.role : 'PUBLIC';
   const navItems = NAV_BY_ROLE[navRole] || NAV_BY_ROLE.PUBLIC;
 
   return (

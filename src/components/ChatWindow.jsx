@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { formatClock, formatTimestamp } from '../utils/format.js';
 import { Button } from './ui.jsx';
 
@@ -7,6 +8,7 @@ function dayKey(value) {
 }
 
 function ChatWindow({ messages, counterpartName, busy, error, onSend }) {
+  const { t } = useTranslation();
   const [draft, setDraft] = useState('');
   const endRef = useRef(null);
   const lastCount = useRef(0);
@@ -37,10 +39,10 @@ function ChatWindow({ messages, counterpartName, busy, error, onSend }) {
 
   return (
     <div className="chat">
-      <div className="chat__messages" role="log" aria-live="polite" aria-label="Messages">
+      <div className="chat__messages" role="log" aria-live="polite" aria-label={t('cards.chat.messagesLabel')}>
         {messages.length === 0 ? (
           <p className="chat__empty">
-            No messages yet. Say hello to {counterpartName || 'the other person'}.
+            {t('cards.chat.empty', { name: counterpartName || t('cards.chat.otherPerson') })}
           </p>
         ) : null}
         {messages.map((message) => {
@@ -55,7 +57,7 @@ function ChatWindow({ messages, counterpartName, busy, error, onSend }) {
                 <p className="bubble__text">{message.message}</p>
                 <span className="bubble__meta">
                   {formatClock(message.createdAt)}
-                  {message.isMine ? (message.readAt ? ' · Read' : ' · Sent') : ''}
+                  {message.isMine ? ` · ${message.readAt ? t('cards.chat.read') : t('cards.chat.sent')}` : ''}
                 </span>
               </div>
             </div>
@@ -76,12 +78,12 @@ function ChatWindow({ messages, counterpartName, busy, error, onSend }) {
           className="chat__input"
           value={draft}
           maxLength={2000}
-          placeholder="Type a message"
-          aria-label="Message"
+          placeholder={t('cards.chat.placeholder')}
+          aria-label={t('cards.chat.inputLabel')}
           onChange={(event) => setDraft(event.target.value)}
         />
         <Button type="submit" size="sm" loading={busy} loadingText="…" disabled={!draft.trim()}>
-          Send
+          {t('cards.chat.send')}
         </Button>
       </form>
     </div>

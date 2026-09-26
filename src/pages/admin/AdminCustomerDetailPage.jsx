@@ -1,18 +1,20 @@
+import { useTranslation } from 'react-i18next';
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import { Card, DetailList, ErrorState, LoadingState, PageHeader, StatusBadge } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { navigate } from '../../hooks/useRoute.js';
 import { adminApi } from '../../services/fixApi.js';
-import { formatSlot, formatTimestamp } from '../../utils/format.js';
+import { formatTimestamp } from '../../utils/format.js';
 
 function AdminCustomerDetailPage({ customerId }) {
+  const { t } = useTranslation();
   const data = useApi(() => adminApi.customer(customerId), [customerId]);
-  const back = { to: '/app/admin/customers', label: 'Customers' };
+  const back = { to: '/app/admin/customers', label: t('common.adminNav.customers') };
 
   if (data.loading) {
     return (
       <AdminShell>
-        <LoadingState label="Loading customer…" />
+        <LoadingState label={t('admin.customerDetail.loading')} />
       </AdminShell>
     );
   }
@@ -20,7 +22,7 @@ function AdminCustomerDetailPage({ customerId }) {
   if (data.error) {
     return (
       <AdminShell>
-        <PageHeader title="Customer" back={back} />
+        <PageHeader title={t('admin.customerDetail.fallbackTitle')} back={back} />
         <ErrorState error={data.error} onRetry={data.reload} />
       </AdminShell>
     );
@@ -36,7 +38,7 @@ function AdminCustomerDetailPage({ customerId }) {
         subtitle={customer.username}
         actions={
           <span className={`badge badge--${customer.isActive ? 'success' : 'muted'}`}>
-            {customer.isActive ? 'Active' : 'Deactivated'}
+            {customer.isActive ? t('admin.shared.active') : t('admin.shared.deactivated')}
           </span>
         }
       />
@@ -45,18 +47,18 @@ function AdminCustomerDetailPage({ customerId }) {
         <div>
           <section className="section section--tight" aria-labelledby="customer-requests-heading">
             <h2 id="customer-requests-heading" className="section__title">
-              Requests {requests.length > 0 ? <span className="count">{requests.length}</span> : null}
+              {t('admin.customerDetail.requests')} {requests.length > 0 ? <span className="count">{requests.length}</span> : null}
             </h2>
             {requests.length === 0 ? (
-              <p className="body-text">No requests yet.</p>
+              <p className="body-text">{t('admin.shared.noRequestsYet')}</p>
             ) : (
               <div className="admin-table-wrap">
                 <table className="admin-table">
                   <thead>
                     <tr>
-                      <th>Service</th>
-                      <th>Status</th>
-                      <th>Created</th>
+                      <th>{t('admin.fields.service')}</th>
+                      <th>{t('admin.fields.status')}</th>
+                      <th>{t('admin.fields.created')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -81,19 +83,19 @@ function AdminCustomerDetailPage({ customerId }) {
 
           <section className="section section--tight" aria-labelledby="customer-bookings-heading">
             <h2 id="customer-bookings-heading" className="section__title">
-              Bookings {bookings.length > 0 ? <span className="count">{bookings.length}</span> : null}
+              {t('admin.customerDetail.bookings')} {bookings.length > 0 ? <span className="count">{bookings.length}</span> : null}
             </h2>
             {bookings.length === 0 ? (
-              <p className="body-text">No bookings yet.</p>
+              <p className="body-text">{t('admin.shared.noBookingsYet')}</p>
             ) : (
               <div className="admin-table-wrap">
                 <table className="admin-table">
                   <thead>
                     <tr>
-                      <th>Service</th>
-                      <th>Provider</th>
-                      <th>Status</th>
-                      <th>Visit</th>
+                      <th>{t('admin.fields.service')}</th>
+                      <th>{t('admin.fields.provider')}</th>
+                      <th>{t('admin.fields.status')}</th>
+                      <th>{t('admin.fields.visit')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -108,7 +110,7 @@ function AdminCustomerDetailPage({ customerId }) {
                         <td>
                           <StatusBadge status={booking.status} audience="booking" />
                         </td>
-                        <td>{booking.scheduledDate ? formatSlot(booking.scheduledDate, booking.scheduledTime) : '—'}</td>
+                        <td>{booking.confirmedAt ? formatTimestamp(booking.confirmedAt) : '—'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -119,16 +121,16 @@ function AdminCustomerDetailPage({ customerId }) {
 
           <section className="section section--tight" aria-labelledby="customer-reviews-heading">
             <h2 id="customer-reviews-heading" className="section__title">
-              Reviews left {reviews.length > 0 ? <span className="count">{reviews.length}</span> : null}
+              {t('admin.customerDetail.reviewsLeft')} {reviews.length > 0 ? <span className="count">{reviews.length}</span> : null}
             </h2>
             {reviews.length === 0 ? (
-              <p className="body-text">No reviews yet.</p>
+              <p className="body-text">{t('admin.shared.noReviewsYet')}</p>
             ) : (
               <div className="list">
                 {reviews.map((review) => (
                   <article key={review.id} className="card review-card">
                     <div className="review-card__top">
-                      <strong>{review.rating} / 5</strong>
+                      <strong>{t('admin.shared.ratingOutOf', { rating: review.rating })}</strong>
                       <span className="review-card__meta">{formatTimestamp(review.createdAt)}</span>
                     </div>
                     {review.comment ? <p className="review-card__comment">{review.comment}</p> : null}
@@ -141,11 +143,11 @@ function AdminCustomerDetailPage({ customerId }) {
 
         <aside>
           <Card>
-            <h2 className="card__title">Account</h2>
+            <h2 className="card__title">{t('admin.fields.account')}</h2>
             <DetailList
               items={[
-                { label: 'Phone', value: customer.username },
-                { label: 'Joined', value: formatTimestamp(customer.createdAt) },
+                { label: t('admin.fields.phone'), value: customer.username },
+                { label: t('admin.fields.joined'), value: formatTimestamp(customer.createdAt) },
               ]}
             />
           </Card>

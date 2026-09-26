@@ -1,23 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import TextField from './TextField.jsx';
 import { Button, Notice } from './ui.jsx';
 
 const GEO_OPTIONS = { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 };
 
+// Returns a translation key (translated at render so a language switch updates it).
 function geolocationError(error) {
   if (!window.isSecureContext) {
-    return 'Location needs a secure (https) connection. Open 4Fix over https and try again.';
+    return 'cards.location.errors.insecure';
   }
 
   switch (error?.code) {
     case 1:
-      return 'Location permission was denied. Allow location for this site in your browser settings, then try again.';
+      return 'cards.location.errors.denied';
     case 2:
-      return 'Your location is unavailable right now. Check that location services are on, then try again.';
+      return 'cards.location.errors.unavailable';
     case 3:
-      return 'Finding your location took too long. Move somewhere with a clearer signal and try again.';
+      return 'cards.location.errors.timeout';
     default:
-      return 'We couldn’t read your location. Please try again.';
+      return 'cards.location.errors.unknown';
   }
 }
 
@@ -28,11 +30,13 @@ function mapPreviewUrl(latitude, longitude) {
   return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${latitude},${longitude}`;
 }
 
-export function LocationPreview({ latitude, longitude }) {
+export function LocationPreview({ latitude, longitude, title }) {
+  const { t } = useTranslation();
+
   return (
     <iframe
       className="location-preview"
-      title="Service location on a map"
+      title={title || t('cards.location.mapTitle')}
       src={mapPreviewUrl(latitude, longitude)}
       loading="lazy"
       referrerPolicy="no-referrer"
@@ -40,9 +44,14 @@ export function LocationPreview({ latitude, longitude }) {
   );
 }
 
-// Captures the device's current position for a service request. `value` is
-// { latitude, longitude, address } or null; `address` is an optional typed hint.
-function LocationCapture({ value, onChange, error, disabled = false }) {
+// Captures the device's current position once, on request — a customer's service
+// location, or (variant="shop") a provider's shop location at signup/profile. It never
+// tracks. `value` is { latitude, longitude, address } or null; `address` is an optional
+// typed hint.
+function LocationCapture({ value, onChange, error, disabled = false, variant = 'service', id = 'location' }) {
+  const { t } = useTranslation();
+  // Wording differs per use; everything else (states, errors, buttons) is shared.
+  const copy = (key, options) => t(`cards.${variant === 'shop' ? 'shopLocation' : 'location'}.${key}`, options);
   const supported = typeof navigator !== 'undefined' && Boolean(navigator.geolocation);
   const [status, setStatus] = useState(value ? 'ready' : 'idle');
   const [message, setMessage] = useState('');
@@ -54,7 +63,7 @@ function LocationCapture({ value, onChange, error, disabled = false }) {
   function locate() {
     if (!supported) {
       setStatus('error');
-      setMessage('This browser can’t share your location.');
+      setMessage('cards.location.errors.unsupported');
       return;
     }
 
@@ -88,34 +97,33 @@ function LocationCapture({ value, onChange, error, disabled = false }) {
   }, []);
 
   if (!supported) {
-    return <Notice>This browser can’t share your location. Enter your address manually instead.</Notice>;
+    return <Notice>{copy('unsupportedManual')}</Notice>;
   }
 
   return (
-    <div className="form-stack" id="location" tabIndex={-1}>
+    <div className="form-stack" id={id} tabIndex={-1}>
       {status === 'locating' ? (
         <div className="location-status" role="status">
           <span className="location-status__pulse" aria-hidden="true" />
-          Finding your location… Allow location access if your browser asks.
+          {t('cards.location.locating')}
         </div>
       ) : null}
 
-      {status === 'error' ? <Notice>{message}</Notice> : null}
+      {status === 'error' ? <Notice>{message ? t(message) : ''}</Notice> : null}
       {error && status !== 'error' ? <Notice>{error}</Notice> : null}
 
       {value && status !== 'locating' ? (
         <>
-          <LocationPreview latitude={value.latitude} longitude={value.longitude} />
+          <LocationPreview latitude={value.latitude} longitude={value.longitude} title={copy('mapTitle')} />
           <p className="field-hint">
-            📍 Location captured{accuracy ? ` (accurate to about ${accuracy} m)` : ''}. Your
-            provider will navigate straight here. Not right? Move to the service spot and update it.
+            {accuracy ? copy('capturedAccuracy', { meters: accuracy }) : copy('captured')}
           </p>
           <TextField
-            id="locationAddress"
-            label="Flat, floor or landmark (optional)"
+            id={`${id}Address`}
+            label={copy('landmark')}
             maxLength={240}
             value={value.address || ''}
-            placeholder="e.g. Flat 3B, 2nd floor, opposite the temple"
+            placeholder={copy('landmarkPlaceholder')}
             disabled={disabled}
             onChange={(event) => onChange({ ...value, address: event.target.value })}
           />
@@ -124,7 +132,11 @@ function LocationCapture({ value, onChange, error, disabled = false }) {
 
       {status !== 'locating' ? (
         <Button variant="secondary" onClick={locate} disabled={disabled}>
-          {status === 'error' ? 'Try again' : value ? 'Update to my current location' : 'Use my current location'}
+          {status === 'error'
+            ? t('cards.location.tryAgain')
+            : value
+              ? t('cards.location.update')
+              : t('cards.location.use')}
         </Button>
       ) : null}
     </div>

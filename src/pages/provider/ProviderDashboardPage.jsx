@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import AppShell from '../../components/AppShell.jsx';
 import { RequestCard } from '../../components/cards.jsx';
 import {
@@ -25,6 +26,7 @@ function StatTile({ label, value, to }) {
 }
 
 function ProviderDashboardPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const open = useApi(async () => ({ pending: (await providerApi.listRequests()).requests }), []);
   const jobs = useApi(() => providerApi.jobs(), []);
@@ -35,16 +37,16 @@ function ProviderDashboardPage() {
   return (
     <AppShell>
       <PageHeader
-        title={`Hi ${firstName(user.name)}`}
-        subtitle="Find new work and keep your jobs moving."
+        title={t('provider.dashboard.greeting', { name: firstName(user.name) })}
+        subtitle={t('provider.dashboard.subtitle')}
         actions={
           <ButtonLink to="/provider/requests" size="sm" className="hide-mobile">
-            Browse requests
+            {t('provider.dashboard.browseRequests')}
           </ButtonLink>
         }
       />
 
-      {loading ? <LoadingState label="Loading your dashboard…" /> : null}
+      {loading ? <LoadingState label={t('provider.dashboard.loading')} /> : null}
 
       {!loading && open.error && jobs.error ? (
         <ErrorState
@@ -59,25 +61,25 @@ function ProviderDashboardPage() {
       {!loading && !(open.error && jobs.error) ? (
         <>
           <div className="stat-grid">
-            <StatTile label="Available requests" value={open.data?.pending.length} to="/provider/requests" />
-            <StatTile label="Active jobs" value={grouped?.active.length} to="/provider/jobs" />
-            <StatTile label="Completed" value={grouped?.completed.length} to="/provider/jobs?tab=completed" />
+            <StatTile label={t('provider.dashboard.statAvailable')} value={open.data?.pending.length} to="/provider/requests" />
+            <StatTile label={t('provider.dashboard.statActive')} value={grouped?.active.length} to="/provider/jobs" />
+            <StatTile label={t('provider.dashboard.statCompleted')} value={grouped?.completed.length} to="/provider/jobs?tab=completed" />
           </div>
 
-          {jobs.error ? <Notice>{`Couldn’t load your jobs: ${jobs.error.message}`}</Notice> : null}
+          {jobs.error ? <Notice>{t('provider.dashboard.jobsLoadError', { message: jobs.error.message })}</Notice> : null}
 
           {grouped ? (
             <section className="section section--tight">
               <div className="section__header">
-                <h2 className="section__title">Active jobs</h2>
+                <h2 className="section__title">{t('provider.dashboard.activeJobs')}</h2>
                 <Link to="/provider/jobs" className="text-link">
-                  All jobs
+                  {t('provider.dashboard.allJobs')}
                 </Link>
               </div>
               {grouped.active.length === 0 ? (
                 <EmptyState
-                  title="No active jobs"
-                  message="Jobs appear here when you accept a request."
+                  title={t('provider.dashboard.noActiveTitle')}
+                  message={t('provider.dashboard.noActiveMessage')}
                 />
               ) : (
                 <div className="list">
@@ -94,15 +96,15 @@ function ProviderDashboardPage() {
           ) : (
             <section className="section section--tight">
               <div className="section__header">
-                <h2 className="section__title">Latest requests</h2>
+                <h2 className="section__title">{t('provider.dashboard.latestRequests')}</h2>
                 <Link to="/provider/requests" className="text-link">
-                  See all
+                  {t('provider.dashboard.seeAll')}
                 </Link>
               </div>
               {open.data.pending.length === 0 ? (
                 <EmptyState
-                  title="No new requests right now"
-                  message="New customer requests will show up here."
+                  title={t('provider.dashboard.noRequestsTitle')}
+                  message={t('provider.dashboard.noRequestsMessage')}
                 />
               ) : (
                 <div className="list">

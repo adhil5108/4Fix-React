@@ -1,24 +1,24 @@
+import { useTranslation } from 'react-i18next';
 import AppShell from '../../components/AppShell.jsx';
 import { RequestCard } from '../../components/cards.jsx';
 import {
   ButtonLink,
   EmptyState,
   ErrorState,
-  Link,
   LoadingState,
   PageHeader,
 } from '../../components/ui.jsx';
-import { useApi } from '../../hooks/useApi.js';
+import { useSavedRequests } from '../../hooks/useSavedRequests.js';
 import { navigate, useQueryParam } from '../../hooks/useRoute.js';
-import { requestsApi } from '../../services/fixApi.js';
 import { REQUEST_STATUSES, statusLabel } from '../../utils/format.js';
 
-// Every request the customer made, including ones still waiting for a provider.
+// Requests made from this browser (customers have no account).
 function RequestsPage() {
+  const { t } = useTranslation();
   const rawStatus = (useQueryParam('status') || '').toUpperCase();
   const status = REQUEST_STATUSES.includes(rawStatus) ? rawStatus : '';
-  const requests = useApi(() => requestsApi.list(status || undefined), [status]);
-  const list = requests.data?.requests || [];
+  const requests = useSavedRequests();
+  const list = (requests.data || []).filter((request) => !status || request.status === status);
 
   function selectStatus(nextStatus) {
     navigate(nextStatus ? `/requests?status=${nextStatus}` : '/requests', { replace: true });
@@ -27,23 +27,23 @@ function RequestsPage() {
   return (
     <AppShell>
       <PageHeader
-        title="My requests"
-        subtitle="Everything you’ve asked for, including requests still waiting for a provider."
+        title={t('customer.requests.title')}
+        subtitle={t('customer.requests.subtitle')}
         actions={
           <ButtonLink to="/services" size="sm" className="hide-mobile">
-            Book a service
+            {t('common.nav.bookService')}
           </ButtonLink>
         }
       />
 
-      <div className="chip-row chip-row--scroll" role="group" aria-label="Filter by status">
+      <div className="chip-row chip-row--scroll" role="group" aria-label={t('customer.requests.filterLabel')}>
         <button
           type="button"
           className={`chip${!status ? ' is-active' : ''}`}
           aria-pressed={!status}
           onClick={() => selectStatus('')}
         >
-          All
+          {t('customer.requests.all')}
         </button>
         {REQUEST_STATUSES.map((item) => (
           <button
@@ -58,23 +58,23 @@ function RequestsPage() {
         ))}
       </div>
 
-      {requests.loading ? <LoadingState label="Loading your requests…" /> : null}
+      {requests.loading ? <LoadingState label={t('customer.requests.loading')} /> : null}
       {requests.error ? <ErrorState error={requests.error} onRetry={requests.reload} /> : null}
       {!requests.loading && !requests.error && list.length === 0 ? (
         status ? (
           <EmptyState
-            title={`No requests with status “${statusLabel(status)}”`}
+            title={t('customer.requests.emptyFiltered', { status: statusLabel(status) })}
             action={
               <button type="button" className="text-link" onClick={() => selectStatus('')}>
-                Show all requests
+                {t('customer.requests.showAll')}
               </button>
             }
           />
         ) : (
           <EmptyState
-            title="No requests yet"
-            message="Book a service and a nearby provider will accept the job."
-            action={<ButtonLink to="/services">Book a service</ButtonLink>}
+            title={t('customer.requests.emptyTitle')}
+            message={t('customer.requests.emptyMessage')}
+            action={<ButtonLink to="/services">{t('common.nav.bookService')}</ButtonLink>}
           />
         )
       ) : null}
@@ -86,12 +86,7 @@ function RequestsPage() {
         </div>
       ) : null}
 
-      <p className="page-footnote">
-        Confirmed bookings live in{' '}
-        <Link to="/bookings" className="text-link">
-          My bookings
-        </Link>
-      </p>
+      <p className="page-footnote">{t('customer.requests.deviceNote')}</p>
     </AppShell>
   );
 }

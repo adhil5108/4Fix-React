@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AddressForm, validateAddress } from '../../components/AddressForm.jsx';
 import AppShell from '../../components/AppShell.jsx';
 import ImageAttachments from '../../components/ImageAttachments.jsx';
 import TextField, { TextArea } from '../../components/TextField.jsx';
 import { Button, Card, ErrorState, LoadingState, Notice, PageHeader } from '../../components/ui.jsx';
 import { useAction, useApi } from '../../hooks/useApi.js';
+import { useTranslatedErrors } from '../../hooks/useTranslatedErrors.js';
 import { navigate } from '../../hooks/useRoute.js';
 import { providerExternalJobsApi } from '../../services/fixApi.js';
 
@@ -43,32 +45,34 @@ function formFromJob(job) {
 
 // Scheduled date/time are optional and never restricted to the future here — unlike a
 // customer's preferred slot, a provider may be logging work that already happened.
-function validate(form) {
-  const errors = { ...validateAddress(form) };
+function validate(form, t) {
+  const errors = { ...validateAddress(form, t) };
 
-  if (!form.customerName.trim()) errors.customerName = 'Enter the customer’s name.';
-  if (!form.serviceLabel.trim()) errors.serviceLabel = 'Enter the service or job type.';
+  if (!form.customerName.trim()) errors.customerName = t('provider.externalForm.errors.customerName');
+  if (!form.serviceLabel.trim()) errors.serviceLabel = t('provider.externalForm.errors.serviceLabel');
 
   const descriptionLength = form.description.trim().length;
-  if (descriptionLength === 0) errors.description = 'Describe the job.';
-  else if (descriptionLength > 2000) errors.description = 'Description must be 2000 characters or fewer.';
+  if (descriptionLength === 0) errors.description = t('provider.externalForm.errors.descriptionRequired');
+  else if (descriptionLength > 2000) errors.description = t('provider.externalForm.errors.descriptionTooLong');
 
   if (form.scheduledDate && !DATE_PATTERN.test(form.scheduledDate)) {
-    errors.scheduledDate = 'Enter a valid date.';
+    errors.scheduledDate = t('provider.externalForm.errors.date');
   }
   if (form.scheduledTime && !TIME_PATTERN.test(form.scheduledTime)) {
-    errors.scheduledTime = 'Enter a valid time.';
+    errors.scheduledTime = t('provider.externalForm.errors.time');
   }
 
   return errors;
 }
 
 function ExternalJobForm({ jobId, initialJob }) {
+  const { t } = useTranslation();
   const isEdit = Boolean(jobId);
   const [form, setForm] = useState(() => (initialJob ? formFromJob(initialJob) : emptyForm()));
   const [attachments, setAttachments] = useState(initialJob?.attachments || []);
   const [initialNote, setInitialNote] = useState('');
   const [errors, setErrors] = useState({});
+  useTranslatedErrors(setErrors, () => validate(form, t));
   const submit = useAction();
 
   function updateField(field, value) {
@@ -79,7 +83,7 @@ function ExternalJobForm({ jobId, initialJob }) {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    const nextErrors = validate(form);
+    const nextErrors = validate(form, t);
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
@@ -126,50 +130,50 @@ function ExternalJobForm({ jobId, initialJob }) {
       <Notice>{submit.error}</Notice>
 
       <Card>
-        <h2 className="card__title">Customer</h2>
+        <h2 className="card__title">{t('provider.externalForm.customerTitle')}</h2>
         <div className="form-stack">
           <TextField
             id="customerName"
-            label="Customer name"
+            label={t('provider.externalForm.customerName')}
             maxLength={120}
             value={form.customerName}
             error={errors.customerName}
-            placeholder="Who is this job for?"
+            placeholder={t('provider.externalForm.customerNamePlaceholder')}
             onChange={(event) => updateField('customerName', event.target.value)}
           />
           <TextField
             id="customerPhone"
-            label="Customer phone (optional)"
+            label={t('provider.externalForm.customerPhone')}
             type="tel"
             maxLength={20}
             value={form.customerPhone}
             error={errors.customerPhone}
-            placeholder="Optional"
+            placeholder={t('provider.externalForm.optional')}
             onChange={(event) => updateField('customerPhone', event.target.value)}
           />
         </div>
       </Card>
 
       <Card>
-        <h2 className="card__title">The job</h2>
+        <h2 className="card__title">{t('provider.externalForm.jobTitle')}</h2>
         <div className="form-stack">
           <TextField
             id="serviceLabel"
-            label="Service / job type"
+            label={t('provider.shared.serviceType')}
             maxLength={120}
             value={form.serviceLabel}
             error={errors.serviceLabel}
-            placeholder="e.g. AC gas refill"
+            placeholder={t('provider.externalForm.serviceLabelPlaceholder')}
             onChange={(event) => updateField('serviceLabel', event.target.value)}
           />
           <TextArea
             id="description"
-            label="Description / issue"
+            label={t('provider.externalForm.description')}
             rows={4}
             maxLength={2000}
             value={form.description}
             error={errors.description}
-            placeholder="What was the job? What did the customer report?"
+            placeholder={t('provider.externalForm.descriptionPlaceholder')}
             onChange={(event) => updateField('description', event.target.value)}
           />
           <ImageAttachments attachments={attachments} setAttachments={setAttachments} />
@@ -177,19 +181,17 @@ function ExternalJobForm({ jobId, initialJob }) {
       </Card>
 
       <Card>
-        <h2 className="card__title">Location</h2>
+        <h2 className="card__title">{t('provider.externalForm.locationTitle')}</h2>
         <AddressForm form={form} errors={errors} onChange={updateField} />
       </Card>
 
       <Card>
-        <h2 className="card__title">Scheduled visit (optional)</h2>
-        <p className="field-hint">
-          Leave blank if it isn’t scheduled yet, or use a past date if you’re logging work already done.
-        </p>
+        <h2 className="card__title">{t('provider.externalForm.scheduleTitle')}</h2>
+        <p className="field-hint">{t('provider.externalForm.scheduleHint')}</p>
         <div className="form-row">
           <TextField
             id="scheduledDate"
-            label="Date"
+            label={t('provider.externalForm.date')}
             type="date"
             value={form.scheduledDate}
             error={errors.scheduledDate}
@@ -197,7 +199,7 @@ function ExternalJobForm({ jobId, initialJob }) {
           />
           <TextField
             id="scheduledTime"
-            label="Time"
+            label={t('provider.externalForm.time')}
             type="time"
             value={form.scheduledTime}
             error={errors.scheduledTime}
@@ -208,23 +210,23 @@ function ExternalJobForm({ jobId, initialJob }) {
 
       {!isEdit ? (
         <Card>
-          <h2 className="card__title">Private notes (optional)</h2>
-          <p className="field-hint">Only visible to you. You can add more later from the job page.</p>
+          <h2 className="card__title">{t('provider.externalForm.notesTitle')}</h2>
+          <p className="field-hint">{t('provider.externalForm.notesHint')}</p>
           <TextArea
             id="initialNote"
-            label="Note"
+            label={t('provider.externalForm.noteLabel')}
             rows={3}
             maxLength={2000}
             value={initialNote}
-            placeholder="Materials used, follow-up needed, anything for your own records…"
+            placeholder={t('provider.externalForm.notePlaceholder')}
             onChange={(event) => setInitialNote(event.target.value)}
           />
         </Card>
       ) : null}
 
       <div className="sticky-actions">
-        <Button type="submit" block size="lg" loading={submit.pending === 'save'} loadingText="Saving…">
-          {isEdit ? 'Save changes' : 'Add job'}
+        <Button type="submit" block size="lg" loading={submit.pending === 'save'} loadingText={t('provider.externalForm.saving')}>
+          {isEdit ? t('provider.externalForm.save') : t('provider.externalForm.add')}
         </Button>
       </div>
     </form>
@@ -232,16 +234,17 @@ function ExternalJobForm({ jobId, initialJob }) {
 }
 
 function ExternalJobFormPage({ jobId }) {
+  const { t } = useTranslation();
   const isEdit = Boolean(jobId);
   const data = useApi(() => (isEdit ? providerExternalJobsApi.get(jobId) : Promise.resolve(null)), [jobId]);
   const back = isEdit
-    ? { to: `/provider/jobs/external/${jobId}`, label: 'Job details' }
-    : { to: '/provider/jobs', label: 'My jobs' };
+    ? { to: `/provider/jobs/external/${jobId}`, label: t('provider.externalForm.backToJob') }
+    : { to: '/provider/jobs', label: t('provider.shared.myJobs') };
 
   if (isEdit && data.loading) {
     return (
       <AppShell width="narrow">
-        <LoadingState label="Loading job…" />
+        <LoadingState label={t('provider.shared.loadingJob')} />
       </AppShell>
     );
   }
@@ -249,7 +252,7 @@ function ExternalJobFormPage({ jobId }) {
   if (isEdit && data.error) {
     return (
       <AppShell width="narrow">
-        <PageHeader title="Job" back={back} />
+        <PageHeader title={t('provider.shared.job')} back={back} />
         <ErrorState error={data.error} onRetry={data.reload} />
       </AppShell>
     );
@@ -259,8 +262,8 @@ function ExternalJobFormPage({ jobId }) {
     <AppShell width="narrow">
       <PageHeader
         back={back}
-        title={isEdit ? 'Edit job' : 'Add a job'}
-        subtitle={isEdit ? undefined : 'Record a job that came in outside 4Fix.'}
+        title={isEdit ? t('provider.externalForm.editTitle') : t('provider.externalForm.addTitle')}
+        subtitle={isEdit ? undefined : t('provider.externalForm.subtitle')}
       />
       <ExternalJobForm jobId={jobId} initialJob={isEdit ? data.data.job : null} />
     </AppShell>

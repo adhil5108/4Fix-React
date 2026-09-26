@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { navigate } from '../hooks/useRoute.js';
 import { statusLabel, statusTone } from '../utils/format.js';
 
@@ -41,6 +42,7 @@ export function Button({
   type = 'button',
   ...props
 }) {
+  const { t } = useTranslation();
   const classes = [
     'btn',
     `btn--${variant}`,
@@ -53,7 +55,7 @@ export function Button({
 
   return (
     <button ref={ref} type={type} className={classes} disabled={disabled || loading} {...props}>
-      {loading ? loadingText || 'Please wait…' : children}
+      {loading ? loadingText || t('common.actions.pleaseWait') : children}
     </button>
   );
 }
@@ -71,6 +73,8 @@ export function ButtonLink({ to, variant = 'primary', size, block = false, class
 }
 
 export function StatusBadge({ status, audience }) {
+  // Subscribes to language changes so the translated label re-renders on switch.
+  useTranslation();
   return (
     <span className={`badge badge--${statusTone(status)}`}>{statusLabel(status, { audience })}</span>
   );
@@ -95,11 +99,12 @@ export function PageHeader({ title, subtitle, back, actions }) {
   );
 }
 
-export function LoadingState({ label = 'Loading…' }) {
+export function LoadingState({ label }) {
+  const { t } = useTranslation();
   return (
     <div className="state" role="status" aria-live="polite">
       <span className="spinner" aria-hidden="true" />
-      <p>{label}</p>
+      <p>{label || t('common.states.loading')}</p>
     </div>
   );
 }
@@ -115,23 +120,24 @@ export function EmptyState({ title, message, action }) {
 }
 
 export function ErrorState({ error, onRetry }) {
+  const { t } = useTranslation();
   const isNetwork = error?.code === 'NETWORK_ERROR';
   const isForbidden = error?.status === 403;
   const isMissing = error?.status === 404;
 
-  let title = 'Something went wrong';
-  if (isNetwork) title = 'You appear to be offline';
-  if (isForbidden) title = 'You don’t have access to this';
-  if (isMissing) title = 'Not found';
+  let title = t('common.states.somethingWrong');
+  if (isNetwork) title = t('common.states.offline');
+  if (isForbidden) title = t('common.states.noAccess');
+  if (isMissing) title = t('common.states.notFound');
 
   return (
     <div className="state state--error" role="alert">
       <p className="state__title">{title}</p>
-      <p>{error?.message || 'Please try again.'}</p>
+      <p>{error?.message || t('common.states.pleaseTryAgain')}</p>
       {onRetry && !isForbidden && !isMissing ? (
         <div className="state__action">
           <Button variant="secondary" onClick={() => onRetry()}>
-            Try again
+            {t('common.actions.tryAgain')}
           </Button>
         </div>
       ) : null}
@@ -184,6 +190,7 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }) {
+  const { t } = useTranslation();
   const cancelRef = useRef(null);
   const latest = useRef({ busy, onCancel });
   latest.current = { busy, onCancel };
@@ -229,7 +236,7 @@ export function ConfirmDialog({
         <p id="dialog-message">{message}</p>
         <div className="dialog__actions">
           <Button ref={cancelRef} variant="secondary" onClick={onCancel} disabled={busy}>
-            Go back
+            {t('common.actions.goBack')}
           </Button>
           <Button variant={confirmVariant} onClick={onConfirm} loading={busy}>
             {confirmLabel}

@@ -1,6 +1,9 @@
+import { useTranslation } from 'react-i18next';
 import { Button } from '../ui.jsx';
 
 function AdminPagination({ page, totalPages, total, onChange }) {
+  const { t } = useTranslation();
+
   if (totalPages <= 1) {
     return null;
   }
@@ -13,10 +16,10 @@ function AdminPagination({ page, totalPages, total, onChange }) {
         disabled={page <= 1}
         onClick={() => onChange(page - 1)}
       >
-        Previous
+        {t('admin.pagination.previous')}
       </Button>
       <span className="admin-pagination__label">
-        Page {page} of {totalPages} · {total} total
+        {t('admin.pagination.summary', { page, pages: totalPages, total })}
       </span>
       <Button
         variant="secondary"
@@ -24,7 +27,7 @@ function AdminPagination({ page, totalPages, total, onChange }) {
         disabled={page >= totalPages}
         onClick={() => onChange(page + 1)}
       >
-        Next
+        {t('admin.pagination.next')}
       </Button>
     </div>
   );

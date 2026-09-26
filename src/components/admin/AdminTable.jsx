@@ -1,11 +1,14 @@
+import { useTranslation } from 'react-i18next';
 import { navigate } from '../../hooks/useRoute.js';
 import { EmptyState, ErrorState, LoadingState } from '../ui.jsx';
 
 // A small, generic column-driven table. Each column is { key, label, render? }; render
 // defaults to reading `row[key]`. Rows are optionally clickable via `getRowHref`.
 function AdminTable({ columns, rows, loading, error, onRetry, emptyTitle, emptyMessage, getRowHref }) {
+  const { t } = useTranslation();
+
   if (loading) {
-    return <LoadingState label="Loading…" />;
+    return <LoadingState label={t('admin.table.loading')} />;
   }
 
   if (error) {

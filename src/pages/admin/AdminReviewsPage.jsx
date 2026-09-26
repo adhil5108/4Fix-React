@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import AdminPagination from '../../components/admin/AdminPagination.jsx';
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import AdminTable from '../../components/admin/AdminTable.jsx';
@@ -7,14 +8,16 @@ import { navigate, useQueryParam } from '../../hooks/useRoute.js';
 import { adminApi } from '../../services/fixApi.js';
 import { formatTimestamp } from '../../utils/format.js';
 
+// Column labels are i18n keys, translated at render.
 const COLUMNS = [
-  { key: 'customer', label: 'Customer', render: (row) => row.customer?.name || '—' },
-  { key: 'rating', label: 'Rating', render: (row) => `${row.rating} / 5` },
-  { key: 'comment', label: 'Comment', render: (row) => row.comment || '—' },
-  { key: 'createdAt', label: 'Created', render: (row) => formatTimestamp(row.createdAt) },
+  { key: 'customer', label: 'admin.fields.customer', render: (row) => row.customer?.name || '—' },
+  { key: 'rating', label: 'admin.fields.rating', render: (row, t) => t('admin.shared.ratingOutOf', { rating: row.rating }) },
+  { key: 'comment', label: 'admin.fields.comment', render: (row) => row.comment || '—' },
+  { key: 'createdAt', label: 'admin.fields.created', render: (row) => formatTimestamp(row.createdAt) },
 ];
 
 function AdminReviewsPage() {
+  const { t } = useTranslation();
   const page = Number(useQueryParam('page')) || 1;
   const provider = useQueryParam('provider') || '';
   const customer = useQueryParam('customer') || '';
@@ -23,6 +26,12 @@ function AdminReviewsPage() {
     () => adminApi.reviews({ page, provider: provider || undefined, customer: customer || undefined }),
     [page, provider, customer],
   );
+
+  const columns = COLUMNS.map((column) => ({
+    ...column,
+    label: t(column.label),
+    render: column.render ? (row) => column.render(row, t) : undefined,
+  }));
 
   function updateQuery(next) {
     const params = new URLSearchParams({
@@ -41,15 +50,15 @@ function AdminReviewsPage() {
 
   return (
     <AdminShell>
-      <PageHeader title="Reviews" subtitle="Ratings and comments customers left for providers." />
+      <PageHeader title={t('common.adminNav.reviews')} subtitle={t('admin.reviews.subtitle')} />
 
       <AdminTable
-        columns={COLUMNS}
+        columns={columns}
         rows={reviews.data?.reviews || []}
         loading={reviews.loading}
         error={reviews.error}
         onRetry={reviews.reload}
-        emptyTitle="No reviews found"
+        emptyTitle={t('admin.reviews.emptyTitle')}
         getRowHref={(row) => `/app/admin/reviews/${row.id}`}
       />
 

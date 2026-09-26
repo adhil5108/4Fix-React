@@ -1,4 +1,5 @@
 import { apiRequest, toQueryString, uploadFile } from './api.js';
+import { tokenForBooking, tokenForRequest } from './customerAccess.js';
 
 const id = (value) => encodeURIComponent(value);
 
@@ -18,26 +19,48 @@ export const providersApi = {
   reviews: (providerId) => apiRequest(`/api/providers/${id(providerId)}/reviews`, { auth: false }),
 };
 
+// Anonymous customer calls: never send a provider/admin JWT, only the request's access
+// token from this browser (see customerAccess.js).
+const asCustomer = (requestToken) => ({ auth: false, requestToken });
+const forRequest = (requestId) => asCustomer(tokenForRequest(requestId));
+const forBooking = (bookingId) => asCustomer(tokenForBooking(bookingId));
+
 export const requestsApi = {
-  create: (payload) => apiRequest('/api/requests', { method: 'POST', body: payload }),
-  list: (status) => apiRequest(`/api/requests${toQueryString({ status })}`),
-  get: (requestId) => apiRequest(`/api/requests/${id(requestId)}`),
-  cancel: (requestId) => apiRequest(`/api/requests/${id(requestId)}/cancel`, { method: 'POST' }),
+  // Returns { request, accessToken } — the token is shown only once.
+  create: (payload) => apiRequest('/api/requests', { method: 'POST', body: payload, auth: false }),
+  get: (requestId) => apiRequest(`/api/requests/${id(requestId)}`, forRequest(requestId)),
+  cancel: (requestId) =>
+    apiRequest(`/api/requests/${id(requestId)}/cancel`, { method: 'POST', ...forRequest(requestId) }),
 };
 
+// The customer's view of the job created from their request.
+export const customerBookingsApi = {
+  get: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}`, forBooking(bookingId)),
+  openChat: (bookingId) =>
+    apiRequest(`/api/bookings/${id(bookingId)}/chat`, { method: 'POST', ...forBooking(bookingId) }),
+  messages: (bookingId, since) =>
+    apiRequest(`/api/bookings/${id(bookingId)}/messages${toQueryString({ since })}`, forBooking(bookingId)),
+  sendMessage: (bookingId, message) =>
+    apiRequest(`/api/bookings/${id(bookingId)}/messages`, {
+      method: 'POST',
+      body: { message },
+      ...forBooking(bookingId),
+    }),
+  markRead: (bookingId) =>
+    apiRequest(`/api/bookings/${id(bookingId)}/messages/read`, { method: 'POST', ...forBooking(bookingId) }),
+  review: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}/review`, forBooking(bookingId)),
+  createReview: (bookingId, { rating, comment }) =>
+    apiRequest(`/api/bookings/${id(bookingId)}/review`, {
+      method: 'POST',
+      body: { rating, comment: comment || undefined },
+      ...forBooking(bookingId),
+    }),
+};
+
+// Provider/admin (JWT) view of jobs, chat and reviews.
 export const bookingsApi = {
   list: ({ status } = {}) => apiRequest(`/api/bookings${toQueryString({ status })}`),
   get: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}`),
-  tracking: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}/tracking`),
-
-  onTheWay: (bookingId) =>
-    apiRequest(`/api/bookings/${id(bookingId)}/on-the-way`, { method: 'POST' }),
-  arrived: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}/arrived`, { method: 'POST' }),
-  updateLocation: (bookingId, { latitude, longitude }) =>
-    apiRequest(`/api/bookings/${id(bookingId)}/location`, {
-      method: 'PATCH',
-      body: { latitude, longitude },
-    }),
 
   openChat: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}/chat`, { method: 'POST' }),
   // Read-only GET, never creates a conversation — used by admin's platform-wide,
@@ -52,11 +75,6 @@ export const bookingsApi = {
     apiRequest(`/api/bookings/${id(bookingId)}/messages/read`, { method: 'POST' }),
 
   review: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}/review`),
-  createReview: (bookingId, { rating, comment }) =>
-    apiRequest(`/api/bookings/${id(bookingId)}/review`, {
-      method: 'POST',
-      body: { rating, comment: comment || undefined },
-    }),
 
   // Private to the provider — never returned in the customer/admin booking payload.
   notes: {
@@ -112,11 +130,6 @@ export const providerApi = {
     apiRequest(`/api/provider/jobs${toQueryString({ status, bookingStatus })}`),
   // Atomically claims an open request; 409 when another provider got there first.
   accept: (requestId) => apiRequest(`/api/requests/${id(requestId)}/accept`, { method: 'POST' }),
-  schedule: (requestId, { scheduledDate, scheduledTime }) =>
-    apiRequest(`/api/requests/${id(requestId)}/schedule`, {
-      method: 'POST',
-      body: { scheduledDate, scheduledTime },
-    }),
   start: (requestId) => apiRequest(`/api/requests/${id(requestId)}/start`, { method: 'POST' }),
   complete: (requestId) =>
     apiRequest(`/api/requests/${id(requestId)}/complete`, { method: 'POST' }),

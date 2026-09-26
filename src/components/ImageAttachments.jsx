@@ -1,17 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { uploadsApi } from '../services/fixApi.js';
 
 export const MAX_ATTACHMENTS = 10;
 
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGE_MB = 5;
+const MAX_IMAGE_BYTES = MAX_IMAGE_MB * 1024 * 1024;
 
+// Local validation errors are stored as { key } and translated at render; upload errors
+// are API messages (already translated) and are stored as plain strings.
 function validateImageFile(file) {
   if (!file.type.startsWith('image/')) {
-    return 'Only image files are allowed.';
+    return { key: 'cards.photos.onlyImages' };
   }
 
   if (file.size > MAX_IMAGE_BYTES) {
-    return 'Images must be 5MB or smaller.';
+    return { key: 'cards.photos.tooLarge', values: { size: MAX_IMAGE_MB } };
   }
 
   return '';
@@ -24,11 +28,12 @@ function ImageAttachments({
   attachments,
   setAttachments,
   error,
-  label = 'Photos (optional)',
-  hint = `Up to ${MAX_ATTACHMENTS} photos, 5MB each.`,
+  label,
+  hint,
 }) {
+  const { t } = useTranslation();
   const [items, setItems] = useState([]);
-  const [pickError, setPickError] = useState('');
+  const [pickError, setPickError] = useState(false);
   const inputRef = useRef(null);
   const removedIdsRef = useRef(new Set());
 
@@ -75,12 +80,12 @@ function ImageAttachments({
     const availableSlots = MAX_ATTACHMENTS - items.length;
 
     if (availableSlots <= 0) {
-      setPickError(`You can add up to ${MAX_ATTACHMENTS} photos.`);
+      setPickError(true);
       return;
     }
 
     const accepted = files.slice(0, availableSlots);
-    setPickError(files.length > accepted.length ? `You can add up to ${MAX_ATTACHMENTS} photos.` : '');
+    setPickError(files.length > accepted.length);
 
     const newItems = accepted.map((file) => {
       const validationError = validateImageFile(file);
@@ -118,7 +123,7 @@ function ImageAttachments({
 
   return (
     <div className="field">
-      <label htmlFor="imageInput">{label}</label>
+      <label htmlFor="imageInput">{label ?? t('cards.photos.label')}</label>
       <input
         ref={inputRef}
         id="imageInput"
@@ -139,7 +144,7 @@ function ImageAttachments({
               {item.status === 'uploading' ? (
                 <span className="image-picker__overlay" aria-live="polite">
                   <span className="spinner spinner--sm" aria-hidden="true" />
-                  <span className="sr-only">Uploading…</span>
+                  <span className="sr-only">{t('cards.photos.uploading')}</span>
                 </span>
               ) : null}
               {item.status === 'success' ? (
@@ -152,15 +157,15 @@ function ImageAttachments({
               type="button"
               className="image-picker__remove"
               onClick={() => removeItem(item)}
-              aria-label="Remove photo"
+              aria-label={t('cards.photos.remove')}
             >
               ×
             </button>
             {item.status === 'error' ? (
               <div className="image-picker__error">
-                <span>{item.error}</span>
+                <span>{item.error?.key ? t(item.error.key, item.error.values) : item.error}</span>
                 <button type="button" className="text-link" onClick={() => retryItem(item)}>
-                  Retry
+                  {t('cards.photos.retry')}
                 </button>
               </div>
             ) : null}
@@ -169,14 +174,14 @@ function ImageAttachments({
         {items.length < MAX_ATTACHMENTS ? (
           <button type="button" className="image-picker__add" onClick={() => inputRef.current?.click()}>
             <span aria-hidden="true">+</span>
-            <span>Add photo</span>
+            <span>{t('cards.photos.add')}</span>
           </button>
         ) : null}
       </div>
       {pickError || error ? (
-        <p className="field-error">{pickError || error}</p>
+        <p className="field-error">{pickError ? t('cards.photos.limit', { max: MAX_ATTACHMENTS }) : error}</p>
       ) : (
-        <p className="field-hint">{hint}</p>
+        <p className="field-hint">{hint ?? t('cards.photos.hint', { max: MAX_ATTACHMENTS, size: MAX_IMAGE_MB })}</p>
       )}
     </div>
   );

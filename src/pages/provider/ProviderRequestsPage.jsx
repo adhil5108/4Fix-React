@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import AcceptJobButton from '../../components/AcceptJobButton.jsx';
 import AppShell from '../../components/AppShell.jsx';
 import { RequestCard } from '../../components/cards.jsx';
@@ -9,6 +10,7 @@ import { usePolling } from '../../hooks/usePolling.js';
 import { providerApi } from '../../services/fixApi.js';
 
 function ProviderRequestsPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const requests = useApi(() => providerApi.listRequests(), []);
   const [taken, setTaken] = useState(() => new Set());
@@ -22,24 +24,24 @@ function ProviderRequestsPage() {
   return (
     <AppShell>
       <PageHeader
-        title="Available requests"
-        subtitle="Open customer requests near you. The first provider to accept gets the job."
+        title={t('provider.requests.title')}
+        subtitle={t('provider.requests.subtitle')}
         actions={
           <Link to="/provider/jobs" className="text-link hide-mobile">
-            My jobs →
+            {t('provider.requests.myJobsLink')}
           </Link>
         }
       />
 
-      {requests.loading ? <LoadingState label="Loading requests…" /> : null}
+      {requests.loading ? <LoadingState label={t('provider.requests.loading')} /> : null}
       {requests.error && !requests.data ? (
         <ErrorState error={requests.error} onRetry={requests.reload} />
       ) : null}
 
       {requests.data && list.length === 0 ? (
         <EmptyState
-          title="No open requests"
-          message="Check back soon — new customer requests appear here."
+          title={t('provider.requests.emptyTitle')}
+          message={t('provider.requests.emptyMessage')}
         />
       ) : null}
 

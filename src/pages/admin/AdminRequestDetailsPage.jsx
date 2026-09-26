@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import { AddressBlock, ServiceLocationBlock, AttachmentList, VoiceNoteBlock } from '../../components/cards.jsx';
 import {
@@ -11,16 +12,17 @@ import {
 } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { adminApi } from '../../services/fixApi.js';
-import { formatSlot, formatTimestamp } from '../../utils/format.js';
+import { formatIssueLabel, formatSlot, formatTimestamp } from '../../utils/format.js';
 
 function AdminRequestDetailsPage({ requestId }) {
+  const { t } = useTranslation();
   const data = useApi(() => adminApi.request(requestId), [requestId]);
-  const back = { to: '/app/admin/requests', label: 'Requests' };
+  const back = { to: '/app/admin/requests', label: t('common.adminNav.requests') };
 
   if (data.loading) {
     return (
       <AdminShell>
-        <LoadingState label="Loading request…" />
+        <LoadingState label={t('admin.requestDetail.loading')} />
       </AdminShell>
     );
   }
@@ -28,7 +30,7 @@ function AdminRequestDetailsPage({ requestId }) {
   if (data.error) {
     return (
       <AdminShell>
-        <PageHeader title="Request" back={back} />
+        <PageHeader title={t('admin.requestDetail.fallbackTitle')} back={back} />
         <ErrorState error={data.error} onRetry={data.reload} />
       </AdminShell>
     );
@@ -40,38 +42,37 @@ function AdminRequestDetailsPage({ requestId }) {
     <AdminShell>
       <PageHeader
         back={back}
-        title={request.service?.name || 'Service request'}
-        subtitle={`${request.customer?.name || 'Customer'} · requested ${formatTimestamp(request.createdAt)}`}
+        title={request.service?.name || t('admin.requestDetail.serviceFallback')}
+        subtitle={t('admin.requestDetail.subtitle', {
+          name: request.customer?.name || t('admin.shared.customerFallback'),
+          time: formatTimestamp(request.createdAt),
+        })}
         actions={<StatusBadge status={request.status} />}
       />
 
       <div className="admin-detail">
         <div>
           <Card>
-            <h2 className="card__title">Request</h2>
+            <h2 className="card__title">{t('admin.requestDetail.request')}</h2>
             <DetailList
               items={[
-                { label: 'Customer', value: request.customer?.name },
-                { label: 'Service', value: request.service?.name },
-                { label: 'Issue', value: request.issueLabel },
-                { label: 'Description', value: request.description },
+                { label: t('admin.fields.customer'), value: request.customer?.name },
+                { label: t('admin.fields.service'), value: request.service?.name },
+                { label: t('admin.fields.issue'), value: formatIssueLabel(request.issueKey, request.issueLabel) },
+                { label: t('admin.fields.description'), value: request.description },
                 {
-                  label: 'Preferred time',
+                  label: t('admin.requestDetail.preferredTime'),
                   value: request.preferredDate ? formatSlot(request.preferredDate, request.preferredTime) : '',
                 },
-                { label: 'Accepted', value: request.acceptedAt ? formatTimestamp(request.acceptedAt) : '' },
-                {
-                  label: 'Scheduled visit',
-                  value: request.scheduledDate ? formatSlot(request.scheduledDate, request.scheduledTime) : '',
-                },
+                { label: t('admin.requestDetail.accepted'), value: request.acceptedAt ? formatTimestamp(request.acceptedAt) : '' },
               ]}
             />
-            <h3 className="card__subtitle">Location</h3>
+            <h3 className="card__subtitle">{t('admin.fields.location')}</h3>
             <AddressBlock address={request.address} />
             <ServiceLocationBlock location={request.location} fallback={null} />
             {request.attachments?.length ? (
               <>
-                <h3 className="card__subtitle">Attachments</h3>
+                <h3 className="card__subtitle">{t('admin.fields.attachments')}</h3>
                 <AttachmentList attachments={request.attachments} />
               </>
             ) : null}
@@ -80,13 +81,10 @@ function AdminRequestDetailsPage({ requestId }) {
 
           {booking ? (
             <Card>
-              <h2 className="card__title">Conversation</h2>
-              <p className="body-text">
-                Read the customer/provider chat for this job's booking. Admin can view every message
-                but cannot send as either participant.
-              </p>
+              <h2 className="card__title">{t('admin.requestDetail.conversation')}</h2>
+              <p className="body-text">{t('admin.requestDetail.conversationBody')}</p>
               <Link to={`/app/admin/bookings/${booking.id}`} className="text-link">
-                View conversation →
+                {t('admin.requestDetail.viewConversation')}
               </Link>
             </Card>
           ) : null}
@@ -94,32 +92,28 @@ function AdminRequestDetailsPage({ requestId }) {
           {booking ? (
             <Card>
               <div className="card__heading-row">
-                <h2 className="card__title">Booking</h2>
+                <h2 className="card__title">{t('admin.requestDetail.booking')}</h2>
                 <StatusBadge status={booking.status} audience="booking" />
               </div>
               <DetailList
                 items={[
-                  { label: 'Provider', value: booking.provider?.name },
-                  { label: 'Arrival code', value: booking.arrivalCode },
-                  {
-                    label: 'Scheduled visit',
-                    value: booking.scheduledDate ? formatSlot(booking.scheduledDate, booking.scheduledTime) : '',
-                  },
+                  { label: t('admin.fields.provider'), value: booking.provider?.name },
+                  { label: t('admin.fields.accepted'), value: formatTimestamp(booking.confirmedAt) },
                 ]}
               />
               <Link to={`/app/admin/bookings/${booking.id}`} className="text-link">
-                View booking →
+                {t('admin.shared.viewBooking')}
               </Link>
             </Card>
           ) : null}
 
           {review ? (
             <Card>
-              <h2 className="card__title">Review</h2>
+              <h2 className="card__title">{t('admin.requestDetail.review')}</h2>
               <DetailList
                 items={[
-                  { label: 'Rating', value: `${review.rating} / 5` },
-                  { label: 'Comment', value: review.comment },
+                  { label: t('admin.fields.rating'), value: t('admin.shared.ratingOutOf', { rating: review.rating }) },
+                  { label: t('admin.fields.comment'), value: review.comment },
                 ]}
               />
             </Card>
@@ -128,24 +122,24 @@ function AdminRequestDetailsPage({ requestId }) {
 
         <aside>
           <Card>
-            <h2 className="card__title">Customer</h2>
-            <DetailList items={[{ label: 'Name', value: request.customer?.name }]} />
+            <h2 className="card__title">{t('admin.fields.customer')}</h2>
+            <DetailList items={[{ label: t('admin.fields.name'), value: request.customer?.name }]} />
             {request.customer ? (
               <Link to={`/app/admin/customers/${request.customer.id}`} className="text-link">
-                View customer →
+                {t('admin.shared.viewCustomer')}
               </Link>
             ) : null}
           </Card>
           <Card>
-            <h2 className="card__title">Assigned provider</h2>
+            <h2 className="card__title">{t('admin.requestDetail.assignedProvider')}</h2>
             {request.selectedProvider ? (
-              <DetailList items={[{ label: 'Provider', value: request.selectedProvider.name }]} />
+              <DetailList items={[{ label: t('admin.fields.provider'), value: request.selectedProvider.name }]} />
             ) : (
-              <p className="body-text">No provider has accepted this request yet.</p>
+              <p className="body-text">{t('admin.requestDetail.noProvider')}</p>
             )}
             {request.selectedProvider ? (
               <Link to={`/app/admin/providers/${request.selectedProviderId}`} className="text-link">
-                View provider →
+                {t('admin.shared.viewProvider')}
               </Link>
             ) : null}
           </Card>

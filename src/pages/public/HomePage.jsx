@@ -1,66 +1,62 @@
+import { useTranslation } from 'react-i18next';
 import AppShell from '../../components/AppShell.jsx';
 import SearchBar from '../../components/SearchBar.jsx';
-import { BookingCard, ServiceCard } from '../../components/cards.jsx';
+import { RequestCard, ServiceCard } from '../../components/cards.jsx';
 import { ButtonLink, EmptyState, ErrorState, Link, LoadingState } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
+import { useSavedRequests } from '../../hooks/useSavedRequests.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { navigate } from '../../hooks/useRoute.js';
-import { bookingsApi, servicesApi } from '../../services/fixApi.js';
+import { servicesApi } from '../../services/fixApi.js';
 import { firstName, formatCategory } from '../../utils/format.js';
 
-const STEPS = [
-  { title: 'Tell us what’s wrong', text: 'Pick a service, describe the problem and share your location.' },
-  { title: 'A provider accepts', text: 'A nearby provider takes the job — no quotes to compare.' },
-  { title: 'Track, chat, rate', text: 'Follow the technician, chat in the app and leave a review when it’s done.' },
-];
+// Keys under public.home.steps; labels are translated at render.
+const STEPS = ['report', 'accept', 'track'];
 
-function NextBooking() {
-  const next = useApi(async () => {
-    const active = await bookingsApi.list({ status: 'ACTIVE' });
-    if (active.bookings.length > 0) return active.bookings[0];
-    const upcoming = await bookingsApi.list({ status: 'UPCOMING' });
-    return upcoming.bookings[0] || null;
-  }, []);
+// The customer's most recent open request from this browser, if any.
+function LatestRequest() {
+  const { t } = useTranslation();
+  const saved = useSavedRequests();
+  const latest = (saved.data || []).find((request) => !['CANCELLED', 'COMPLETED'].includes(request.status));
 
-  if (next.loading || next.error || !next.data) {
+  if (!latest) {
     return null;
   }
 
   return (
-    <section className="section section--tight" aria-labelledby="next-heading">
+    <section className="section section--tight" aria-labelledby="latest-heading">
       <div className="section__header">
-        <h2 id="next-heading" className="section__title">
-          Your next booking
+        <h2 id="latest-heading" className="section__title">
+          {t('public.home.latestRequest')}
         </h2>
-        <Link to="/bookings" className="text-link">
-          All bookings
+        <Link to="/requests" className="text-link">
+          {t('common.nav.myRequests')}
         </Link>
       </div>
-      <BookingCard booking={next.data} to={`/bookings/${next.data.id}`} />
+      <RequestCard request={latest} to={`/requests/${latest.id}`} />
     </section>
   );
 }
 
 function HomePage() {
+  const { t } = useTranslation();
   const { isAuthenticated, user } = useAuth();
   const services = useApi(() => servicesApi.list(), []);
   const all = services.data?.services || [];
   const popular = all.filter((service) => service.isPopular);
   const featured = (popular.length > 0 ? popular : all).slice(0, 6);
   const categories = [...new Set(all.map((service) => service.category))].sort();
-  const isCustomer = isAuthenticated && user.role === 'CUSTOMER';
 
   return (
     <AppShell>
       <section className="hero">
         <p className="hero__eyebrow">
-          {isAuthenticated ? `Hi ${firstName(user.name)},` : 'Repairs, maintenance and home services'}
+          {isAuthenticated
+            ? t('public.home.greeting', { name: firstName(user.name) })
+            : t('public.home.eyebrow')}
         </p>
-        <h1 className="hero__title">Something broken? Get it fixed with 4Fix.</h1>
-        <p className="hero__text">
-          Choose a service, tell us what’s wrong, pick a provider and track the technician to
-          your door.
-        </p>
+        <h1 className="hero__title">{t('public.home.title')}</h1>
+        <p className="hero__text">{t('public.home.text')}</p>
         <div className="hero__search">
           <SearchBar
             size="lg"
@@ -70,7 +66,7 @@ function HomePage() {
           />
         </div>
         {categories.length > 0 ? (
-          <div className="chip-row chip-row--scroll hero__categories" aria-label="Categories">
+          <div className="chip-row chip-row--scroll hero__categories" aria-label={t('public.home.categories')}>
             {categories.map((category) => (
               <Link
                 key={category}
@@ -84,24 +80,24 @@ function HomePage() {
         ) : null}
       </section>
 
-      {isCustomer ? <NextBooking /> : null}
+      {!isAuthenticated ? <LatestRequest /> : null}
 
       <section className="section" aria-labelledby="popular-heading">
         <div className="section__header">
           <h2 id="popular-heading" className="section__title">
-            Popular services
+            {t('public.home.popular')}
           </h2>
           <Link to="/services" className="text-link">
-            See all
+            {t('public.home.seeAll')}
           </Link>
         </div>
 
-        {services.loading ? <LoadingState label="Loading services…" /> : null}
+        {services.loading ? <LoadingState label={t('public.home.loadingServices')} /> : null}
         {services.error ? <ErrorState error={services.error} onRetry={services.reload} /> : null}
         {!services.loading && !services.error && featured.length === 0 ? (
           <EmptyState
-            title="No services yet"
-            message="Services will appear here as soon as they are available."
+            title={t('public.home.emptyTitle')}
+            message={t('public.home.emptyMessage')}
           />
         ) : null}
         {featured.length > 0 && !services.error ? (
@@ -115,22 +111,22 @@ function HomePage() {
 
       <section className="section" aria-labelledby="how-heading">
         <h2 id="how-heading" className="section__title">
-          How 4Fix works
+          {t('public.home.howTitle')}
         </h2>
         <ol className="steps">
           {STEPS.map((step, index) => (
-            <li key={step.title} className="step">
+            <li key={step} className="step">
               <span className="step__number">{index + 1}</span>
               <div>
-                <p className="step__title">{step.title}</p>
-                <p className="step__text">{step.text}</p>
+                <p className="step__title">{t(`public.home.steps.${step}.title`)}</p>
+                <p className="step__text">{t(`public.home.steps.${step}.text`)}</p>
               </div>
             </li>
           ))}
         </ol>
         <div className="section__cta">
           <ButtonLink to="/services" size="lg">
-            Book a service
+            {t('common.nav.bookService')}
           </ButtonLink>
         </div>
       </section>
@@ -138,11 +134,11 @@ function HomePage() {
       {!isAuthenticated ? (
         <section className="card callout">
           <div>
-            <p className="callout__title">Are you a service provider?</p>
-            <p className="callout__text">Find customers who need your skills and accept jobs near you.</p>
+            <p className="callout__title">{t('public.home.providerTitle')}</p>
+            <p className="callout__text">{t('public.home.providerText')}</p>
           </div>
           <ButtonLink to="/signup/provider" variant="secondary">
-            Join as a provider
+            {t('public.home.joinProvider')}
           </ButtonLink>
         </section>
       ) : null}

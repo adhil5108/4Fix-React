@@ -1,11 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { setUnauthorizedHandler } from '../services/api.js';
-import {
-  loginRequest,
-  meRequest,
-  signupCustomerRequest,
-  signupProviderRequest,
-} from '../services/authApi.js';
+import { loginRequest, meRequest, signupProviderRequest } from '../services/authApi.js';
 import { clearStoredAuth, persistAuth, readStoredAuth } from '../services/authStorage.js';
 import { disconnectSocket } from '../services/socket.js';
 import { buildLoginPath } from '../utils/roles.js';
@@ -80,7 +75,6 @@ export function AuthProvider({ children }) {
       user: authState?.user || null,
       isAuthenticated: Boolean(authState?.accessToken && authState?.user),
       login: async (credentials) => completeAuth(await loginRequest(credentials)),
-      signupCustomer: async (payload) => completeAuth(await signupCustomerRequest(payload)),
       signupProvider: async (payload) => completeAuth(await signupProviderRequest(payload)),
       logout,
       updateUser,

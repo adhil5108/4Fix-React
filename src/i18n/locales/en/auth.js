@@ -1,0 +1,45 @@
+// auth UI text (en). Keys mirror between en.js and ml.js modules.
+export default {
+  login: {
+    heading: 'Welcome back',
+    subtext: 'Log in to your provider account.',
+    submitting: 'Logging in…',
+    newHere: 'Offer your services on 4Fix?',
+    createAccount: 'Join as a provider',
+    customerNote: 'Need a repair? You don’t need an account.',
+  },
+  signup: {
+    PROVIDER: {
+      heading: 'Join 4Fix as a service provider',
+      subtext: 'Offer your services and connect with people who need them.',
+      cta: 'Create provider account',
+    },
+    submitting: 'Creating account…',
+    haveAccount: 'Already have an account?',
+    shopLocationTitle: 'Shop location',
+    shopLocationHint: 'Your shop or business location, saved on your profile. 4Fix never tracks your live location.',
+  },
+  fields: {
+    phone: 'Phone Number',
+    phonePlaceholder: 'Enter your phone number',
+    password: 'Password',
+    passwordPlaceholder: 'Enter your password',
+    newPasswordPlaceholder: 'Enter password',
+    confirmPassword: 'Confirm Password',
+    confirmPasswordPlaceholder: 'Re-enter password',
+    fullName: 'Full Name',
+    fullNamePlaceholder: 'Enter your full name',
+    show: 'Show {{field}}',
+    hide: 'Hide {{field}}',
+  },
+  errors: {
+    phoneRequired: 'Enter your phone number.',
+    passwordRequired: 'Enter your password.',
+    nameRequired: 'Enter your full name.',
+    newPasswordRequired: 'Enter a password.',
+    passwordTooShort: 'Use at least 8 characters.',
+    confirmRequired: 'Confirm your password.',
+    passwordMismatch: 'Passwords do not match.',
+    shopLocationRequired: 'Set your shop location.',
+  },
+};

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 function SearchIcon() {
   return (
@@ -9,7 +10,8 @@ function SearchIcon() {
   );
 }
 
-function SearchBar({ initialValue = '', placeholder = 'Search services, e.g. AC not cooling', onSearch, size }) {
+function SearchBar({ initialValue = '', placeholder, onSearch, size }) {
+  const { t } = useTranslation();
   const [value, setValue] = useState(initialValue);
 
   function handleSubmit(event) {
@@ -26,13 +28,13 @@ function SearchBar({ initialValue = '', placeholder = 'Search services, e.g. AC 
         type="search"
         className="search-bar__input"
         value={value}
-        placeholder={placeholder}
-        aria-label="Search services"
+        placeholder={placeholder ?? t('public.search.placeholder')}
+        aria-label={t('public.search.label')}
         maxLength={80}
         onChange={(event) => setValue(event.target.value)}
       />
       <button type="submit" className="btn btn--primary btn--sm search-bar__button">
-        Search
+        {t('public.search.submit')}
       </button>
     </form>
   );

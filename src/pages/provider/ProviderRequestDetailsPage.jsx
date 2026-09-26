@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import AcceptJobButton from '../../components/AcceptJobButton.jsx';
 import AppShell from '../../components/AppShell.jsx';
 import { AddressBlock, ServiceLocationBlock, AttachmentList, VoiceNoteBlock } from '../../components/cards.jsx';
@@ -15,19 +16,20 @@ import {
 import { useApi } from '../../hooks/useApi.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { providerApi } from '../../services/fixApi.js';
-import { formatSlot, formatTimestamp } from '../../utils/format.js';
+import { formatIssueLabel, formatSlot, formatTimestamp } from '../../utils/format.js';
 
 function ProviderRequestDetailsPage({ requestId }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const data = useApi(() => providerApi.getRequest(requestId), [requestId]);
   const [taken, setTaken] = useState(false);
 
-  const back = { to: '/provider/requests', label: 'Available requests' };
+  const back = { to: '/provider/requests', label: t('provider.requests.title') };
 
   if (data.loading) {
     return (
       <AppShell>
-        <LoadingState label="Loading request…" />
+        <LoadingState label={t('provider.requestDetails.loading')} />
       </AppShell>
     );
   }
@@ -35,14 +37,14 @@ function ProviderRequestDetailsPage({ requestId }) {
   if (data.error && !data.data) {
     const error =
       data.error.status === 403
-        ? { status: 403, message: 'This job has already been accepted by another provider.' }
+        ? { status: 403, message: t('provider.requestDetails.alreadyAccepted') }
         : data.error.status === 400
-          ? { status: 404, message: 'This request could not be found.' }
+          ? { status: 404, message: t('provider.requestDetails.notFound') }
           : data.error;
 
     return (
       <AppShell>
-        <PageHeader title="Request" back={back} />
+        <PageHeader title={t('provider.requestDetails.title')} back={back} />
         <ErrorState error={error} />
       </AppShell>
     );
@@ -55,13 +57,18 @@ function ProviderRequestDetailsPage({ requestId }) {
   // Admin reaches this page from Provider View, but is never a real provider — the
   // backend rejects ADMIN on accept, so the button is never offered.
   const canAccept = isOpen && !isAdminViewer;
+  const posted = formatTimestamp(request.createdAt);
 
   return (
     <AppShell>
       <PageHeader
         back={back}
-        title={request.service?.name || 'Service request'}
-        subtitle={`${request.issueLabel ? `${request.issueLabel} · ` : ''}posted ${formatTimestamp(request.createdAt)}`}
+        title={request.service?.name || t('provider.requestDetails.fallbackTitle')}
+        subtitle={
+          formatIssueLabel(request.issueKey, request.issueLabel)
+            ? t('provider.requestDetails.postedWithIssue', { issue: formatIssueLabel(request.issueKey, request.issueLabel), time: posted })
+            : t('provider.requestDetails.posted', { time: posted })
+        }
         actions={<StatusBadge status={taken ? 'ACCEPTED' : request.status} audience="provider" />}
       />
 
@@ -69,12 +76,8 @@ function ProviderRequestDetailsPage({ requestId }) {
         <div className="detail-layout__main">
           {canAccept ? (
             <Card className="card--accent">
-              <h2 className="card__title">Take this job?</h2>
-              <p className="body-text">
-                The first provider to accept gets the job. You’ll then see the customer’s exact
-                location, can chat with them and schedule the visit. Agree the price with the customer
-                directly.
-              </p>
+              <h2 className="card__title">{t('provider.requestDetails.takeTitle')}</h2>
+              <p className="body-text">{t('provider.requestDetails.takeText')}</p>
               <AcceptJobButton
                 requestId={request.id}
                 size="lg"
@@ -85,69 +88,65 @@ function ProviderRequestDetailsPage({ requestId }) {
           ) : null}
 
           {isOpen && isAdminViewer ? (
-            <Notice tone="info">Admin preview is read-only — accepting jobs is a provider-only action.</Notice>
+            <Notice tone="info">{t('provider.requestDetails.adminReadOnly')}</Notice>
           ) : null}
 
           {isAssigned && request.bookingId ? (
             <Card className="card--accent">
-              <h2 className="card__title">This is your job</h2>
-              <p className="body-text">Manage the visit, navigation, chat and notes from the job page.</p>
+              <h2 className="card__title">{t('provider.requestDetails.yoursTitle')}</h2>
+              <p className="body-text">{t('provider.requestDetails.yoursText')}</p>
               <ButtonLink to={`/provider/jobs/${request.bookingId}`} block>
-                Open job
+                {t('provider.requestDetails.openJob')}
               </ButtonLink>
             </Card>
           ) : null}
 
           {taken ? (
             <Card>
-              <h2 className="card__title">Job no longer available</h2>
-              <p className="body-text">This job has already been accepted by another provider.</p>
+              <h2 className="card__title">{t('provider.requestDetails.goneTitle')}</h2>
+              <p className="body-text">{t('provider.requestDetails.alreadyAccepted')}</p>
               <ButtonLink to="/provider/requests" variant="secondary" block>
-                See other requests
+                {t('provider.requestDetails.seeOther')}
               </ButtonLink>
             </Card>
           ) : null}
 
           {request.status === 'CANCELLED' ? (
             <Card>
-              <h2 className="card__title">Request cancelled</h2>
-              <p className="body-text">The customer cancelled this request.</p>
+              <h2 className="card__title">{t('provider.requestDetails.cancelledTitle')}</h2>
+              <p className="body-text">{t('provider.requestDetails.cancelledText')}</p>
             </Card>
           ) : null}
         </div>
 
         <aside className="detail-layout__side">
           <Card>
-            <h2 className="card__title">Job details</h2>
+            <h2 className="card__title">{t('provider.requestDetails.detailsTitle')}</h2>
             <DetailList
               items={[
-                { label: 'Customer', value: request.customer?.name },
-                { label: 'Issue', value: request.issueLabel },
-                { label: 'Problem', value: request.description },
+                { label: t('provider.shared.customer'), value: request.customer?.name },
+                { label: t('provider.shared.issue'), value: formatIssueLabel(request.issueKey, request.issueLabel) },
+                { label: t('provider.shared.problem'), value: request.description },
                 {
-                  label: 'Preferred time',
+                  label: t('provider.shared.preferredTime'),
                   value: request.preferredDate ? formatSlot(request.preferredDate, request.preferredTime) : '',
-                },
-                {
-                  label: 'Scheduled visit',
-                  value: request.scheduledDate ? formatSlot(request.scheduledDate, request.scheduledTime) : '',
                 },
               ]}
             />
-            <h3 className="card__subtitle">{isAssigned ? 'Service location' : 'Area'}</h3>
+            <h3 className="card__subtitle">{isAssigned ? t('provider.shared.serviceLocation') : t('provider.shared.area')}</h3>
             <AddressBlock address={request.address} />
             <ServiceLocationBlock
               location={request.location}
               navigate
               fallback={
                 isAssigned
-                  ? 'No map pin for this job. Use the address above or ask the customer in chat.'
-                  : 'The customer’s exact location is shared once you accept the job.'
+                  ? t('provider.shared.noMapPin')
+                  : t('provider.requestDetails.locationAfterAccept')
               }
             />
             {request.attachments?.length ? (
               <>
-                <h3 className="card__subtitle">Photos</h3>
+                <h3 className="card__subtitle">{t('provider.shared.photos')}</h3>
                 <AttachmentList attachments={request.attachments} />
               </>
             ) : null}

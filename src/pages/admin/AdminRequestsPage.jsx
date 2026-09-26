@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import AdminPagination from '../../components/admin/AdminPagination.jsx';
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import AdminTable from '../../components/admin/AdminTable.jsx';
@@ -6,22 +7,19 @@ import { PageHeader, StatusBadge } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { navigate, useQueryParam } from '../../hooks/useRoute.js';
 import { adminApi } from '../../services/fixApi.js';
-import { REQUEST_STATUSES, formatTimestamp, statusLabel } from '../../utils/format.js';
+import { REQUEST_STATUSES, formatIssueLabel, formatTimestamp, statusLabel } from '../../utils/format.js';
 
+// Column labels are i18n keys, translated at render.
 const COLUMNS = [
-  { key: 'customer', label: 'Customer', render: (row) => row.customer?.name || '—' },
-  { key: 'service', label: 'Service', render: (row) => row.service?.name || '—' },
-  { key: 'issueLabel', label: 'Issue', render: (row) => row.issueLabel || '—' },
-  { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
-  { key: 'createdAt', label: 'Created', render: (row) => formatTimestamp(row.createdAt) },
+  { key: 'customer', label: 'admin.fields.customer', render: (row) => row.customer?.name || '—' },
+  { key: 'service', label: 'admin.fields.service', render: (row) => row.service?.name || '—' },
+  { key: 'issueLabel', label: 'admin.fields.issue', render: (row) => formatIssueLabel(row.issueKey, row.issueLabel) || '—' },
+  { key: 'status', label: 'admin.fields.status', render: (row) => <StatusBadge status={row.status} /> },
+  { key: 'createdAt', label: 'admin.fields.created', render: (row) => formatTimestamp(row.createdAt) },
 ];
 
-const STATUS_OPTIONS = [{ value: '', label: 'All statuses' }, ...REQUEST_STATUSES.map((status) => ({
-  value: status,
-  label: statusLabel(status),
-}))];
-
 function AdminRequestsPage() {
+  const { t } = useTranslation();
   const page = Number(useQueryParam('page')) || 1;
   const status = useQueryParam('status') || '';
   const search = useQueryParam('search') || '';
@@ -33,6 +31,16 @@ function AdminRequestsPage() {
     () => adminApi.requests({ page, status: status || undefined, search: search || undefined, customer: customer || undefined, provider: provider || undefined, service: service || undefined }),
     [page, status, search, customer, provider, service],
   );
+
+  const columns = COLUMNS.map((column) => ({
+    ...column,
+    label: t(column.label),
+    render: column.render ? (row) => column.render(row, t) : undefined,
+  }));
+  const statusOptions = [
+    { value: '', label: t('admin.shared.allStatuses') },
+    ...REQUEST_STATUSES.map((value) => ({ value, label: statusLabel(value) })),
+  ];
 
   function updateQuery(next) {
     const params = new URLSearchParams({
@@ -54,24 +62,24 @@ function AdminRequestsPage() {
 
   return (
     <AdminShell>
-      <PageHeader title="Requests" subtitle="Every service request raised by a customer." />
+      <PageHeader title={t('common.adminNav.requests')} subtitle={t('admin.requests.subtitle')} />
 
       <div className="admin-filters">
         <Select
           id="statusFilter"
-          label="Status"
+          label={t('admin.fields.status')}
           value={status}
-          options={STATUS_OPTIONS}
+          options={statusOptions}
           onChange={(event) => updateQuery({ status: event.target.value })}
         />
         <div className="field">
-          <label htmlFor="searchFilter">Search description</label>
+          <label htmlFor="searchFilter">{t('admin.requests.searchDescription')}</label>
           <div className="field-control">
             <input
               id="searchFilter"
               className="field-input"
               type="search"
-              placeholder="Search"
+              placeholder={t('admin.requests.searchPlaceholder')}
               defaultValue={search}
               onKeyDown={(event) => {
                 if (event.key === 'Enter') updateQuery({ search: event.currentTarget.value });
@@ -83,12 +91,12 @@ function AdminRequestsPage() {
       </div>
 
       <AdminTable
-        columns={COLUMNS}
+        columns={columns}
         rows={requests.data?.requests || []}
         loading={requests.loading}
         error={requests.error}
         onRetry={requests.reload}
-        emptyTitle="No requests found"
+        emptyTitle={t('admin.requests.emptyTitle')}
         getRowHref={(row) => `/app/admin/requests/${row.id}`}
       />
 

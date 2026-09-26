@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import AppShell from '../../components/AppShell.jsx';
 import TrackingTimeline from '../../components/TrackingTimeline.jsx';
 import { AddressBlock, ServiceLocationBlock, Avatar, RatingSummary } from '../../components/cards.jsx';
@@ -5,6 +6,7 @@ import {
   ButtonLink,
   Card,
   DetailList,
+  EmptyState,
   ErrorState,
   Link,
   LoadingState,
@@ -14,31 +16,16 @@ import {
 } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { usePolling } from '../../hooks/usePolling.js';
-import { bookingsApi, providersApi } from '../../services/fixApi.js';
-import { formatSlot } from '../../utils/format.js';
+import { tokenForBooking } from '../../services/customerAccess.js';
+import { customerBookingsApi, providersApi } from '../../services/fixApi.js';
+import { formatIssueLabel } from '../../utils/format.js';
 
-const LIVE = ['CONFIRMED', 'ASSIGNED', 'ON_THE_WAY', 'ARRIVED', 'IN_SERVICE'];
+const LIVE = ['ASSIGNED', 'IN_PROGRESS'];
 
-function nextStep(booking) {
-  switch (booking.status) {
-    case 'CONFIRMED':
-    case 'ASSIGNED':
-      return booking.scheduledDate
-        ? `Your technician is booked for ${formatSlot(booking.scheduledDate, booking.scheduledTime)}.`
-        : 'Your provider accepted the job and will confirm the visit date and time shortly.';
-    case 'ON_THE_WAY':
-      return 'Your technician is on the way. Keep your arrival code handy.';
-    case 'ARRIVED':
-      return 'Your technician has arrived. Share the arrival code to start.';
-    case 'IN_SERVICE':
-      return 'The service is in progress.';
-    case 'COMPLETED':
-      return 'Service completed. Rate your experience to help other customers.';
-    case 'CANCELLED':
-      return 'This booking was cancelled.';
-    default:
-      return '';
-  }
+function nextStep(booking, t) {
+  return ['ASSIGNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'].includes(booking.status)
+    ? t(`customer.booking.next.${booking.status}`)
+    : '';
 }
 
 // Fetch-if-exists helpers: 404 simply means "not there yet".
@@ -51,12 +38,16 @@ async function optional(promise) {
   }
 }
 
+// The customer's job page, reached with the request token saved in this browser.
 function BookingPage({ bookingId }) {
+  const { t } = useTranslation();
+  const hasAccess = Boolean(tokenForBooking(bookingId));
   const data = useApi(async () => {
-    const { booking } = await bookingsApi.get(bookingId);
+    if (!hasAccess) return null;
+    const { booking } = await customerBookingsApi.get(bookingId);
     const [provider, review] = await Promise.all([
       booking.providerId ? optional(providersApi.get(booking.providerId)) : null,
-      booking.status === 'COMPLETED' ? optional(bookingsApi.review(bookingId)) : null,
+      booking.status === 'COMPLETED' ? optional(customerBookingsApi.review(bookingId)) : null,
     ]);
     return {
       booking,
@@ -68,12 +59,21 @@ function BookingPage({ bookingId }) {
   const booking = data.data?.booking;
   usePolling(() => data.refresh(), 20000, Boolean(booking) && LIVE.includes(booking.status));
 
-  const back = { to: '/bookings', label: 'My bookings' };
+  const back = { to: '/requests', label: t('common.nav.myRequests') };
+
+  if (!hasAccess) {
+    return (
+      <AppShell>
+        <PageHeader title={t('customer.shared.booking')} back={back} />
+        <EmptyState title={t('customer.access.noAccessTitle')} message={t('customer.access.noAccessMessage')} />
+      </AppShell>
+    );
+  }
 
   if (data.loading) {
     return (
       <AppShell>
-        <LoadingState label="Loading booking…" />
+        <LoadingState label={t('customer.booking.loading')} />
       </AppShell>
     );
   }
@@ -81,9 +81,9 @@ function BookingPage({ bookingId }) {
   if (data.error && !data.data) {
     return (
       <AppShell>
-        <PageHeader title="Booking" back={back} />
+        <PageHeader title={t('customer.shared.booking')} back={back} />
         <ErrorState
-          error={data.error.status === 400 ? { status: 404, message: 'This booking could not be found.' } : data.error}
+          error={data.error.status === 400 ? { status: 404, message: t('customer.booking.notFound') } : data.error}
           onRetry={data.reload}
         />
       </AppShell>
@@ -98,8 +98,8 @@ function BookingPage({ bookingId }) {
     <AppShell>
       <PageHeader
         back={back}
-        title={booking.service?.name || 'Booking'}
-        subtitle={booking.request?.issueLabel}
+        title={booking.service?.name || t('customer.shared.booking')}
+        subtitle={formatIssueLabel(booking.request?.issueKey, booking.request?.issueLabel)}
         actions={<StatusBadge status={booking.status} audience="booking" />}
       />
 
@@ -110,38 +110,27 @@ function BookingPage({ bookingId }) {
       <div className="detail-layout">
         <div className="detail-layout__main">
           <Card className={isLive ? 'card--accent' : ''}>
-            <h2 className="card__title">{nextStep(booking)}</h2>
+            <h2 className="card__title">{nextStep(booking, t)}</h2>
             <TrackingTimeline status={booking.status} timeline={booking.timeline} compact />
             <div className="action-grid">
-              {isLive ? (
-                <ButtonLink to={`/bookings/${booking.id}/tracking`}>Track technician</ButtonLink>
-              ) : null}
               {booking.status !== 'CANCELLED' ? (
-                <ButtonLink to={`/bookings/${booking.id}/chat`} variant={isLive ? 'secondary' : 'primary'}>
-                  Chat with {provider?.name ? provider.name.split(' ')[0] : 'technician'}
+                <ButtonLink to={`/bookings/${booking.id}/chat`} variant={isCompleted ? 'secondary' : 'primary'}>
+                  {t('customer.booking.chatWith', {
+                    name: provider?.name ? provider.name.split(' ')[0] : t('customer.shared.technician'),
+                  })}
                 </ButtonLink>
               ) : null}
               {isCompleted ? (
                 <ButtonLink to={`/bookings/${booking.id}/review`} variant={review ? 'secondary' : 'primary'}>
-                  {review ? 'Your review' : 'Rate your experience'}
+                  {review ? t('customer.booking.yourReview') : t('customer.booking.rate')}
                 </ButtonLink>
               ) : null}
             </div>
           </Card>
 
-          {isLive && booking.arrivalCode ? (
-            <Card className="arrival-card">
-              <p className="arrival-card__label">Arrival code</p>
-              <p className="arrival-card__code" aria-label={`Arrival code ${booking.arrivalCode.split('').join(' ')}`}>
-                {booking.arrivalCode}
-              </p>
-              <p className="field-hint">Share this with your technician only when they arrive.</p>
-            </Card>
-          ) : null}
-
           {provider ? (
             <Card>
-              <h2 className="card__title">Your technician</h2>
+              <h2 className="card__title">{t('customer.shared.yourTechnician')}</h2>
               <div className="provider-card__head">
                 <Avatar name={provider.name} image={provider.profileImage} />
                 <div className="provider-card__identity">
@@ -159,26 +148,20 @@ function BookingPage({ bookingId }) {
 
         <aside className="detail-layout__side">
           <Card>
-            <h2 className="card__title">Booking details</h2>
+            <h2 className="card__title">{t('customer.booking.detailsTitle')}</h2>
             <DetailList
               items={[
-                { label: 'Service', value: booking.service?.name },
-                { label: 'Issue', value: booking.request?.issueLabel },
-                {
-                  label: 'Scheduled visit',
-                  value: booking.scheduledDate
-                    ? formatSlot(booking.scheduledDate, booking.scheduledTime)
-                    : 'Provider will confirm',
-                },
-                { label: 'Details', value: booking.request?.description },
+                { label: t('customer.shared.service'), value: booking.service?.name },
+                { label: t('customer.shared.issue'), value: formatIssueLabel(booking.request?.issueKey, booking.request?.issueLabel) },
+                { label: t('customer.shared.details'), value: booking.request?.description },
               ]}
             />
-            <h3 className="card__subtitle">Service location</h3>
+            <h3 className="card__subtitle">{t('customer.shared.serviceLocation')}</h3>
             <AddressBlock address={booking.request?.address} />
             <ServiceLocationBlock location={booking.request?.location} fallback={null} />
             <p className="card__links">
               <Link to={`/requests/${booking.requestId}`} className="text-link">
-                View original request
+                {t('customer.booking.viewRequest')}
               </Link>
             </p>
           </Card>

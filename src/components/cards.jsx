@@ -1,15 +1,19 @@
 import {
   formatAddress,
   formatCategory,
+  formatIssueLabel,
   formatMoney,
   formatRating,
   formatSlot,
   formatTimestamp,
   initials,
 } from '../utils/format.js';
+import { useTranslation } from 'react-i18next';
 import { Link, StatusBadge } from './ui.jsx';
 
 export function ServiceCard({ service }) {
+  const { t } = useTranslation();
+
   return (
     <Link to={`/services/${service.id}`} className="card card--link service-card">
       {service.image ? (
@@ -20,12 +24,14 @@ export function ServiceCard({ service }) {
       <span className="service-card__description">{service.description}</span>
       <span className="service-card__footer">
         {service.startingPrice !== null && service.startingPrice !== undefined ? (
-          <span className="service-card__price">From {formatMoney(service.startingPrice)}</span>
+          <span className="service-card__price">
+            {t('cards.serviceCard.from', { price: formatMoney(service.startingPrice) })}
+          </span>
         ) : (
           <span />
         )}
         <span className="service-card__cta" aria-hidden="true">
-          Book →
+          {t('cards.serviceCard.book')}
         </span>
       </span>
     </Link>
@@ -40,7 +46,7 @@ export function IssueCard({ issue, selected = false, onSelect }) {
       aria-pressed={selected}
       onClick={() => onSelect(issue)}
     >
-      <span className="issue-card__label">{issue.label}</span>
+      <span className="issue-card__label">{formatIssueLabel(issue.key, issue.label)}</span>
       {issue.description ? <span className="issue-card__description">{issue.description}</span> : null}
     </button>
   );
@@ -57,6 +63,7 @@ export function Avatar({ name, image, size = 'md' }) {
 }
 
 export function RatingSummary({ rating, reviewCount }) {
+  const { t } = useTranslation();
   const value = formatRating(rating);
 
   return (
@@ -68,11 +75,11 @@ export function RatingSummary({ rating, reviewCount }) {
         <>
           <strong>{value}</strong>
           <span className="rating-summary__count">
-            ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
+            {t('cards.rating.reviews', { count: reviewCount })}
           </span>
         </>
       ) : (
-        <span className="rating-summary__count">No reviews yet</span>
+        <span className="rating-summary__count">{t('cards.rating.noReviews')}</span>
       )}
     </span>
   );
@@ -80,11 +87,12 @@ export function RatingSummary({ rating, reviewCount }) {
 
 // Facts a provider profile exposes; only fields the API actually returns are shown.
 export function ProviderFacts({ provider }) {
+  const { t } = useTranslation();
   const facts = [
     provider.experienceYears !== null && provider.experienceYears !== undefined
-      ? `${provider.experienceYears} yrs experience`
+      ? t('cards.providerFacts.experience', { count: provider.experienceYears })
       : null,
-    `${provider.completedJobs} ${provider.completedJobs === 1 ? 'job' : 'jobs'} completed`,
+    t('cards.providerFacts.jobsCompleted', { count: provider.completedJobs }),
     provider.serviceCategories?.length
       ? provider.serviceCategories.map(formatCategory).join(' · ')
       : null,
@@ -100,18 +108,18 @@ export function ProviderFacts({ provider }) {
 }
 
 export function RequestCard({ request, to, audience = 'customer' }) {
-  const slot = request.scheduledDate
-    ? `Scheduled: ${formatSlot(request.scheduledDate, request.scheduledTime)}`
-    : request.preferredDate
-      ? `Preferred: ${formatSlot(request.preferredDate, request.preferredTime)}`
-      : '';
+  const { t } = useTranslation();
+  // Only legacy requests carry a preferred slot; V1 jobs have no scheduling step.
+  const slot = request.preferredDate
+    ? t('cards.requestCard.preferred', { slot: formatSlot(request.preferredDate, request.preferredTime) })
+    : '';
 
   return (
     <Link to={to} className="card card--link request-card">
       <span className="request-card__top">
         <span className="request-card__service">
-          {request.service?.name || 'Service request'}
-          {request.issueLabel ? <span className="request-card__issue"> · {request.issueLabel}</span> : null}
+          {request.service?.name || t('cards.requestCard.fallbackService')}
+          {formatIssueLabel(request.issueKey, request.issueLabel) ? <span className="request-card__issue"> · {formatIssueLabel(request.issueKey, request.issueLabel)}</span> : null}
         </span>
         <StatusBadge status={request.status} audience={audience} />
       </span>
@@ -122,10 +130,10 @@ export function RequestCard({ request, to, audience = 'customer' }) {
           <span>{[request.address.city, request.address.pincode].filter(Boolean).join(' · ')}</span>
         ) : null}
         {audience === 'customer' && request.selectedProvider ? (
-          <span>Provider: {request.selectedProvider.name}</span>
+          <span>{t('cards.requestCard.provider', { name: request.selectedProvider.name })}</span>
         ) : null}
         {audience === 'provider' || !request.selectedProvider ? (
-          <span>Requested {formatTimestamp(request.createdAt)}</span>
+          <span>{t('cards.requestCard.requested', { time: formatTimestamp(request.createdAt) })}</span>
         ) : null}
       </span>
     </Link>
@@ -134,20 +142,21 @@ export function RequestCard({ request, to, audience = 'customer' }) {
 
 // Booking list card for both roles; the counterpart shown depends on who is looking.
 export function BookingCard({ booking, to, audience = 'customer' }) {
+  const { t } = useTranslation();
   const counterpart = audience === 'provider' ? booking.customer : booking.provider;
-  const slot = booking.scheduledDate
-    ? `Scheduled: ${formatSlot(booking.scheduledDate, booking.scheduledTime)}`
-    : booking.request?.preferredDate
-      ? `Preferred: ${formatSlot(booking.request.preferredDate, booking.request.preferredTime)}`
-      : '';
+  const slot = booking.request?.preferredDate
+    ? t('cards.requestCard.preferred', {
+        slot: formatSlot(booking.request.preferredDate, booking.request.preferredTime),
+      })
+    : '';
 
   return (
     <Link to={to} className="card card--link booking-card">
       <span className="request-card__top">
         <span className="request-card__service">
-          {booking.service?.name || 'Booking'}
-          {booking.request?.issueLabel ? (
-            <span className="request-card__issue"> · {booking.request.issueLabel}</span>
+          {booking.service?.name || t('cards.requestCard.fallbackBooking')}
+          {formatIssueLabel(booking.request?.issueKey, booking.request?.issueLabel) ? (
+            <span className="request-card__issue"> · {formatIssueLabel(booking.request.issueKey, booking.request.issueLabel)}</span>
           ) : null}
         </span>
         <StatusBadge status={booking.status} audience="booking" />
@@ -165,7 +174,7 @@ export function BookingCard({ booking, to, audience = 'customer' }) {
         {audience === 'provider' && booking.request?.address ? (
           <span>{booking.request.address.city}</span>
         ) : null}
-        <span>Booked {formatTimestamp(booking.createdAt)}</span>
+        <span>{t('cards.requestCard.booked', { time: formatTimestamp(booking.createdAt) })}</span>
       </span>
     </Link>
   );
@@ -174,15 +183,17 @@ export function BookingCard({ booking, to, audience = 'customer' }) {
 // A customer's recorded voice message, wherever a request/job/booking with one is
 // shown. Native controls only (play/pause/seek); never autoplays.
 export function VoiceNoteBlock({ voiceNote }) {
+  const { t } = useTranslation();
+
   if (!voiceNote?.url) {
     return null;
   }
 
   return (
     <div className="voice-note">
-      <span className="voice-note__label">🎤 Voice message from customer</span>
+      <span className="voice-note__label">{t('cards.voiceNote.label')}</span>
       <audio controls preload="none" src={voiceNote.url} className="voice-note__player">
-        Your browser does not support audio playback.
+        {t('cards.voiceNote.unsupported')}
       </audio>
     </div>
   );
@@ -203,11 +214,14 @@ export function AddressBlock({ address }) {
 
 // Pinned customer location. Providers get turn-by-turn via Google Maps (`navigate`);
 // everyone else just views the pin. Without coordinates, no link is rendered at all.
-export function ServiceLocationBlock({ location, navigate = false, fallback = 'Exact location not shared.' }) {
+// `fallback` from callers is already translated; `undefined` uses the default text, `null` hides it.
+export function ServiceLocationBlock({ location, navigate = false, fallback }) {
+  const { t } = useTranslation();
   const hasCoordinates = Number.isFinite(location?.latitude) && Number.isFinite(location?.longitude);
 
   if (!hasCoordinates) {
-    return fallback ? <p className="field-hint">{fallback}</p> : null;
+    const text = fallback === undefined ? t('cards.serviceLocation.notShared') : fallback;
+    return text ? <p className="field-hint">{text}</p> : null;
   }
 
   const coordinates = `${location.latitude},${location.longitude}`;
@@ -217,7 +231,7 @@ export function ServiceLocationBlock({ location, navigate = false, fallback = 'E
 
   return (
     <div className="service-location">
-      <span className="service-location__label">📍 Pinned location</span>
+      <span className="service-location__label">{t('cards.serviceLocation.pinned')}</span>
       {location.address ? <span>{location.address}</span> : null}
       <a
         className={`btn ${navigate ? 'btn--primary' : 'btn--secondary'} btn--sm`}
@@ -225,7 +239,7 @@ export function ServiceLocationBlock({ location, navigate = false, fallback = 'E
         target="_blank"
         rel="noopener noreferrer"
       >
-        {navigate ? 'Navigate' : 'Open in Maps'}
+        {navigate ? t('cards.serviceLocation.navigate') : t('cards.serviceLocation.openInMaps')}
       </a>
     </div>
   );
@@ -236,6 +250,8 @@ const IMAGE_ATTACHMENT_RE = /^https?:\/\/.*\.(?:jpe?g|png|gif|webp|avif|bmp|svg)
 // Uploaded photos (Cloudinary URLs) render as thumbnails; any other attachment
 // (a plain note, or a non-image link) keeps the original text/link treatment.
 export function AttachmentList({ attachments }) {
+  const { t } = useTranslation();
+
   if (!attachments?.length) {
     return null;
   }
@@ -249,8 +265,13 @@ export function AttachmentList({ attachments }) {
         <ul className="attachment-thumbs">
           {images.map((url, index) => (
             <li key={`${url}-${index}`}>
-              <a href={url} target="_blank" rel="noopener noreferrer" aria-label={`Open photo ${index + 1}`}>
-                <img src={url} alt={`Attachment ${index + 1}`} loading="lazy" />
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={t('cards.attachments.openPhoto', { number: index + 1 })}
+              >
+                <img src={url} alt={t('cards.attachments.photoAlt', { number: index + 1 })} loading="lazy" />
               </a>
             </li>
           ))}

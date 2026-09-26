@@ -1,9 +1,5 @@
 import { apiRequest } from './api.js';
 
-export function signupCustomerRequest(payload) {
-  return apiRequest('/api/auth/customer/signup', { method: 'POST', body: payload, auth: false });
-}
-
 export function signupProviderRequest(payload) {
   return apiRequest('/api/auth/provider/signup', { method: 'POST', body: payload, auth: false });
 }

@@ -1,0 +1,120 @@
+/* Language switcher (header, both app and admin shells) */
+
+.lang-switch {
+  display: inline-flex;
+  flex: 0 0 auto;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 2px;
+}
+
+.lang-switch__option {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.3;
+  padding: 4px 10px;
+}
+
+.lang-switch__option:hover:not(.is-active) {
+  color: var(--green);
+}
+
+.lang-switch__option.is-active {
+  background: var(--green);
+  color: #fff;
+}
+
+.lang-switch__option:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+/* Narrow phones: short labels keep the header on one line; the active option is still
+   filled, and each button keeps its full name as its accessible label. */
+.lang-switch__short {
+  display: none;
+}
+
+@media (max-width: 419px) {
+  .lang-switch__full {
+    display: none;
+  }
+
+  .lang-switch__short {
+    display: inline;
+  }
+}
+
+.admin-header__lang {
+  margin-left: auto;
+}
+
+/* Malayalam: script-aware fonts, taller lines for vowel signs, and wrapping instead of
+   fixed single-line layouts. Nothing here assumes an English text length. */
+
+:lang(ml) {
+  font-family:
+    Inter, "Noto Sans Malayalam", "Nirmala UI", "Kartika", "Manjari", ui-sans-serif, system-ui,
+    -apple-system, "Segoe UI", sans-serif;
+}
+
+:lang(ml) body {
+  line-height: 1.6;
+}
+
+/* Uppercase and wide tracking are Latin-only effects; they only distort Malayalam. */
+:lang(ml) * {
+  letter-spacing: normal !important;
+  text-transform: none !important;
+}
+
+:lang(ml) .btn {
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+:lang(ml) .badge {
+  line-height: 1.3;
+  white-space: normal;
+  text-align: center;
+}
+
+:lang(ml) .chip,
+:lang(ml) .admin-table th {
+  white-space: normal;
+}
+
+/* Tabs use one short word (common.navShort); never break inside a Malayalam word. */
+:lang(ml) .mobile-nav__link span {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.66rem;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:lang(ml) .page-title,
+:lang(ml) .card__title,
+:lang(ml) .section__title,
+:lang(ml) .state__title {
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+:lang(ml) .site-nav__link {
+  white-space: nowrap;
+}
+
+/* Stat tiles are narrow two-column cards on phones; long Malayalam nouns need a size step down. */
+:lang(ml) .stat__label {
+  font-size: 0.8rem;
+  line-height: 1.35;
+}

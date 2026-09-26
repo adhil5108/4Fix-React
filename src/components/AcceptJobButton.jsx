@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAction } from '../hooks/useApi.js';
 import { navigate } from '../hooks/useRoute.js';
 import { providerApi } from '../services/fixApi.js';
@@ -8,6 +9,7 @@ import { Button, ConfirmDialog, Notice } from './ui.jsx';
 // wins; on success the provider lands on the new job, on 409 the caller is told the job
 // is gone (`onTaken`) so it can stop offering it.
 function AcceptJobButton({ requestId, size, block = true, onTaken, onFailed }) {
+  const { t } = useTranslation();
   const action = useAction();
   const [confirming, setConfirming] = useState(false);
 
@@ -34,13 +36,13 @@ function AcceptJobButton({ requestId, size, block = true, onTaken, onFailed }) {
     <>
       <Notice>{action.error}</Notice>
       <Button block={block} size={size} onClick={() => setConfirming(true)} disabled={Boolean(action.pending)}>
-        Accept Job
+        {t('provider.acceptJob.button')}
       </Button>
       <ConfirmDialog
         open={confirming}
-        title="Accept this job?"
-        message="You’ll be assigned to this customer and the request will close for other providers."
-        confirmLabel="Accept Job"
+        title={t('provider.acceptJob.confirmTitle')}
+        message={t('provider.acceptJob.confirmMessage')}
+        confirmLabel={t('provider.acceptJob.button')}
         busy={action.pending === 'accept'}
         onConfirm={accept}
         onCancel={() => setConfirming(false)}

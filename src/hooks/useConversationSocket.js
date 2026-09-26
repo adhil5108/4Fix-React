@@ -5,7 +5,8 @@ import { getSocket } from '../services/socket.js';
 // `onMessage`/`onRead` fire for events from anyone else in the room (the socket
 // server never echoes a sender's own broadcast back with useful per-viewer fields,
 // so the sender keeps relying on its own REST response instead).
-export function useConversationSocket(bookingId, { onMessage, onRead } = {}) {
+// `requestToken` is set for the anonymous customer; providers use their account.
+export function useConversationSocket(bookingId, { onMessage, onRead, requestToken } = {}) {
   const onMessageRef = useRef(onMessage);
   const onReadRef = useRef(onRead);
   onMessageRef.current = onMessage;
@@ -16,7 +17,7 @@ export function useConversationSocket(bookingId, { onMessage, onRead } = {}) {
       return undefined;
     }
 
-    const socket = getSocket();
+    const socket = getSocket({ requestToken });
 
     function join() {
       socket.emit('conversation:join', { bookingId });
@@ -46,5 +47,5 @@ export function useConversationSocket(bookingId, { onMessage, onRead } = {}) {
       socket.off('message:new', handleMessage);
       socket.off('messages:read', handleRead);
     };
-  }, [bookingId]);
+  }, [bookingId, requestToken]);
 }

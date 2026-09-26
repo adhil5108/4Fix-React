@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import AppShell from '../components/AppShell.jsx';
+import { LocationPreview } from '../components/LocationCapture.jsx';
+import ShopLocationField from '../components/ShopLocationField.jsx';
 import TextField, { TextArea } from '../components/TextField.jsx';
 import {
   Button,
@@ -18,12 +21,6 @@ import { meRequest, updateMeRequest } from '../services/authApi.js';
 import { servicesApi } from '../services/fixApi.js';
 import { formatCategory } from '../utils/format.js';
 
-const ROLE_LABELS = {
-  CUSTOMER: 'Customer',
-  PROVIDER: 'Service provider',
-  ADMIN: 'Administrator',
-};
-
 function formFromUser(user) {
   return {
     name: user.name || '',
@@ -34,13 +31,92 @@ function formFromUser(user) {
   };
 }
 
+// The provider's registered shop/business location — fixed profile data, not a live
+// position. Shown to the provider and admin only; never on the public profile.
+function ShopLocationCard({ user, onSaved }) {
+  const { t } = useTranslation();
+  const current = user.shopLocation;
+  const [editing, setEditing] = useState(!current);
+  const [value, setValue] = useState(null);
+  const [error, setError] = useState('');
+  const save = useAction();
+
+  async function handleSave() {
+    if (!value) {
+      setError('auth.errors.shopLocationRequired');
+      return;
+    }
+
+    const ok = await save.run('shop', async () => {
+      const result = await updateMeRequest({
+        shopLocation: {
+          latitude: value.latitude,
+          longitude: value.longitude,
+          address: value.address?.trim() || undefined,
+        },
+      });
+      await onSaved(result.user);
+    });
+
+    if (ok) {
+      setEditing(false);
+      setValue(null);
+    }
+  }
+
+  return (
+    <Card>
+      <h2 className="card__title">{t('profile.shop.title')}</h2>
+      <p className="field-hint">{t('profile.shop.hint')}</p>
+      {!current ? <Notice tone="info">{t('profile.shop.missing')}</Notice> : null}
+      <Notice>{save.error}</Notice>
+
+      {current && !editing ? (
+        <div className="form-stack">
+          <LocationPreview latitude={current.latitude} longitude={current.longitude} title={t('profile.shop.title')} />
+          {current.address ? <p className="body-text">{current.address}</p> : null}
+          <div>
+            <Button variant="secondary" onClick={() => setEditing(true)}>
+              {t('profile.shop.change')}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="form-stack">
+          <ShopLocationField
+            value={value}
+            error={error ? t(error) : ''}
+            disabled={save.pending === 'shop'}
+            onChange={(next) => {
+              setValue(next);
+              setError('');
+            }}
+          />
+          <div className="card__actions">
+            <Button onClick={handleSave} loading={save.pending === 'shop'} loadingText={t('profile.details.saving')}>
+              {t('profile.shop.save')}
+            </Button>
+            {current ? (
+              <Button variant="secondary" onClick={() => setEditing(false)} disabled={save.pending === 'shop'}>
+                {t('profile.shop.cancel')}
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 function ProfilePage() {
+  const { t } = useTranslation();
   const { user: authUser, logout, updateUser } = useAuth();
   const isProvider = authUser.role === 'PROVIDER';
   const me = useApi(() => meRequest(), []);
   const services = useApi(() => (isProvider ? servicesApi.list() : Promise.resolve({ services: [] })), [isProvider]);
   const save = useAction();
   const [form, setForm] = useState(null);
+  // Field errors hold translation keys so they follow a language switch.
   const [errors, setErrors] = useState({});
   const [saved, setSaved] = useState(false);
 
@@ -65,15 +141,15 @@ function ProfilePage() {
     const nextErrors = {};
     const name = form.name.trim();
 
-    if (name.length < 2) nextErrors.name = 'Name must be at least 2 characters.';
-    else if (name.length > 120) nextErrors.name = 'Name must be 120 characters or fewer.';
+    if (name.length < 2) nextErrors.name = 'profile.errors.nameTooShort';
+    else if (name.length > 120) nextErrors.name = 'profile.errors.nameTooLong';
 
     if (isProvider) {
-      if (form.bio.trim().length > 500) nextErrors.bio = 'Bio must be 500 characters or fewer.';
+      if (form.bio.trim().length > 500) nextErrors.bio = 'profile.errors.bioTooLong';
       if (form.experienceYears !== '' && !/^\d{1,2}$/.test(form.experienceYears)) {
-        nextErrors.experienceYears = 'Enter whole years (0–60).';
+        nextErrors.experienceYears = 'profile.errors.experienceInvalid';
       } else if (form.experienceYears !== '' && Number(form.experienceYears) > 60) {
-        nextErrors.experienceYears = 'Enter whole years (0–60).';
+        nextErrors.experienceYears = 'profile.errors.experienceInvalid';
       }
     }
 
@@ -109,7 +185,7 @@ function ProfilePage() {
     if (me.error) {
       return (
         <AppShell width="narrow">
-          <PageHeader title="Profile" />
+          <PageHeader title={t('profile.title')} />
           <ErrorState error={me.error} onRetry={me.reload} />
         </AppShell>
       );
@@ -117,7 +193,7 @@ function ProfilePage() {
 
     return (
       <AppShell width="narrow">
-        <LoadingState label="Loading profile…" />
+        <LoadingState label={t('profile.loading')} />
       </AppShell>
     );
   }
@@ -126,20 +202,20 @@ function ProfilePage() {
 
   return (
     <AppShell width="narrow">
-      <PageHeader title="Profile" subtitle={ROLE_LABELS[user.role]} />
+      <PageHeader title={t('profile.title')} subtitle={t(`profile.roles.${user.role}`)} />
 
       <Card>
-        <h2 className="card__title">Your details</h2>
+        <h2 className="card__title">{t('profile.details.title')}</h2>
         <form className="form-stack" onSubmit={handleSubmit} noValidate>
           <Notice>{save.error}</Notice>
-          {saved ? <Notice tone="success">Your profile was updated.</Notice> : null}
+          {saved ? <Notice tone="success">{t('profile.details.saved')}</Notice> : null}
           <TextField
             id="name"
-            label="Full Name"
+            label={t('profile.details.fullName')}
             autoComplete="name"
             maxLength={120}
             value={form.name}
-            error={errors.name}
+            error={errors.name ? t(errors.name) : ''}
             onChange={(event) => update('name', event.target.value)}
           />
 
@@ -147,31 +223,31 @@ function ProfilePage() {
             <>
               <TextArea
                 id="bio"
-                label="About you"
+                label={t('profile.provider.bio')}
                 rows={3}
                 maxLength={500}
                 value={form.bio}
-                error={errors.bio}
-                hint="Shown to customers on your profile."
-                placeholder="e.g. 8 years fixing split and window ACs across Bengaluru."
+                error={errors.bio ? t(errors.bio) : ''}
+                hint={t('profile.provider.bioHint')}
+                placeholder={t('profile.provider.bioPlaceholder')}
                 onChange={(event) => update('bio', event.target.value)}
               />
               <TextField
                 id="experienceYears"
-                label="Years of experience"
+                label={t('profile.provider.experience')}
                 type="text"
                 inputMode="numeric"
                 maxLength={2}
                 value={form.experienceYears}
-                error={errors.experienceYears}
+                error={errors.experienceYears ? t(errors.experienceYears) : ''}
                 onChange={(event) => update('experienceYears', event.target.value.replace(/\D/g, ''))}
               />
               <div className="field">
-                <label>Services you offer</label>
+                <label>{t('profile.provider.categories')}</label>
                 {categories.length === 0 ? (
-                  <p className="field-hint">Categories will appear once services are available.</p>
+                  <p className="field-hint">{t('profile.provider.noCategories')}</p>
                 ) : (
-                  <div className="chip-row" role="group" aria-label="Service categories">
+                  <div className="chip-row" role="group" aria-label={t('profile.provider.categoriesLabel')}>
                     {categories.map((category) => {
                       const selected = form.serviceCategories.includes(category);
                       return (
@@ -195,9 +271,7 @@ function ProfilePage() {
                     })}
                   </div>
                 )}
-                <p className="field-hint">
-                  Leave all unselected to be shown for every service.
-                </p>
+                <p className="field-hint">{t('profile.provider.categoriesHint')}</p>
               </div>
               <label className="toggle">
                 <input
@@ -206,47 +280,50 @@ function ProfilePage() {
                   onChange={(event) => update('isAvailable', event.target.checked)}
                 />
                 <span>
-                  <strong>Available for new bookings</strong>
-                  <span className="field-hint">Turn off to hide yourself from customers for a while.</span>
+                  <strong>{t('profile.provider.available')}</strong>
+                  <span className="field-hint">{t('profile.provider.availableHint')}</span>
                 </span>
               </label>
             </>
           ) : null}
 
           <div>
-            <Button type="submit" loading={save.pending === 'save'} loadingText="Saving…">
-              Save changes
+            <Button type="submit" loading={save.pending === 'save'} loadingText={t('profile.details.saving')}>
+              {t('profile.details.save')}
             </Button>
           </div>
         </form>
       </Card>
 
+      {isProvider ? (
+        <ShopLocationCard
+          user={user}
+          onSaved={async (updated) => {
+            updateUser(updated);
+            await me.refresh();
+          }}
+        />
+      ) : null}
+
       <Card>
-        <h2 className="card__title">Account</h2>
+        <h2 className="card__title">{t('profile.account.title')}</h2>
         <DetailList
           items={[
-            { label: user.role === 'ADMIN' ? 'Username' : 'Phone number', value: user.username },
-            { label: 'Account type', value: ROLE_LABELS[user.role] },
+            {
+              label: user.role === 'ADMIN' ? t('profile.account.username') : t('profile.account.phone'),
+              value: user.username,
+            },
+            { label: t('profile.account.type'), value: t(`profile.roles.${user.role}`) },
           ]}
         />
         <p className="card__links">
-          {user.role === 'CUSTOMER' ? (
-            <>
-              <Link to="/bookings" className="text-link">
-                My bookings
-              </Link>
-              <Link to="/requests" className="text-link">
-                My requests
-              </Link>
-            </>
-          ) : null}
           {isProvider ? (
             <>
               <Link to="/provider/jobs" className="text-link">
-                My jobs
+                {t('common.nav.myJobs')}
               </Link>
               <Link to={`/providers/${user.id}`} className="text-link">
-                View public profile
+                {t('profile.account.viewPublic')}
               </Link>
             </>
           ) : null}
@@ -254,7 +331,7 @@ function ProfilePage() {
       </Card>
 
       <Button variant="danger-ghost" block onClick={handleLogout}>
-        Log out
+        {t('common.nav.logOut')}
       </Button>
     </AppShell>
   );

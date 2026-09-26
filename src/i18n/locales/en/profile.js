@@ -1,0 +1,50 @@
+// profile UI text (en). Keys mirror between en.js and ml.js modules.
+export default {
+  title: 'Profile',
+  loading: 'Loading profile…',
+  roles: {
+    CUSTOMER: 'Customer',
+    PROVIDER: 'Service provider',
+    ADMIN: 'Administrator',
+  },
+  details: {
+    title: 'Your details',
+    saved: 'Your profile was updated.',
+    fullName: 'Full Name',
+    save: 'Save changes',
+    saving: 'Saving…',
+  },
+  provider: {
+    bio: 'About you',
+    bioHint: 'Shown to customers on your profile.',
+    bioPlaceholder: 'e.g. 8 years fixing split and window ACs across Bengaluru.',
+    experience: 'Years of experience',
+    categories: 'Services you offer',
+    categoriesLabel: 'Service categories',
+    noCategories: 'Categories will appear once services are available.',
+    categoriesHint: 'Leave all unselected to be shown for every service.',
+    available: 'Available for new bookings',
+    availableHint: 'Turn off to hide yourself from customers for a while.',
+  },
+  account: {
+    title: 'Account',
+    username: 'Username',
+    phone: 'Phone number',
+    type: 'Account type',
+    viewPublic: 'View public profile',
+  },
+  errors: {
+    nameTooShort: 'Name must be at least 2 characters.',
+    nameTooLong: 'Name must be 120 characters or fewer.',
+    bioTooLong: 'Bio must be 500 characters or fewer.',
+    experienceInvalid: 'Enter whole years (0–60).',
+  },
+  shop: {
+    title: 'Shop location',
+    hint: 'Your registered business location. Only you and 4Fix admins can see it — customers never do.',
+    missing: 'Add your shop location to complete your profile.',
+    change: 'Change shop location',
+    save: 'Save shop location',
+    cancel: 'Cancel',
+  },
+};

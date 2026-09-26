@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 function EyeIcon() {
   return (
@@ -19,6 +20,7 @@ function EyeOffIcon() {
 }
 
 function PasswordField({ id, label, error, ...inputProps }) {
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
   const errorId = `${id}-error`;
 
@@ -38,7 +40,7 @@ function PasswordField({ id, label, error, ...inputProps }) {
           type="button"
           className="field-eye"
           onClick={() => setIsVisible((current) => !current)}
-          aria-label={isVisible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
+          aria-label={t(isVisible ? 'auth.fields.hide' : 'auth.fields.show', { field: label.toLowerCase() })}
         >
           {isVisible ? <EyeOffIcon /> : <EyeIcon />}
         </button>

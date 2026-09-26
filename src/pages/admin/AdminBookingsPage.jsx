@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import AdminPagination from '../../components/admin/AdminPagination.jsx';
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import AdminTable from '../../components/admin/AdminTable.jsx';
@@ -6,29 +7,31 @@ import { PageHeader, StatusBadge } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { navigate, useQueryParam } from '../../hooks/useRoute.js';
 import { adminApi } from '../../services/fixApi.js';
-import { formatSlot } from '../../utils/format.js';
+import { formatTimestamp } from '../../utils/format.js';
 
+// Option/column labels are i18n keys, translated at render.
 const STATUS_OPTIONS = [
-  { value: '', label: 'All statuses' },
-  { value: 'UPCOMING', label: 'Upcoming' },
-  { value: 'ACTIVE', label: 'Active' },
-  { value: 'COMPLETED', label: 'Completed' },
-  { value: 'CANCELLED', label: 'Cancelled' },
+  { value: '', label: 'admin.shared.allStatuses' },
+  { value: 'UPCOMING', label: 'common.status.groups.UPCOMING' },
+  { value: 'ACTIVE', label: 'common.status.groups.ACTIVE' },
+  { value: 'COMPLETED', label: 'common.status.groups.COMPLETED' },
+  { value: 'CANCELLED', label: 'common.status.groups.CANCELLED' },
 ];
 
 const COLUMNS = [
-  { key: 'service', label: 'Service', render: (row) => row.service?.name || '—' },
-  { key: 'customer', label: 'Customer', render: (row) => row.customer?.name || '—' },
-  { key: 'provider', label: 'Provider', render: (row) => row.provider?.name || '—' },
-  { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} audience="booking" /> },
+  { key: 'service', label: 'admin.fields.service', render: (row) => row.service?.name || '—' },
+  { key: 'customer', label: 'admin.fields.customer', render: (row) => row.customer?.name || '—' },
+  { key: 'provider', label: 'admin.fields.provider', render: (row) => row.provider?.name || '—' },
+  { key: 'status', label: 'admin.fields.status', render: (row) => <StatusBadge status={row.status} audience="booking" /> },
   {
-    key: 'scheduledDate',
-    label: 'Scheduled',
-    render: (row) => (row.scheduledDate ? formatSlot(row.scheduledDate, row.scheduledTime) : '—'),
+    key: 'confirmedAt',
+    label: 'admin.fields.accepted',
+    render: (row) => (row.confirmedAt ? formatTimestamp(row.confirmedAt) : '—'),
   },
 ];
 
 function AdminBookingsPage() {
+  const { t } = useTranslation();
   const page = Number(useQueryParam('page')) || 1;
   const status = useQueryParam('status') || '';
   const provider = useQueryParam('provider') || '';
@@ -44,6 +47,13 @@ function AdminBookingsPage() {
       }),
     [page, status, provider, customer],
   );
+
+  const columns = COLUMNS.map((column) => ({
+    ...column,
+    label: t(column.label),
+    render: column.render ? (row) => column.render(row, t) : undefined,
+  }));
+  const statusOptions = STATUS_OPTIONS.map((option) => ({ ...option, label: t(option.label) }));
 
   function updateQuery(next) {
     const params = new URLSearchParams({
@@ -63,25 +73,25 @@ function AdminBookingsPage() {
 
   return (
     <AdminShell>
-      <PageHeader title="Bookings" subtitle="Confirmed customer/provider bookings." />
+      <PageHeader title={t('common.adminNav.bookings')} subtitle={t('admin.bookings.subtitle')} />
 
       <div className="admin-filters">
         <Select
           id="statusFilter"
-          label="Status"
+          label={t('admin.fields.status')}
           value={status}
-          options={STATUS_OPTIONS}
+          options={statusOptions}
           onChange={(event) => updateQuery({ status: event.target.value })}
         />
       </div>
 
       <AdminTable
-        columns={COLUMNS}
+        columns={columns}
         rows={bookings.data?.bookings || []}
         loading={bookings.loading}
         error={bookings.error}
         onRetry={bookings.reload}
-        emptyTitle="No bookings found"
+        emptyTitle={t('admin.bookings.emptyTitle')}
         getRowHref={(row) => `/app/admin/bookings/${row.id}`}
       />
 

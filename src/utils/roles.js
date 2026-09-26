@@ -1,5 +1,5 @@
+// Only providers and admins sign in; customers never have a session.
 export const ROLE_HOME_ROUTES = {
-  CUSTOMER: '/',
   PROVIDER: '/provider',
   ADMIN: '/app/admin',
 };
@@ -44,10 +44,6 @@ export function resolvePostAuthRoute(role, returnTo) {
   }
 
   const isAdminPath = safeReturnTo.startsWith('/app/');
-
-  if (role === 'CUSTOMER' && (isProviderPath(safeReturnTo) || isAdminPath)) {
-    return getHomeRouteForRole(role);
-  }
 
   if (role === 'PROVIDER' && !isProviderPath(safeReturnTo) && !isSharedPath(safeReturnTo)) {
     return getHomeRouteForRole(role);

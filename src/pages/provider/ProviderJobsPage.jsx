@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import AppShell from '../../components/AppShell.jsx';
 import {
   ButtonLink,
@@ -11,13 +12,10 @@ import {
 import { useApi } from '../../hooks/useApi.js';
 import { navigate, useQueryParam } from '../../hooks/useRoute.js';
 import { providerApi } from '../../services/fixApi.js';
-import { formatSlot } from '../../utils/format.js';
+import { formatIssueLabel, formatSlot } from '../../utils/format.js';
 
-const TABS = [
-  { key: 'active', label: 'Active' },
-  { key: 'completed', label: 'Completed' },
-  { key: 'cancelled', label: 'Cancelled' },
-];
+// Labels come from provider.jobs.tabs.<key>.
+const TABS = [{ key: 'active' }, { key: 'completed' }, { key: 'cancelled' }];
 
 // The server is the source of truth for jobs: everything here comes from /api/provider/jobs.
 export function splitJobs(jobs) {
@@ -37,22 +35,23 @@ export function jobPath(job) {
 }
 
 export function JobCard({ job }) {
+  const { t } = useTranslation();
   const isExternal = job.source === 'EXTERNAL';
   const slot = job.scheduledDate
-    ? `Scheduled: ${formatSlot(job.scheduledDate, job.scheduledTime)}`
+    ? t('provider.jobs.card.scheduled', { slot: formatSlot(job.scheduledDate, job.scheduledTime) })
     : job.preferredDate
-      ? `Preferred: ${formatSlot(job.preferredDate, job.preferredTime)}`
-      : 'Not scheduled yet';
+      ? t('provider.jobs.card.preferred', { slot: formatSlot(job.preferredDate, job.preferredTime) })
+      : t('provider.shared.notScheduledYet');
 
   return (
     <Link to={jobPath(job)} className="card card--link request-card">
       <span className="request-card__top">
         <span className="request-card__service">
-          {job.service?.name || job.serviceLabel || 'Job'}
-          {job.issueLabel ? <span className="request-card__issue"> · {job.issueLabel}</span> : null}
+          {job.service?.name || job.serviceLabel || t('provider.shared.job')}
+          {formatIssueLabel(job.issueKey, job.issueLabel) ? <span className="request-card__issue"> · {formatIssueLabel(job.issueKey, job.issueLabel)}</span> : null}
         </span>
         <span className="job-card__badges">
-          {isExternal ? <span className="badge badge--muted">External</span> : null}
+          {isExternal ? <span className="badge badge--muted">{t('provider.shared.external')}</span> : null}
           {isExternal ? (
             <StatusBadge status={job.status} audience="externalJob" />
           ) : job.bookingStatus ? (
@@ -72,6 +71,7 @@ export function JobCard({ job }) {
 }
 
 function ProviderJobsPage() {
+  const { t } = useTranslation();
   const tabParam = useQueryParam('tab');
   const tab = TABS.some((item) => item.key === tabParam) ? tabParam : 'active';
   const jobs = useApi(() => providerApi.jobs(), []);
@@ -81,16 +81,16 @@ function ProviderJobsPage() {
   return (
     <AppShell>
       <PageHeader
-        title="My jobs"
-        subtitle="Jobs customers have awarded to you, plus jobs you've added yourself."
+        title={t('provider.shared.myJobs')}
+        subtitle={t('provider.jobs.subtitle')}
         actions={
           <ButtonLink to="/provider/jobs/new" size="sm">
-            + Add Job
+            {t('provider.jobs.addJob')}
           </ButtonLink>
         }
       />
 
-      <div className="tabs" role="tablist" aria-label="Jobs">
+      <div className="tabs" role="tablist" aria-label={t('provider.jobs.tabsAria')}>
         {TABS.map((item) => (
           <button
             key={item.key}
@@ -100,18 +100,18 @@ function ProviderJobsPage() {
             className={`tab${tab === item.key ? ' is-active' : ''}`}
             onClick={() => navigate(item.key === 'active' ? '/provider/jobs' : `/provider/jobs?tab=${item.key}`, { replace: true })}
           >
-            {item.label}
+            {t(`provider.jobs.tabs.${item.key}`)}
             {grouped ? <span className="count">{grouped[item.key].length}</span> : null}
           </button>
         ))}
       </div>
 
-      {jobs.loading ? <LoadingState label="Loading your jobs…" /> : null}
+      {jobs.loading ? <LoadingState label={t('provider.jobs.loading')} /> : null}
       {jobs.error ? <ErrorState error={jobs.error} onRetry={jobs.reload} /> : null}
       {grouped && list.length === 0 ? (
         <EmptyState
-          title={tab === 'active' ? 'No active jobs' : `No ${tab} jobs`}
-          message={tab === 'active' ? 'Accept open requests — jobs you accept appear here.' : undefined}
+          title={t(`provider.jobs.empty.${tab}`)}
+          message={tab === 'active' ? t('provider.jobs.emptyActiveMessage') : undefined}
         />
       ) : null}
       {grouped && list.length > 0 ? (

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import AppShell from '../../components/AppShell.jsx';
 import { StarRating } from '../../components/StarRating.jsx';
 import { Avatar, ProviderFacts, RatingSummary } from '../../components/cards.jsx';
@@ -7,6 +8,7 @@ import { providersApi } from '../../services/fixApi.js';
 import { formatTimestamp } from '../../utils/format.js';
 
 function ProviderProfilePage({ providerId }) {
+  const { t } = useTranslation();
   const data = useApi(async () => {
     const [profile, reviews] = await Promise.all([
       providersApi.get(providerId),
@@ -15,12 +17,12 @@ function ProviderProfilePage({ providerId }) {
     return { provider: profile.provider, reviews: reviews.reviews, summary: reviews.summary };
   }, [providerId]);
 
-  const back = { to: '/services', label: 'Back' };
+  const back = { to: '/services', label: t('public.back') };
 
   if (data.loading) {
     return (
       <AppShell width="narrow">
-        <LoadingState label="Loading provider…" />
+        <LoadingState label={t('public.providerProfile.loading')} />
       </AppShell>
     );
   }
@@ -28,11 +30,11 @@ function ProviderProfilePage({ providerId }) {
   if (data.error) {
     return (
       <AppShell width="narrow">
-        <PageHeader title="Provider" back={back} />
+        <PageHeader title={t('public.providerProfile.fallbackTitle')} back={back} />
         <ErrorState
           error={
             data.error.status === 400
-              ? { status: 404, message: 'This provider could not be found.' }
+              ? { status: 404, message: t('public.providerProfile.notFound') }
               : data.error
           }
           onRetry={data.reload}
@@ -57,7 +59,9 @@ function ProviderProfilePage({ providerId }) {
                 className={`availability__dot${provider.isAvailable ? '' : ' availability__dot--off'}`}
                 aria-hidden="true"
               />
-              {provider.isAvailable ? 'Accepting bookings' : 'Not accepting bookings right now'}
+              {provider.isAvailable
+                ? t('public.providerProfile.accepting')
+                : t('public.providerProfile.notAccepting')}
             </p>
           </div>
         </div>
@@ -67,10 +71,13 @@ function ProviderProfilePage({ providerId }) {
 
       <section className="section section--tight" aria-labelledby="reviews-heading">
         <h2 id="reviews-heading" className="section__title">
-          Reviews {reviews.length > 0 ? <span className="count">{reviews.length}</span> : null}
+          {t('public.providerProfile.reviews')} {reviews.length > 0 ? <span className="count">{reviews.length}</span> : null}
         </h2>
         {reviews.length === 0 ? (
-          <EmptyState title="No reviews yet" message="Reviews appear here after completed bookings." />
+          <EmptyState
+            title={t('public.providerProfile.noReviews')}
+            message={t('public.providerProfile.noReviewsMessage')}
+          />
         ) : (
           <div className="list">
             {reviews.map((review) => (
@@ -78,7 +85,7 @@ function ProviderProfilePage({ providerId }) {
                 <div className="review-card__top">
                   <StarRating value={review.rating} readOnly />
                   <span className="review-card__meta">
-                    {review.customer?.name || 'Customer'} · {formatTimestamp(review.createdAt)}
+                    {review.customer?.name || t('public.providerProfile.customerFallback')} · {formatTimestamp(review.createdAt)}
                   </span>
                 </div>
                 {review.comment ? <p className="review-card__comment">{review.comment}</p> : null}

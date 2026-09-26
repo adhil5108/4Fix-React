@@ -1,15 +1,19 @@
+import { useTranslation } from 'react-i18next';
+
+// `labelKey` is translated at render; a caller-supplied step may pass a ready `label` instead.
 export const BOOKING_STEPS = [
-  { key: 'service', label: 'Service' },
-  { key: 'issue', label: 'Issue' },
-  { key: 'details', label: 'Details & location' },
+  { key: 'service', labelKey: 'cards.steps.service' },
+  { key: 'issue', labelKey: 'cards.steps.issue' },
+  { key: 'details', labelKey: 'cards.steps.details' },
 ];
 
 // Guided-flow progress: steps before `current` are done, `current` is highlighted.
 function StepIndicator({ steps = BOOKING_STEPS, current }) {
+  const { t } = useTranslation();
   const currentIndex = steps.findIndex((step) => step.key === current);
 
   return (
-    <ol className="stepper" aria-label="Booking steps">
+    <ol className="stepper" aria-label={t('cards.steps.ariaLabel')}>
       {steps.map((step, index) => {
         const state = index < currentIndex ? 'done' : index === currentIndex ? 'current' : 'upcoming';
 
@@ -22,7 +26,7 @@ function StepIndicator({ steps = BOOKING_STEPS, current }) {
             <span className="stepper__dot" aria-hidden="true">
               {state === 'done' ? '✓' : index + 1}
             </span>
-            <span className="stepper__label">{step.label}</span>
+            <span className="stepper__label">{step.labelKey ? t(step.labelKey) : step.label}</span>
           </li>
         );
       })}

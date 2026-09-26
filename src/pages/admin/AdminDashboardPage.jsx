@@ -1,19 +1,21 @@
+import { useTranslation } from 'react-i18next';
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import { ErrorState, Link, LoadingState, StatusBadge } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { navigate } from '../../hooks/useRoute.js';
 import { adminApi } from '../../services/fixApi.js';
-import { firstName, formatSlot, formatTimestamp } from '../../utils/format.js';
+import { firstName, formatTimestamp } from '../../utils/format.js';
 
+// Labels are translated at render from admin.dashboard.tiles.<key>.
 const STAT_TILES = [
-  { key: 'totalCustomers', label: 'Customers', to: '/app/admin/customers' },
-  { key: 'totalProviders', label: 'Providers', to: '/app/admin/providers' },
-  { key: 'totalServices', label: 'Services', to: '/app/admin/services' },
-  { key: 'openRequests', label: 'Open requests', to: '/app/admin/requests?status=PENDING' },
-  { key: 'acceptedRequests', label: 'Accepted requests', to: '/app/admin/requests?status=ACCEPTED' },
-  { key: 'activeBookings', label: 'Active bookings', to: '/app/admin/bookings' },
-  { key: 'completedBookings', label: 'Completed bookings', to: '/app/admin/bookings?status=COMPLETED' },
+  { key: 'totalCustomers', to: '/app/admin/customers' },
+  { key: 'totalProviders', to: '/app/admin/providers' },
+  { key: 'totalServices', to: '/app/admin/services' },
+  { key: 'openRequests', to: '/app/admin/requests?status=PENDING' },
+  { key: 'acceptedRequests', to: '/app/admin/requests?status=ACCEPTED' },
+  { key: 'activeBookings', to: '/app/admin/bookings' },
+  { key: 'completedBookings', to: '/app/admin/bookings?status=COMPLETED' },
 ];
 
 function StatTile({ label, value, to }) {
@@ -26,6 +28,7 @@ function StatTile({ label, value, to }) {
 }
 
 function AdminDashboardPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const dashboard = useApi(() => adminApi.dashboard(), []);
 
@@ -33,37 +36,37 @@ function AdminDashboardPage() {
     <AdminShell>
       <div className="admin-content__header">
         <div>
-          <h1 className="admin-content__title">Hi {firstName(user.name)}</h1>
-          <p className="admin-content__subtitle">Marketplace overview and recent activity.</p>
+          <h1 className="admin-content__title">{t('admin.dashboard.greeting', { name: firstName(user.name) })}</h1>
+          <p className="admin-content__subtitle">{t('admin.dashboard.subtitle')}</p>
         </div>
       </div>
 
-      {dashboard.loading ? <LoadingState label="Loading dashboard…" /> : null}
+      {dashboard.loading ? <LoadingState label={t('admin.dashboard.loading')} /> : null}
       {dashboard.error ? <ErrorState error={dashboard.error} onRetry={dashboard.reload} /> : null}
 
       {dashboard.data ? (
         <>
           <div className="stat-grid">
             {STAT_TILES.map((tile) => (
-              <StatTile key={tile.key} label={tile.label} value={dashboard.data.counts[tile.key]} to={tile.to} />
+              <StatTile key={tile.key} label={t(`admin.dashboard.tiles.${tile.key}`)} value={dashboard.data.counts[tile.key]} to={tile.to} />
             ))}
           </div>
 
           <section className="section section--tight" aria-labelledby="recent-requests-heading">
             <h2 id="recent-requests-heading" className="section__title">
-              Recent requests
+              {t('admin.dashboard.recentRequests')}
             </h2>
             {dashboard.data.recent.requests.length === 0 ? (
-              <p className="body-text">No requests yet.</p>
+              <p className="body-text">{t('admin.shared.noRequestsYet')}</p>
             ) : (
               <div className="admin-table-wrap">
                 <table className="admin-table">
                   <thead>
                     <tr>
-                      <th>Customer</th>
-                      <th>Service</th>
-                      <th>Status</th>
-                      <th>Created</th>
+                      <th>{t('admin.fields.customer')}</th>
+                      <th>{t('admin.fields.service')}</th>
+                      <th>{t('admin.fields.status')}</th>
+                      <th>{t('admin.fields.created')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -89,19 +92,19 @@ function AdminDashboardPage() {
 
           <section className="section section--tight" aria-labelledby="recent-bookings-heading">
             <h2 id="recent-bookings-heading" className="section__title">
-              Recent bookings
+              {t('admin.dashboard.recentBookings')}
             </h2>
             {dashboard.data.recent.bookings.length === 0 ? (
-              <p className="body-text">No bookings yet.</p>
+              <p className="body-text">{t('admin.shared.noBookingsYet')}</p>
             ) : (
               <div className="admin-table-wrap">
                 <table className="admin-table">
                   <thead>
                     <tr>
-                      <th>Service</th>
-                      <th>Provider</th>
-                      <th>Status</th>
-                      <th>Visit</th>
+                      <th>{t('admin.fields.service')}</th>
+                      <th>{t('admin.fields.provider')}</th>
+                      <th>{t('admin.fields.status')}</th>
+                      <th>{t('admin.fields.visit')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -116,7 +119,7 @@ function AdminDashboardPage() {
                         <td>
                           <StatusBadge status={booking.status} audience="booking" />
                         </td>
-                        <td>{booking.scheduledDate ? formatSlot(booking.scheduledDate, booking.scheduledTime) : '—'}</td>
+                        <td>{booking.confirmedAt ? formatTimestamp(booking.confirmedAt) : '—'}</td>
                       </tr>
                     ))}
                   </tbody>

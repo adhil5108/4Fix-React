@@ -6,12 +6,10 @@ import ProfilePage from './pages/ProfilePage.jsx';
 import SignupPage from './pages/SignupPage.jsx';
 import BookPage from './pages/customer/BookPage.jsx';
 import BookingPage from './pages/customer/BookingPage.jsx';
-import BookingsPage from './pages/customer/BookingsPage.jsx';
 import ChatPage from './pages/customer/ChatPage.jsx';
 import RequestDetailsPage from './pages/customer/RequestDetailsPage.jsx';
 import RequestsPage from './pages/customer/RequestsPage.jsx';
 import ReviewPage from './pages/customer/ReviewPage.jsx';
-import TrackingPage from './pages/customer/TrackingPage.jsx';
 import AdminBookingDetailPage from './pages/admin/AdminBookingDetailPage.jsx';
 import AdminBookingsPage from './pages/admin/AdminBookingsPage.jsx';
 import AdminCustomerDetailPage from './pages/admin/AdminCustomerDetailPage.jsx';
@@ -61,55 +59,51 @@ const ROUTES = [
   { path: '/about', access: PUBLIC, render: () => <AboutPage /> },
 
   { path: '/login', access: GUEST, render: () => <LoginPage /> },
-  { path: '/signup', access: GUEST, redirect: '/signup/customer' },
-  { path: '/signup/customer', access: GUEST, render: () => <SignupPage key="customer" role="CUSTOMER" /> },
-  { path: '/signup/provider', access: GUEST, render: () => <SignupPage key="provider" role="PROVIDER" /> },
+  // Only providers have accounts; customers use 4Fix without signing up.
+  { path: '/signup', access: PUBLIC, redirect: '/signup/provider' },
+  { path: '/signup/customer', access: PUBLIC, redirect: '/signup/provider' },
+  { path: '/signup/provider', access: GUEST, render: () => <SignupPage /> },
 
+  // Customer pages are public: a request/job is reached with the access token saved in
+  // this browser when it was created (or restored from its private tracking link).
   {
     path: '/book/:serviceId',
-    access: 'CUSTOMER',
+    access: PUBLIC,
     render: ({ serviceId }) => <BookPage key={serviceId} serviceId={serviceId} />,
   },
   {
     path: '/requests',
-    access: ['CUSTOMER', 'ADMIN'],
+    access: PUBLIC,
     render: () => <RequestsPage />,
   },
   {
     path: '/requests/:requestId',
-    access: 'CUSTOMER',
+    access: PUBLIC,
     render: ({ requestId }) => <RequestDetailsPage key={requestId} requestId={requestId} />,
   },
-  {
-    path: '/bookings',
-    access: ['CUSTOMER', 'ADMIN'],
-    render: () => <BookingsPage />,
-  },
+  { path: '/bookings', access: PUBLIC, redirect: '/requests' },
   {
     path: '/bookings/:bookingId',
-    access: 'CUSTOMER',
+    access: PUBLIC,
     render: ({ bookingId }) => <BookingPage key={bookingId} bookingId={bookingId} />,
   },
   {
     path: '/bookings/:bookingId/tracking',
-    access: 'CUSTOMER',
-    render: ({ bookingId }) => <TrackingPage key={bookingId} bookingId={bookingId} />,
+    access: PUBLIC,
+    redirect: ({ bookingId }) => `/bookings/${encodeURIComponent(bookingId)}`,
   },
   {
+    // Providers chat with their account; the customer with this browser's request token.
     path: '/bookings/:bookingId/chat',
-    access: ['CUSTOMER', 'PROVIDER'],
+    access: PUBLIC,
     render: ({ bookingId }) => <ChatPage key={bookingId} bookingId={bookingId} />,
   },
   {
     path: '/bookings/:bookingId/review',
-    access: 'CUSTOMER',
+    access: PUBLIC,
     render: ({ bookingId }) => <ReviewPage key={bookingId} bookingId={bookingId} />,
   },
-  {
-    path: '/profile',
-    access: ['CUSTOMER', 'ADMIN'],
-    render: () => <ProfilePage />,
-  },
+  { path: '/profile', access: PUBLIC, redirect: '/requests' },
 
   {
     path: '/provider',
@@ -214,7 +208,7 @@ const ROUTES = [
   {
     path: '/history',
     access: PUBLIC,
-    redirect: (_params, search) => `/bookings?status=${search.get('status') || 'COMPLETED'}`,
+    redirect: '/requests',
   },
   {
     path: '/requests/:requestId/payment',

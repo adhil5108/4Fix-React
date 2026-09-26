@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import AdminPagination from '../../components/admin/AdminPagination.jsx';
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import AdminTable from '../../components/admin/AdminTable.jsx';
@@ -8,37 +9,46 @@ import { navigate, useQueryParam } from '../../hooks/useRoute.js';
 import { formatCategory, formatMoney } from '../../utils/format.js';
 import { adminApi } from '../../services/fixApi.js';
 
+// Column labels are i18n keys, translated at render.
 const COLUMNS = [
-  { key: 'name', label: 'Name' },
-  { key: 'category', label: 'Category', render: (row) => formatCategory(row.category) },
+  { key: 'name', label: 'admin.fields.name' },
+  { key: 'category', label: 'admin.services.columns.category', render: (row) => formatCategory(row.category) },
   {
     key: 'startingPrice',
-    label: 'Starting price',
+    label: 'admin.services.columns.startingPrice',
     render: (row) => (row.startingPrice !== null ? formatMoney(row.startingPrice) : '—'),
   },
-  { key: 'issues', label: 'Issues', render: (row) => row.issues.length },
-  { key: 'isPopular', label: 'Popular', render: (row) => (row.isPopular ? 'Yes' : '—') },
+  { key: 'issues', label: 'admin.services.columns.issues', render: (row) => row.issues.length },
+  { key: 'isPopular', label: 'admin.services.columns.popular', render: (row, t) => (row.isPopular ? t('admin.shared.yes') : '—') },
   {
     key: 'isActive',
-    label: 'Status',
-    render: (row) => (
+    label: 'admin.fields.status',
+    render: (row, t) => (
       <span className={`badge badge--${row.isActive ? 'success' : 'muted'}`}>
-        {row.isActive ? 'Active' : 'Inactive'}
+        {row.isActive ? t('admin.shared.active') : t('admin.shared.inactive')}
       </span>
     ),
   },
 ];
 
 const STATUS_OPTIONS = [
-  { value: '', label: 'All statuses' },
-  { value: 'true', label: 'Active' },
-  { value: 'false', label: 'Inactive' },
+  { value: '', label: 'admin.shared.allStatuses' },
+  { value: 'true', label: 'admin.shared.active' },
+  { value: 'false', label: 'admin.shared.inactive' },
 ];
 
 function AdminServicesPage() {
+  const { t } = useTranslation();
   const page = Number(useQueryParam('page')) || 1;
   const isActive = useQueryParam('isActive') || '';
   const services = useApi(() => adminApi.services({ page, isActive: isActive || undefined }), [page, isActive]);
+
+  const columns = COLUMNS.map((column) => ({
+    ...column,
+    label: t(column.label),
+    render: column.render ? (row) => column.render(row, t) : undefined,
+  }));
+  const statusOptions = STATUS_OPTIONS.map((option) => ({ ...option, label: t(option.label) }));
 
   function updateQuery(next) {
     const params = new URLSearchParams({ ...(isActive ? { isActive } : {}), page: '1', ...next });
@@ -54,32 +64,32 @@ function AdminServicesPage() {
     <AdminShell>
       <div className="admin-content__header">
         <div>
-          <h1 className="admin-content__title">Services</h1>
-          <p className="admin-content__subtitle">The service catalogue customers can book from.</p>
+          <h1 className="admin-content__title">{t('common.adminNav.services')}</h1>
+          <p className="admin-content__subtitle">{t('admin.services.subtitle')}</p>
         </div>
         <ButtonLink to="/app/admin/services/new" size="sm">
-          New service
+          {t('admin.services.newService')}
         </ButtonLink>
       </div>
 
       <div className="admin-filters">
         <Select
           id="isActiveFilter"
-          label="Status"
+          label={t('admin.fields.status')}
           value={isActive}
-          options={STATUS_OPTIONS}
+          options={statusOptions}
           onChange={(event) => updateQuery({ isActive: event.target.value })}
         />
       </div>
 
       <AdminTable
-        columns={COLUMNS}
+        columns={columns}
         rows={services.data?.services || []}
         loading={services.loading}
         error={services.error}
         onRetry={services.reload}
-        emptyTitle="No services found"
-        emptyMessage="Create a service to get started."
+        emptyTitle={t('admin.services.emptyTitle')}
+        emptyMessage={t('admin.services.emptyMessage')}
         getRowHref={(row) => `/app/admin/services/${row.id}`}
       />
 
