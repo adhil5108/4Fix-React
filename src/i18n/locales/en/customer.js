@@ -93,6 +93,8 @@ export default {
       copied: 'Copied',
     },
     leaveReview: 'Rate your provider',
+    providerPhone: 'Phone number',
+    callProvider: 'Call Provider',
     yourDetails: 'Your details',
   },
   requests: {

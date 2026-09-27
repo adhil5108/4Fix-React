@@ -163,6 +163,7 @@ function SignupPage() {
             <legend className="auth-legend">{t('auth.signup.shopLocationTitle')}</legend>
             <p className="field-hint">{t('auth.signup.shopLocationHint')}</p>
             <ShopLocationField
+              manualOnly
               value={shopLocation}
               error={errors.shopLocation ? t(errors.shopLocation) : ''}
               disabled={isSubmitting}

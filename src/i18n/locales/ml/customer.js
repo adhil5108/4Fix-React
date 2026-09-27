@@ -93,6 +93,8 @@ export default {
       copied: 'കോപ്പി ചെയ്തു',
     },
     leaveReview: 'സേവനദാതാവിനെ റേറ്റ് ചെയ്യുക',
+    providerPhone: 'ഫോൺ നമ്പർ',
+    callProvider: 'സേവനദാതാവിനെ വിളിക്കുക',
     yourDetails: 'നിങ്ങളുടെ വിവരങ്ങൾ',
   },
   requests: {

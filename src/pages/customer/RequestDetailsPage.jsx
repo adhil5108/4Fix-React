@@ -230,6 +230,17 @@ function RequestDetailsPage({ requestId }) {
                   ) : null}
                 </div>
               </div>
+              {/* Present only once a provider is assigned (the API returns null before). */}
+              {request.provider?.phone ? (
+                <>
+                  <DetailList
+                    items={[{ label: t('customer.request.providerPhone'), value: request.provider.phone }]}
+                  />
+                  <a className="btn btn--primary btn--block" href={`tel:${request.provider.phone}`}>
+                    {t('customer.request.callProvider')}
+                  </a>
+                </>
+              ) : null}
             </Card>
           ) : null}
 
