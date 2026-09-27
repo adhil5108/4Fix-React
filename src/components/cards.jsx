@@ -10,6 +10,7 @@ import {
 } from '../utils/format.js';
 import { useTranslation } from 'react-i18next';
 import { Link, StatusBadge } from './ui.jsx';
+import { ChatCount } from './Unread.jsx';
 
 // A service's uploaded asset (API field `image`) is its ICON: always shown small, in a
 // consistent square tile, scaled to fit (never cropped) so transparent, square and
@@ -138,7 +139,10 @@ export function RequestCard({ request, to, audience = 'customer' }) {
           {request.service?.name || t('cards.requestCard.fallbackService')}
           {formatIssueLabel(request.issueKey, request.issueLabel) ? <span className="request-card__issue"> · {formatIssueLabel(request.issueKey, request.issueLabel)}</span> : null}
         </span>
-        <StatusBadge status={request.status} audience={audience} />
+        <span className="job-card__badges">
+          {audience === 'customer' && request.booking?.id ? <ChatCount bookingId={request.booking.id} /> : null}
+          <StatusBadge status={request.status} audience={audience} />
+        </span>
       </span>
       <span className="request-card__description">{request.description}</span>
       <span className="request-card__meta">

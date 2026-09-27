@@ -41,6 +41,15 @@ export default {
     admin: 'അഡ്മിൻ',
     myRequests: 'അഭ്യർത്ഥന',
   },
+  unread: {
+    count_one: '{{count}} വായിക്കാത്ത സന്ദേശം',
+    count_other: '{{count}} വായിക്കാത്ത സന്ദേശങ്ങൾ',
+    newFrom: '{{name}} അയച്ച പുതിയ സന്ദേശം',
+    newMessage: 'പുതിയ സന്ദേശം',
+    open: 'ചാറ്റ് തുറക്കുക',
+    dismiss: 'അടയ്ക്കുക',
+    region: 'അറിയിപ്പുകൾ',
+  },
   adminNav: {
     dashboard: 'ഡാഷ്ബോർഡ്',
     services: 'സേവനങ്ങൾ',

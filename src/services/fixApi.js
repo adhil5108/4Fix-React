@@ -57,6 +57,13 @@ export const customerBookingsApi = {
     }),
 };
 
+// Unread chat counts for one identity: the provider's account (no token), or one of
+// this browser's customer requests (its access token). Admin has none.
+export const chatUnreadApi = {
+  summary: (requestToken) =>
+    apiRequest('/api/bookings/unread', requestToken ? asCustomer(requestToken) : {}),
+};
+
 // Provider/admin (JWT) view of jobs, chat and reviews.
 export const bookingsApi = {
   list: ({ status } = {}) => apiRequest(`/api/bookings${toQueryString({ status })}`),

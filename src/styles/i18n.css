@@ -92,7 +92,8 @@
 }
 
 /* Tabs use one short word (common.navShort); never break inside a Malayalam word. */
-:lang(ml) .mobile-nav__link span {
+/* Only the label: the icon wrapper holds the unread badge, which must not be clipped. */
+:lang(ml) .mobile-nav__link > span:not(.mobile-nav__icon) {
   max-width: 100%;
   overflow: hidden;
   font-size: 0.66rem;

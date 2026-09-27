@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import AppShell from '../../components/AppShell.jsx';
 import { AddressBlock, Avatar, ServiceLocationBlock, AttachmentList, VoiceNoteBlock } from '../../components/cards.jsx';
+import { ChatCount } from '../../components/Unread.jsx';
 import {
   Button,
   ButtonLink,
@@ -192,6 +193,7 @@ function RequestDetailsPage({ requestId }) {
                 {request.status !== 'CANCELLED' ? (
                   <ButtonLink to={`/bookings/${booking.id}/chat`} variant="secondary" block>
                     {t('customer.request.chatWith', { name: provider?.name || t('customer.shared.yourProvider') })}
+                    <ChatCount bookingId={booking.id} />
                   </ButtonLink>
                 ) : null}
                 {request.status === 'COMPLETED' ? (

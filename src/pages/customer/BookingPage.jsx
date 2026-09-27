@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import AppShell from '../../components/AppShell.jsx';
 import TrackingTimeline from '../../components/TrackingTimeline.jsx';
 import { AddressBlock, ServiceLocationBlock, Avatar, RatingSummary } from '../../components/cards.jsx';
+import { ChatCount } from '../../components/Unread.jsx';
 import {
   ButtonLink,
   Card,
@@ -118,6 +119,7 @@ function BookingPage({ bookingId }) {
                   {t('customer.booking.chatWith', {
                     name: provider?.name ? provider.name.split(' ')[0] : t('customer.shared.technician'),
                   })}
+                  <ChatCount bookingId={booking.id} />
                 </ButtonLink>
               ) : null}
               {isCompleted ? (

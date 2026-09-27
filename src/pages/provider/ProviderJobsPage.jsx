@@ -9,6 +9,7 @@ import {
   PageHeader,
   StatusBadge,
 } from '../../components/ui.jsx';
+import { ChatCount } from '../../components/Unread.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { navigate, useQueryParam } from '../../hooks/useRoute.js';
 import { providerApi } from '../../services/fixApi.js';
@@ -51,6 +52,7 @@ export function JobCard({ job }) {
           {formatIssueLabel(job.issueKey, job.issueLabel) ? <span className="request-card__issue"> · {formatIssueLabel(job.issueKey, job.issueLabel)}</span> : null}
         </span>
         <span className="job-card__badges">
+          {job.bookingId ? <ChatCount bookingId={job.bookingId} /> : null}
           {isExternal ? <span className="badge badge--muted">{t('provider.shared.external')}</span> : null}
           {isExternal ? (
             <StatusBadge status={job.status} audience="externalJob" />

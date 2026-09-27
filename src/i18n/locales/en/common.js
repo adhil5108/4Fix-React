@@ -43,6 +43,16 @@ export default {
     admin: 'Admin',
     myRequests: 'Requests',
   },
+  // Unread chat messages: badges and the in-app "new message" notification.
+  unread: {
+    count_one: '{{count}} unread message',
+    count_other: '{{count}} unread messages',
+    newFrom: 'New message from {{name}}',
+    newMessage: 'New message',
+    open: 'Open chat',
+    dismiss: 'Dismiss',
+    region: 'Notifications',
+  },
   adminNav: {
     dashboard: 'Dashboard',
     services: 'Services',

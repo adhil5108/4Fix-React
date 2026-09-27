@@ -4,6 +4,7 @@ import AppShell from '../../components/AppShell.jsx';
 import JobNotes from '../../components/JobNotes.jsx';
 import TrackingTimeline from '../../components/TrackingTimeline.jsx';
 import { AddressBlock, ServiceLocationBlock, AttachmentList, VoiceNoteBlock } from '../../components/cards.jsx';
+import { ChatCount } from '../../components/Unread.jsx';
 import {
   Button,
   ButtonLink,
@@ -134,6 +135,7 @@ function ProviderJobPage({ bookingId }) {
                 </Button>
                 <ButtonLink to={`/bookings/${booking.id}/chat`} variant="secondary" block>
                   {t('provider.job.chat')}
+                <ChatCount bookingId={booking.id} />
                 </ButtonLink>
               </div>
               <ServiceLocationBlock location={request?.location} navigate fallback={null} />
@@ -202,6 +204,7 @@ function ProviderJobPage({ bookingId }) {
             <div className="card__actions">
               <ButtonLink to={`/bookings/${booking.id}/chat`} variant="secondary" block>
                 {t('provider.job.chat')}
+                <ChatCount bookingId={booking.id} />
               </ButtonLink>
             </div>
           </Card>

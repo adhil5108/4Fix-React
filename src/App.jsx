@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { AuthProvider, useAuth } from './hooks/useAuth.jsx';
+import { UnreadProvider } from './hooks/useUnread.jsx';
 import { getCurrentLocation, matchPath, navigate, useRoute } from './hooks/useRoute.js';
 import LoginPage from './pages/LoginPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
@@ -292,7 +293,9 @@ function AppRoutes() {
 function App() {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <UnreadProvider>
+        <AppRoutes />
+      </UnreadProvider>
     </AuthProvider>
   );
 }

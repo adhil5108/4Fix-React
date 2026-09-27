@@ -6,6 +6,7 @@ import { EmptyState, ErrorState, LoadingState, PageHeader } from '../../componen
 import { useAction, useApi } from '../../hooks/useApi.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useConversationSocket } from '../../hooks/useConversationSocket.js';
+import { useActiveConversation } from '../../hooks/useUnread.jsx';
 import { usePolling } from '../../hooks/usePolling.js';
 import { tokenForBooking } from '../../services/customerAccess.js';
 import { bookingsApi, customerBookingsApi } from '../../services/fixApi.js';
@@ -33,6 +34,9 @@ function ChatPage({ bookingId }) {
     onRead: () => messages.refresh(),
   });
   usePolling(() => messages.refresh(), 20000, Boolean(conversation.data));
+  // While this page is open its conversation is never "unread" and raises no
+  // notifications; new messages are marked read below as they arrive.
+  useActiveConversation(canChat ? bookingId : null);
 
   const list = messages.data?.messages || [];
   const unreadFromOther = list.some((message) => !message.isMine && !message.readAt);

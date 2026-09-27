@@ -1650,3 +1650,183 @@ a.provider-card__name:hover {
     margin-left: 0;
   }
 }
+
+/* ---------- Unread chat: badges and in-app notifications ---------- */
+
+.unread-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0 5px;
+}
+
+/* Pinned to the corner so it never widens the header (Malayalam labels already fill it). */
+.site-nav__link:has(.unread-badge) {
+  position: relative;
+}
+
+.site-nav__link .unread-badge {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  min-width: 17px;
+  height: 17px;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.mobile-nav__icon {
+  position: relative;
+  display: inline-flex;
+}
+
+.mobile-nav__icon .unread-badge {
+  position: absolute;
+  top: -6px;
+  left: 14px;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.chat-count {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 4px 8px;
+}
+
+.chat-count svg {
+  width: 13px;
+  height: 13px;
+}
+
+.toast-stack {
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 12px);
+  left: 16px;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.toast-stack > div {
+  display: grid;
+  gap: 8px;
+}
+
+.toast {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 10px 30px rgba(5, 7, 13, 0.16);
+  pointer-events: auto;
+  animation: toast-in 180ms ease-out;
+}
+
+.toast__body {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 56px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  padding: 10px 4px 10px 14px;
+  text-align: left;
+}
+
+.toast__icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.toast__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.toast__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.toast__text strong {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.93rem;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.toast__text span {
+  color: var(--green);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.toast__close {
+  flex: 0 0 auto;
+  width: 44px;
+  border: 0;
+  border-radius: 0 14px 14px 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1.3rem;
+}
+
+.toast__body:focus-visible,
+.toast__close:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: -2px;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .toast-stack {
+    right: 24px;
+    bottom: 24px;
+    left: auto;
+    width: 360px;
+  }
+}

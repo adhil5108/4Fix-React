@@ -2,8 +2,10 @@ import { useTranslation } from 'react-i18next';
 import AreaSwitcher from './admin/AreaSwitcher.jsx';
 import LanguageSwitcher from './LanguageSwitcher.jsx';
 import { useAuth } from '../hooks/useAuth.jsx';
+import { useUnread } from '../hooks/useUnread.jsx';
 import { navigate, useRoute } from '../hooks/useRoute.js';
 import { ButtonLink, Link } from './ui.jsx';
+import { NavBadge, UnreadToasts } from './Unread.jsx';
 
 const icons = {
   home: <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />,
@@ -67,20 +69,21 @@ function Icon({ name }) {
 }
 
 // Mobile keeps to Home / Book / My requests / About; desktop swaps Book for Services.
-// `label`/`shortLabel` are keys under common.nav.
+// `label`/`shortLabel` are keys under common.nav. `unread` marks the item that carries
+// the unread-chat badge: where that person's conversations live.
 const NAV_BY_ROLE = {
   // Customers never sign in: everyone who isn't a provider/admin sees this navigation.
   PUBLIC: [
     { to: '/', label: 'home', icon: 'home', exact: true },
     { to: '/services', label: 'services', icon: 'grid', desktopOnly: true },
     { to: '/services', label: 'book', icon: 'plus', mobileOnly: true },
-    { to: '/requests', label: 'myRequests', icon: 'calendar' },
+    { to: '/requests', label: 'myRequests', icon: 'calendar', unread: true },
     { to: '/about', label: 'about', icon: 'info' },
   ],
   PROVIDER: [
     { to: '/provider', label: 'dashboard', icon: 'home', exact: true },
     { to: '/provider/requests', label: 'requests', icon: 'briefcase' },
-    { to: '/provider/jobs', label: 'myJobs', shortLabel: 'jobs', icon: 'wrench' },
+    { to: '/provider/jobs', label: 'myJobs', shortLabel: 'jobs', icon: 'wrench', unread: true },
     { to: '/provider/profile', label: 'profile', icon: 'user' },
   ],
   ADMIN: [{ to: '/app/admin', label: 'admin', icon: 'home', exact: true }],
@@ -94,7 +97,7 @@ function isActive(item, path) {
   return path === item.to || path.startsWith(`${item.to}/`);
 }
 
-function Header({ navItems, path, previewRole }) {
+function Header({ navItems, path, previewRole, unreadTotal }) {
   const { t } = useTranslation();
   const { isAuthenticated, user, logout } = useAuth();
   const homeTarget = user?.role === 'PROVIDER' ? '/provider' : '/';
@@ -122,6 +125,7 @@ function Header({ navItems, path, previewRole }) {
                 aria-current={isActive(item, path) ? 'page' : undefined}
               >
                 {t(`common.nav.${item.label}`)}
+                {item.unread ? <NavBadge count={unreadTotal} /> : null}
               </Link>
             ))}
         </nav>
@@ -160,7 +164,7 @@ function Header({ navItems, path, previewRole }) {
   );
 }
 
-function MobileNav({ navItems, path }) {
+function MobileNav({ navItems, path, unreadTotal }) {
   const { t } = useTranslation();
   const items = navItems.filter((item) => !item.desktopOnly && item.icon);
 
@@ -175,7 +179,10 @@ function MobileNav({ navItems, path }) {
           }`}
           aria-current={isActive(item, path) ? 'page' : undefined}
         >
-          <Icon name={item.icon} />
+          <span className="mobile-nav__icon">
+            <Icon name={item.icon} />
+            {item.unread ? <NavBadge count={unreadTotal} /> : null}
+          </span>
           <span>{t(`common.navShort.${item.shortLabel || item.label}`)}</span>
         </Link>
       ))}
@@ -197,12 +204,15 @@ function AppShell({ children, width = 'default' }) {
   const previewRole = isAdminPreview ? resolvePreviewRole(path) : null;
   const navRole = isAdminPreview ? (previewRole === 'PROVIDER' ? 'PROVIDER' : 'PUBLIC') : isAuthenticated ? user.role : 'PUBLIC';
   const navItems = NAV_BY_ROLE[navRole] || NAV_BY_ROLE.PUBLIC;
+  // Admin (previewing) never has unread chats: it is not a participant.
+  const { total: unreadTotal } = useUnread();
 
   return (
     <div className="app-shell">
-      <Header navItems={navItems} path={path} previewRole={previewRole} />
+      <Header navItems={navItems} path={path} previewRole={previewRole} unreadTotal={unreadTotal} />
       <main className={`app-main app-main--${width}`}>{children}</main>
-      <MobileNav navItems={navItems} path={path} />
+      <MobileNav navItems={navItems} path={path} unreadTotal={unreadTotal} />
+      <UnreadToasts />
     </div>
   );
 }
