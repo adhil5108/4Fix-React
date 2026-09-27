@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next';
 import AppShell from '../components/AppShell.jsx';
 import { LocationPreview } from '../components/LocationCapture.jsx';
 import ShopLocationField from '../components/ShopLocationField.jsx';
+import { Avatar } from '../components/cards.jsx';
 import TextField, { TextArea } from '../components/TextField.jsx';
 import {
   Button,
+  ButtonLink,
   Card,
   DetailList,
   ErrorState,
-  Link,
   LoadingState,
   Notice,
   PageHeader,
@@ -36,6 +37,7 @@ function formFromUser(user) {
 function ShopLocationCard({ user, onSaved }) {
   const { t } = useTranslation();
   const current = user.shopLocation;
+  const hasCoordinates = Number.isFinite(current?.latitude) && Number.isFinite(current?.longitude);
   const [editing, setEditing] = useState(!current);
   const [value, setValue] = useState(null);
   const [error, setError] = useState('');
@@ -66,18 +68,31 @@ function ShopLocationCard({ user, onSaved }) {
 
   return (
     <Card>
-      <h2 className="card__title">{t('profile.shop.title')}</h2>
-      <p className="field-hint">{t('profile.shop.hint')}</p>
+      <div className="profile-section__head">
+        <h2 className="card__title">{t('profile.shop.title')}</h2>
+        <p className="field-hint">{t('profile.shop.hint')}</p>
+      </div>
       {!current ? <Notice tone="info">{t('profile.shop.missing')}</Notice> : null}
       <Notice>{save.error}</Notice>
 
       {current && !editing ? (
         <div className="form-stack">
+          <div className="shop-summary">
+            <span className="shop-summary__pin" aria-hidden="true">
+              📍
+            </span>
+            <div className="shop-summary__body">
+              <p className="shop-summary__label">{t('profile.shop.addressLabel')}</p>
+              <p className="shop-summary__address">{current.address || t('profile.shop.noAddress')}</p>
+              <span className={`badge badge--${hasCoordinates ? 'success' : 'muted'}`}>
+                {hasCoordinates ? t('profile.shop.pinSet') : t('profile.shop.pinMissing')}
+              </span>
+            </div>
+          </div>
           {/* Providers who registered with an address only have no coordinates yet. */}
-          {Number.isFinite(current.latitude) && Number.isFinite(current.longitude) ? (
+          {hasCoordinates ? (
             <LocationPreview latitude={current.latitude} longitude={current.longitude} title={t('profile.shop.title')} />
           ) : null}
-          {current.address ? <p className="body-text">{current.address}</p> : null}
           <div>
             <Button variant="secondary" onClick={() => setEditing(true)}>
               {t('profile.shop.change')}
@@ -205,10 +220,22 @@ function ProfilePage() {
 
   return (
     <AppShell width="narrow">
-      <PageHeader title={t('profile.title')} subtitle={t(`profile.roles.${user.role}`)} />
+      <PageHeader title={t('profile.title')} />
+
+      <Card className="profile-identity">
+        <Avatar name={user.name} image={user.profileImage} size="lg" />
+        <div className="profile-identity__body">
+          <p className="profile-identity__name">{user.name}</p>
+          <p className="profile-identity__phone">{user.username}</p>
+          <span className="badge badge--info">{t(`profile.roles.${user.role}`)}</span>
+        </div>
+      </Card>
 
       <Card>
-        <h2 className="card__title">{t('profile.details.title')}</h2>
+        <div className="profile-section__head">
+          <h2 className="card__title">{t('profile.details.title')}</h2>
+          {isProvider ? <p className="field-hint">{t('profile.details.hint')}</p> : null}
+        </div>
         <form className="form-stack" onSubmit={handleSubmit} noValidate>
           <Notice>{save.error}</Notice>
           {saved ? <Notice tone="success">{t('profile.details.saved')}</Notice> : null}
@@ -290,7 +317,7 @@ function ProfilePage() {
             </>
           ) : null}
 
-          <div>
+          <div className="profile-actions">
             <Button type="submit" loading={save.pending === 'save'} loadingText={t('profile.details.saving')}>
               {t('profile.details.save')}
             </Button>
@@ -319,23 +346,23 @@ function ProfilePage() {
             { label: t('profile.account.type'), value: t(`profile.roles.${user.role}`) },
           ]}
         />
-        <p className="card__links">
-          {isProvider ? (
-            <>
-              <Link to="/provider/jobs" className="text-link">
-                {t('common.nav.myJobs')}
-              </Link>
-              <Link to={`/providers/${user.id}`} className="text-link">
-                {t('profile.account.viewPublic')}
-              </Link>
-            </>
-          ) : null}
-        </p>
+        {isProvider ? (
+          <div className="profile-actions">
+            <ButtonLink to="/provider/jobs" variant="secondary">
+              {t('common.nav.myJobs')}
+            </ButtonLink>
+            <ButtonLink to={`/providers/${user.id}`} variant="secondary">
+              {t('profile.account.viewPublic')}
+            </ButtonLink>
+          </div>
+        ) : null}
+        <div className="profile-logout">
+          <Button variant="danger-ghost" block onClick={handleLogout}>
+            {t('common.nav.logOut')}
+          </Button>
+        </div>
       </Card>
 
-      <Button variant="danger-ghost" block onClick={handleLogout}>
-        {t('common.nav.logOut')}
-      </Button>
     </AppShell>
   );
 }

@@ -13,6 +13,7 @@ export default {
     fullName: 'Full Name',
     save: 'Save changes',
     saving: 'Saving…',
+    hint: 'Customers see your name, bio and services on your public profile.',
   },
   provider: {
     bio: 'About you',
@@ -46,5 +47,9 @@ export default {
     change: 'Change shop location',
     save: 'Save shop location',
     cancel: 'Cancel',
+    addressLabel: 'Shop address',
+    noAddress: 'No shop address added',
+    pinSet: 'Map location set',
+    pinMissing: 'Address only — no map location yet',
   },
 };

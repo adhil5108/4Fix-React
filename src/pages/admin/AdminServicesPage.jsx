@@ -3,6 +3,7 @@ import AdminPagination from '../../components/admin/AdminPagination.jsx';
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import AdminTable from '../../components/admin/AdminTable.jsx';
 import { Select } from '../../components/TextField.jsx';
+import { ServiceIcon } from '../../components/cards.jsx';
 import { ButtonLink } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { navigate, useQueryParam } from '../../hooks/useRoute.js';
@@ -11,7 +12,16 @@ import { adminApi } from '../../services/fixApi.js';
 
 // Column labels are i18n keys, translated at render.
 const COLUMNS = [
-  { key: 'name', label: 'admin.fields.name' },
+  {
+    key: 'name',
+    label: 'admin.fields.name',
+    render: (row) => (
+      <span className="service-inline">
+        <ServiceIcon service={row} size="sm" />
+        {row.name}
+      </span>
+    ),
+  },
   { key: 'category', label: 'admin.services.columns.category', render: (row) => formatCategory(row.category) },
   {
     key: 'startingPrice',

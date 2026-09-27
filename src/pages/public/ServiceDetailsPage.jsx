@@ -1,7 +1,7 @@
 import { Trans, useTranslation } from 'react-i18next';
 import AppShell from '../../components/AppShell.jsx';
 import StepIndicator from '../../components/StepIndicator.jsx';
-import { IssueCard } from '../../components/cards.jsx';
+import { IssueCard, ServiceIcon } from '../../components/cards.jsx';
 import { Card, ErrorState, LoadingState, Notice, PageHeader } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
@@ -56,8 +56,10 @@ function ServiceDetailsPage({ serviceId }) {
       <PageHeader back={back} title={details.name} subtitle={formatCategory(details.category)} />
 
       <Card>
-        {details.image ? <img className="service-hero" src={details.image} alt="" /> : null}
-        <p className="body-text">{details.description}</p>
+        <div className="service-summary">
+          <ServiceIcon service={details} size="lg" />
+          <p className="body-text">{details.description}</p>
+        </div>
         {details.startingPrice !== null ? (
           <p className="service-price">
             <Trans

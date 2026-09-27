@@ -88,6 +88,7 @@ function validateServiceImageFile(file, t) {
   return '';
 }
 
+// The service's ICON (stored in the existing `image` field for API compatibility).
 // Uploads through the same Cloudinary endpoint the customer booking flow already uses
 // (POST /api/uploads/image via uploadsApi) — no separate upload path. `value`/`onChange`
 // plug straight into the form's existing `image` field, so the rest of the form (and the
@@ -162,7 +163,7 @@ function ServiceImageField({ value, onChange, onUploadingChange }) {
       <div className="image-picker">
         {displayUrl ? (
           <div className={`image-picker__item image-picker__item--${status}`}>
-            <div className="image-picker__thumb">
+            <div className="image-picker__thumb image-picker__thumb--icon">
               <img src={displayUrl} alt="" />
               {isUploading ? (
                 <span className="image-picker__overlay" aria-live="polite">

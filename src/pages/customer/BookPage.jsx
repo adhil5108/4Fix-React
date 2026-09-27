@@ -7,7 +7,7 @@ import ImageAttachments, { MAX_ATTACHMENTS } from '../../components/ImageAttachm
 import StepIndicator from '../../components/StepIndicator.jsx';
 import TextField, { TextArea } from '../../components/TextField.jsx';
 import VoiceRecorder from '../../components/VoiceRecorder.jsx';
-import { IssueCard } from '../../components/cards.jsx';
+import { IssueCard, ServiceIcon } from '../../components/cards.jsx';
 import {
   Button,
   Card,
@@ -199,12 +199,15 @@ function BookPage({ serviceId }) {
         back={{ to: bookPath(serviceId), label: t('customer.book.changeIssue') }}
         title={t('customer.book.detailsTitle')}
         subtitle={
-          <>
-            {details.name} · <strong>{formatIssueLabel(issue.key, issue.label)}</strong>{' '}
-            <Link to={bookPath(serviceId)} className="text-link">
-              {t('customer.book.change')}
-            </Link>
-          </>
+          <span className="service-inline">
+            <ServiceIcon service={details} size="sm" />
+            <span>
+              {details.name} · <strong>{formatIssueLabel(issue.key, issue.label)}</strong>{' '}
+              <Link to={bookPath(serviceId)} className="text-link">
+                {t('customer.book.change')}
+              </Link>
+            </span>
+          </span>
         }
       />
 

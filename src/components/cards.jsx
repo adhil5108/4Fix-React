@@ -11,16 +11,33 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Link, StatusBadge } from './ui.jsx';
 
+// A service's uploaded asset (API field `image`) is its ICON: always shown small, in a
+// consistent square tile, scaled to fit (never cropped) so transparent, square and
+// non-square uploads all work. Services without one show their initials instead.
+export function ServiceIcon({ service, size = 'md' }) {
+  return (
+    <span className={`service-icon service-icon--${size}`} aria-hidden="true">
+      {service?.image ? (
+        <img src={service.image} alt="" loading="lazy" />
+      ) : (
+        <span className="service-icon__fallback">{initials(service?.name) || '•'}</span>
+      )}
+    </span>
+  );
+}
+
 export function ServiceCard({ service }) {
   const { t } = useTranslation();
 
   return (
     <Link to={`/services/${service.id}`} className="card card--link service-card">
-      {service.image ? (
-        <img className="service-card__image" src={service.image} alt="" loading="lazy" />
-      ) : null}
-      <span className="service-card__category">{formatCategory(service.category)}</span>
-      <span className="service-card__name">{service.name}</span>
+      <span className="service-card__head">
+        <ServiceIcon service={service} />
+        <span className="service-card__title">
+          <span className="service-card__category">{formatCategory(service.category)}</span>
+          <span className="service-card__name">{service.name}</span>
+        </span>
+      </span>
       <span className="service-card__description">{service.description}</span>
       <span className="service-card__footer">
         {service.startingPrice !== null && service.startingPrice !== undefined ? (
