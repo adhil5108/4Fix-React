@@ -27,20 +27,61 @@ export function parseCoordinates(text) {
 // A provider's fixed shop/business location: captured once from this device's
 // location, or entered as coordinates / a Maps link when geolocation isn't available.
 // It is profile data — never a live position.
-function ShopLocationField({ value, onChange, error, disabled = false }) {
+//
+// `manualOnly` (provider registration): typed entry only — shop name/address first, then
+// coordinates or a Maps link. No map, and the location component is never mounted, so
+// the browser is never asked for location permission.
+function ShopLocationField({ value, onChange, error, disabled = false, manualOnly = false }) {
   const { t } = useTranslation();
   const geolocationSupported = typeof navigator !== 'undefined' && Boolean(navigator.geolocation);
-  const [manual, setManual] = useState(!geolocationSupported);
+  const [manual, setManual] = useState(manualOnly || !geolocationSupported);
   const [coordinatesText, setCoordinatesText] = useState(
     value ? `${value.latitude}, ${value.longitude}` : '',
   );
+  // Kept locally so a name/address typed before the coordinates isn't lost.
+  const [addressText, setAddressText] = useState(value?.address || '');
   const [parseError, setParseError] = useState('');
 
   function updateManual(text) {
     setCoordinatesText(text);
     const parsed = parseCoordinates(text);
     setParseError(text.trim() && !parsed ? 'cards.shopLocation.manualInvalid' : '');
-    onChange(parsed ? { ...parsed, address: value?.address || '' } : null);
+    onChange(parsed ? { ...parsed, address: manualOnly ? addressText : value?.address || '' } : null);
+  }
+
+  function updateAddress(text) {
+    setAddressText(text);
+    if (value) onChange({ ...value, address: text });
+  }
+
+  const coordinatesField = (
+    <TextField
+      id="shopLocation"
+      label={t('cards.shopLocation.manualLabel')}
+      value={coordinatesText}
+      placeholder={t('cards.shopLocation.manualPlaceholder')}
+      error={parseError ? t(parseError) : error}
+      disabled={disabled}
+      onChange={(event) => updateManual(event.target.value)}
+    />
+  );
+
+  if (manualOnly) {
+    return (
+      <div className="form-stack">
+        <TextField
+          id="shopLocationAddress"
+          label={t('cards.shopLocation.landmark')}
+          maxLength={240}
+          value={addressText}
+          placeholder={t('cards.shopLocation.landmarkPlaceholder')}
+          disabled={disabled}
+          onChange={(event) => updateAddress(event.target.value)}
+        />
+        {coordinatesField}
+        <p className="field-hint">{t('cards.shopLocation.manualHelp')}</p>
+      </div>
+    );
   }
 
   return (
@@ -48,15 +89,7 @@ function ShopLocationField({ value, onChange, error, disabled = false }) {
       {manual ? (
         <>
           <Notice tone="info">{t('cards.shopLocation.manualHelp')}</Notice>
-          <TextField
-            id="shopLocation"
-            label={t('cards.shopLocation.manualLabel')}
-            value={coordinatesText}
-            placeholder={t('cards.shopLocation.manualPlaceholder')}
-            error={parseError ? t(parseError) : error}
-            disabled={disabled}
-            onChange={(event) => updateManual(event.target.value)}
-          />
+          {coordinatesField}
           <TextField
             id="shopLocationAddress"
             label={t('cards.shopLocation.landmark')}
