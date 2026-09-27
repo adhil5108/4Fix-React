@@ -73,7 +73,10 @@ function ShopLocationCard({ user, onSaved }) {
 
       {current && !editing ? (
         <div className="form-stack">
-          <LocationPreview latitude={current.latitude} longitude={current.longitude} title={t('profile.shop.title')} />
+          {/* Providers who registered with an address only have no coordinates yet. */}
+          {Number.isFinite(current.latitude) && Number.isFinite(current.longitude) ? (
+            <LocationPreview latitude={current.latitude} longitude={current.longitude} title={t('profile.shop.title')} />
+          ) : null}
           {current.address ? <p className="body-text">{current.address}</p> : null}
           <div>
             <Button variant="secondary" onClick={() => setEditing(true)}>

@@ -41,5 +41,7 @@ export default {
     confirmRequired: 'പാസ്‌വേഡ് സ്ഥിരീകരിക്കുക.',
     passwordMismatch: 'പാസ്‌വേഡുകൾ പൊരുത്തപ്പെടുന്നില്ല.',
     shopLocationRequired: 'നിങ്ങളുടെ ഷോപ്പ് ലൊക്കേഷൻ നൽകുക.',
+    shopAddressRequired: 'ഷോപ്പിന്റെ പേരോ വിലാസമോ നൽകുക.',
+    shopAddressShort: 'ഷോപ്പ് വിലാസത്തിൽ കുറഞ്ഞത് 5 അക്ഷരങ്ങൾ വേണം.',
   },
 };

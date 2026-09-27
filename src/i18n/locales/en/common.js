@@ -175,6 +175,7 @@ export default {
       'Unsupported voice note format': 'This voice note format isn’t supported.',
       'Customer details are required': 'Enter your name and phone number.',
       'Customer name must be at least 2 characters': 'Name must be at least 2 characters.',
+      'Shop address must be at least 5 characters': 'Shop address must be at least 5 characters.',
       'Shop location is required': 'Set your shop location.',
     },
   },

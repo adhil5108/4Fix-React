@@ -40,8 +40,12 @@ function validateForm(form, shopLocation) {
     errors.confirmPassword = 'auth.errors.passwordMismatch';
   }
 
-  if (!shopLocation) {
-    errors.shopLocation = 'auth.errors.shopLocationRequired';
+  // Registration takes the shop address only (same length rule as an address line).
+  const shopAddress = shopLocation?.address?.trim() || '';
+  if (!shopAddress) {
+    errors.shopLocationAddress = 'auth.errors.shopAddressRequired';
+  } else if (shopAddress.length < 5) {
+    errors.shopLocationAddress = 'auth.errors.shopAddressShort';
   }
 
   return errors;
@@ -86,11 +90,7 @@ function SignupPage() {
     try {
       const result = await signupProvider({
         ...form,
-        shopLocation: {
-          latitude: shopLocation.latitude,
-          longitude: shopLocation.longitude,
-          address: shopLocation.address?.trim() || undefined,
-        },
+        shopLocation: { address: shopLocation.address.trim() },
       });
       navigate(resolvePostAuthRoute(result.user.role, returnTo), { replace: true });
     } catch (error) {
@@ -165,11 +165,11 @@ function SignupPage() {
             <ShopLocationField
               manualOnly
               value={shopLocation}
-              error={errors.shopLocation ? t(errors.shopLocation) : ''}
+              error={errors.shopLocationAddress ? t(errors.shopLocationAddress) : ''}
               disabled={isSubmitting}
               onChange={(next) => {
                 setShopLocation(next);
-                setErrors((current) => ({ ...current, shopLocation: '' }));
+                setErrors((current) => ({ ...current, shopLocationAddress: '' }));
                 setFormError('');
               }}
             />

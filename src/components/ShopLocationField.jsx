@@ -28,9 +28,9 @@ export function parseCoordinates(text) {
 // location, or entered as coordinates / a Maps link when geolocation isn't available.
 // It is profile data — never a live position.
 //
-// `manualOnly` (provider registration): typed entry only — shop name/address first, then
-// coordinates or a Maps link. No map, and the location component is never mounted, so
-// the browser is never asked for location permission.
+// `manualOnly` (provider registration): the typed shop name/address only — no
+// coordinates, no map, and the location component is never mounted, so the browser is
+// never asked for location permission. `value` is then { address } or null.
 function ShopLocationField({ value, onChange, error, disabled = false, manualOnly = false }) {
   const { t } = useTranslation();
   const geolocationSupported = typeof navigator !== 'undefined' && Boolean(navigator.geolocation);
@@ -46,12 +46,7 @@ function ShopLocationField({ value, onChange, error, disabled = false, manualOnl
     setCoordinatesText(text);
     const parsed = parseCoordinates(text);
     setParseError(text.trim() && !parsed ? 'cards.shopLocation.manualInvalid' : '');
-    onChange(parsed ? { ...parsed, address: manualOnly ? addressText : value?.address || '' } : null);
-  }
-
-  function updateAddress(text) {
-    setAddressText(text);
-    if (value) onChange({ ...value, address: text });
+    onChange(parsed ? { ...parsed, address: value?.address || '' } : null);
   }
 
   const coordinatesField = (
@@ -68,19 +63,20 @@ function ShopLocationField({ value, onChange, error, disabled = false, manualOnl
 
   if (manualOnly) {
     return (
-      <div className="form-stack">
-        <TextField
-          id="shopLocationAddress"
-          label={t('cards.shopLocation.landmark')}
-          maxLength={240}
-          value={addressText}
-          placeholder={t('cards.shopLocation.landmarkPlaceholder')}
-          disabled={disabled}
-          onChange={(event) => updateAddress(event.target.value)}
-        />
-        {coordinatesField}
-        <p className="field-hint">{t('cards.shopLocation.manualHelp')}</p>
-      </div>
+      <TextField
+        id="shopLocationAddress"
+        label={t('cards.shopLocation.addressLabel')}
+        autoComplete="street-address"
+        maxLength={240}
+        value={addressText}
+        placeholder={t('cards.shopLocation.landmarkPlaceholder')}
+        error={error}
+        disabled={disabled}
+        onChange={(event) => {
+          setAddressText(event.target.value);
+          onChange(event.target.value.trim() ? { address: event.target.value } : null);
+        }}
+      />
     );
   }
 

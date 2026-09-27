@@ -171,6 +171,7 @@ export default {
       'Unsupported voice note format': 'ഈ വോയ്സ് നോട്ട് ഫോർമാറ്റ് പിന്തുണയ്ക്കുന്നില്ല.',
       'Customer details are required': 'നിങ്ങളുടെ പേരും ഫോൺ നമ്പറും നൽകുക.',
       'Customer name must be at least 2 characters': 'പേരിൽ കുറഞ്ഞത് 2 അക്ഷരങ്ങൾ വേണം.',
+      'Shop address must be at least 5 characters': 'ഷോപ്പ് വിലാസത്തിൽ കുറഞ്ഞത് 5 അക്ഷരങ്ങൾ വേണം.',
       'Shop location is required': 'നിങ്ങളുടെ ഷോപ്പ് ലൊക്കേഷൻ നൽകുക.',
     },
   },

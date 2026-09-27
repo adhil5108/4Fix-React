@@ -41,5 +41,7 @@ export default {
     confirmRequired: 'Confirm your password.',
     passwordMismatch: 'Passwords do not match.',
     shopLocationRequired: 'Set your shop location.',
+    shopAddressRequired: 'Enter your shop name or address.',
+    shopAddressShort: 'Shop address must be at least 5 characters.',
   },
 };

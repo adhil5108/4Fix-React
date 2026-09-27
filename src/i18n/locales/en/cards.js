@@ -166,5 +166,6 @@ export default {
     manualInvalid: 'We couldn’t find coordinates in that. Paste a Google Maps link or “latitude, longitude”.',
     useDevice: 'Use this device’s location instead',
     enterManually: 'Can’t use location here? Enter coordinates',
+    addressLabel: 'Shop name or address',
   },
 };
