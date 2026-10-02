@@ -52,6 +52,7 @@ export default {
   },
   adminNav: {
     dashboard: 'ഡാഷ്ബോർഡ്',
+    categories: 'വിഭാഗങ്ങൾ',
     services: 'സേവനങ്ങൾ',
     providers: 'സേവനദാതാക്കൾ',
     customers: 'ഉപഭോക്താക്കൾ',
@@ -164,6 +165,11 @@ export default {
       INVALID_STATE_TRANSITION: 'ഈ ഘട്ടം ഇപ്പോൾ സാധ്യമല്ല. പുതിയ നില കാണാൻ പേജ് പുതുക്കുക.',
       RATE_LIMITED: 'ഈ നെറ്റ്‌വർക്കിൽ നിന്ന് വളരെയധികം ശ്രമങ്ങൾ. കുറച്ച് കഴിഞ്ഞ് വീണ്ടും ശ്രമിക്കുക.',
       INVALID_TOKEN: 'ഈ ലിങ്ക് അല്ലെങ്കിൽ സെഷൻ ഇനി സാധുവല്ല.',
+      CATEGORY_NOT_ELIGIBLE: 'നിങ്ങൾ ജോലി ചെയ്യുന്ന വിഭാഗങ്ങളിലെ അഭ്യർത്ഥനകൾ മാത്രമേ സ്വീകരിക്കാനാകൂ.',
+      CATEGORY_EXISTS: 'ഈ പേരിൽ ഒരു വിഭാഗം ഇതിനകം ഉണ്ട്.',
+      CATEGORY_IN_USE: 'ഈ വിഭാഗത്തിൽ ഇപ്പോഴും സേവനങ്ങൾ ഉള്ളതിനാൽ ഡിലീറ്റ് ചെയ്യാനാവില്ല. പകരം പ്രവർത്തനരഹിതമാക്കുക.',
+      CATEGORY_NOT_FOUND: 'വിഭാഗം കണ്ടെത്തിയില്ല.',
+      INVOICE_NOT_FOUND: 'ജോലി പൂർത്തിയായ ശേഷം ഇൻവോയ്സ് ലഭ്യമാകും.',
     },
     validation: {
       'Pincode must be 6 digits': 'പിൻകോഡ് 6 അക്കങ്ങളായിരിക്കണം.',
@@ -182,6 +188,10 @@ export default {
       'Customer name must be at least 2 characters': 'പേരിൽ കുറഞ്ഞത് 2 അക്ഷരങ്ങൾ വേണം.',
       'Shop address must be at least 5 characters': 'ഷോപ്പ് വിലാസത്തിൽ കുറഞ്ഞത് 5 അക്ഷരങ്ങൾ വേണം.',
       'Shop location is required': 'നിങ്ങളുടെ ഷോപ്പ് ലൊക്കേഷൻ നൽകുക.',
+      'Choose at least one category': 'നിങ്ങൾ ജോലി ചെയ്യുന്ന ഒരു വിഭാഗമെങ്കിലും തിരഞ്ഞെടുക്കുക.',
+      'One or more categories are not available': 'തിരഞ്ഞെടുത്ത ഒരു വിഭാഗം ഇപ്പോൾ ലഭ്യമല്ല. വീണ്ടും തിരഞ്ഞെടുക്കുക.',
+      'Category is required': 'ഈ സേവനത്തിന് ഒരു വിഭാഗം തിരഞ്ഞെടുക്കുക.',
+      'Category does not exist': 'ആ വിഭാഗം ഇപ്പോൾ നിലവിലില്ല. മറ്റൊന്ന് തിരഞ്ഞെടുക്കുക.',
     },
   },
 };

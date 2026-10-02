@@ -7,8 +7,9 @@ import { useApi } from '../../hooks/useApi.js';
 import { useSavedRequests } from '../../hooks/useSavedRequests.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { navigate } from '../../hooks/useRoute.js';
-import { servicesApi } from '../../services/fixApi.js';
-import { firstName, formatCategory } from '../../utils/format.js';
+import { categoriesApi, servicesApi } from '../../services/fixApi.js';
+import { firstName } from '../../utils/format.js';
+import { categoryPath } from './publicLinks.js';
 
 // Keys under public.home.steps; labels are translated at render.
 const STEPS = ['report', 'accept', 'track'];
@@ -45,7 +46,8 @@ function HomePage() {
   const all = services.data?.services || [];
   const popular = all.filter((service) => service.isPopular);
   const featured = (popular.length > 0 ? popular : all).slice(0, 6);
-  const categories = [...new Set(all.map((service) => service.category))].sort();
+  const categoryList = useApi(() => categoriesApi.list(), []);
+  const categories = categoryList.data?.categories || [];
 
   return (
     <AppShell>
@@ -68,12 +70,8 @@ function HomePage() {
         {categories.length > 0 ? (
           <div className="chip-row chip-row--scroll hero__categories" aria-label={t('public.home.categories')}>
             {categories.map((category) => (
-              <Link
-                key={category}
-                to={`/services?category=${encodeURIComponent(category)}`}
-                className="chip"
-              >
-                {formatCategory(category)}
+              <Link key={category.id} to={categoryPath(category.id)} className="chip">
+                {category.name}
               </Link>
             ))}
           </div>

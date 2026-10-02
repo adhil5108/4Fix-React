@@ -146,6 +146,11 @@ function ProviderJobPage({ bookingId }) {
             <Card>
               <h2 className="card__title">{t('provider.job.completedTitle')}</h2>
               <p className="body-text">{t('provider.job.completedText', { time: formatDateTime(booking.timeline.completedAt) })}</p>
+              <div className="card__actions">
+                <ButtonLink to={`/bookings/${booking.id}/invoice`} variant="secondary" block>
+                  {t('invoice.view')}
+                </ButtonLink>
+              </div>
             </Card>
           ) : null}
 

@@ -8,11 +8,13 @@ import SignupPage from './pages/SignupPage.jsx';
 import BookPage from './pages/customer/BookPage.jsx';
 import BookingPage from './pages/customer/BookingPage.jsx';
 import ChatPage from './pages/customer/ChatPage.jsx';
+import InvoicePage from './pages/InvoicePage.jsx';
 import RequestDetailsPage from './pages/customer/RequestDetailsPage.jsx';
 import RequestsPage from './pages/customer/RequestsPage.jsx';
 import ReviewPage from './pages/customer/ReviewPage.jsx';
 import AdminBookingDetailPage from './pages/admin/AdminBookingDetailPage.jsx';
 import AdminBookingsPage from './pages/admin/AdminBookingsPage.jsx';
+import AdminCategoriesPage from './pages/admin/AdminCategoriesPage.jsx';
 import AdminCustomerDetailPage from './pages/admin/AdminCustomerDetailPage.jsx';
 import AdminCustomersPage from './pages/admin/AdminCustomersPage.jsx';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage.jsx';
@@ -32,6 +34,7 @@ import ProviderJobsPage from './pages/provider/ProviderJobsPage.jsx';
 import ProviderRequestDetailsPage from './pages/provider/ProviderRequestDetailsPage.jsx';
 import ProviderRequestsPage from './pages/provider/ProviderRequestsPage.jsx';
 import AboutPage from './pages/public/AboutPage.jsx';
+import CategoryPage from './pages/public/CategoryPage.jsx';
 import HomePage from './pages/public/HomePage.jsx';
 import NotFoundPage from './pages/public/NotFoundPage.jsx';
 import ProviderProfilePage from './pages/public/ProviderProfilePage.jsx';
@@ -47,6 +50,11 @@ const GUEST = 'GUEST';
 const ROUTES = [
   { path: '/', access: PUBLIC, render: () => <HomePage /> },
   { path: '/services', access: PUBLIC, render: () => <ServicesPage /> },
+  {
+    path: '/categories/:categoryId',
+    access: PUBLIC,
+    render: ({ categoryId }) => <CategoryPage key={categoryId} categoryId={categoryId} />,
+  },
   {
     path: '/services/:serviceId',
     access: PUBLIC,
@@ -98,6 +106,13 @@ const ROUTES = [
     path: '/bookings/:bookingId/chat',
     access: PUBLIC,
     render: ({ bookingId }) => <ChatPage key={bookingId} bookingId={bookingId} />,
+  },
+  {
+    // One invoice page for all three audiences: the customer (this browser's request
+    // token), the assigned provider or admin (their account). The API enforces access.
+    path: '/bookings/:bookingId/invoice',
+    access: PUBLIC,
+    render: ({ bookingId }) => <InvoicePage key={bookingId} bookingId={bookingId} />,
   },
   {
     path: '/bookings/:bookingId/review',
@@ -159,6 +174,7 @@ const ROUTES = [
   },
 
   { path: '/app/admin', access: 'ADMIN', render: () => <AdminDashboardPage /> },
+  { path: '/app/admin/categories', access: 'ADMIN', render: () => <AdminCategoriesPage /> },
   { path: '/app/admin/services', access: 'ADMIN', render: () => <AdminServicesPage /> },
   { path: '/app/admin/services/new', access: 'ADMIN', render: () => <AdminServiceFormPage /> },
   {

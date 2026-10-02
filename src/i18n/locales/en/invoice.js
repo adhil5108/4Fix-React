@@ -1,0 +1,21 @@
+// invoice UI text (en). A completed job's invoice — a record, not a payment.
+export default {
+  title: 'Invoice',
+  view: 'Invoice',
+  loading: 'Loading invoice…',
+  notAvailable: 'The invoice is available once the job is completed.',
+  print: 'Print',
+  heading: 'INVOICE',
+  number: 'Invoice no.',
+  date: 'Date',
+  from: 'From',
+  to: 'To',
+  providerFallback: 'Service provider',
+  customerFallback: 'Customer',
+  job: 'Job',
+  amount: 'Amount',
+  completedOn: 'Job completed {{date}}',
+  amountAgreed: 'Agreed directly with the provider',
+  paymentNote: '4Fix does not process payments. The price for this job was agreed and paid directly between the customer and the provider.',
+  thanks: 'Thank you for using 4Fix.',
+};

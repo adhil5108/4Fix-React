@@ -14,7 +14,7 @@ import {
 import { useAction, useApi } from '../../hooks/useApi.js';
 import { navigate } from '../../hooks/useRoute.js';
 import { adminApi } from '../../services/fixApi.js';
-import { formatCategory, formatTimestamp } from '../../utils/format.js';
+import { formatTimestamp } from '../../utils/format.js';
 
 function AdminProviderDetailPage({ providerId }) {
   const { t } = useTranslation();
@@ -163,9 +163,9 @@ function AdminProviderDetailPage({ providerId }) {
                 },
                 {
                   label: t('admin.providerDetail.categories'),
-                  value: provider.serviceCategories?.length
-                    ? provider.serviceCategories.map(formatCategory).join(', ')
-                    : '',
+                  value: provider.categories?.length
+                    ? provider.categories.map((category) => category.name).filter(Boolean).join(', ')
+                    : t('admin.providerDetail.noCategories'),
                 },
                 {
                   label: t('admin.providerDetail.acceptingBookings'),

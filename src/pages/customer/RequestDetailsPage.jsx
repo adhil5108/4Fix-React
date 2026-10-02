@@ -201,6 +201,11 @@ function RequestDetailsPage({ requestId }) {
                     {t('customer.request.leaveReview')}
                   </ButtonLink>
                 ) : null}
+                {request.status === 'COMPLETED' ? (
+                  <ButtonLink to={`/bookings/${booking.id}/invoice`} variant="secondary" block>
+                    {t('invoice.view')}
+                  </ButtonLink>
+                ) : null}
               </div>
             ) : null}
             {request.status === 'PENDING' ? (

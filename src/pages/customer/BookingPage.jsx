@@ -127,6 +127,11 @@ function BookingPage({ bookingId }) {
                   {review ? t('customer.booking.yourReview') : t('customer.booking.rate')}
                 </ButtonLink>
               ) : null}
+              {isCompleted ? (
+                <ButtonLink to={`/bookings/${booking.id}/invoice`} variant="secondary">
+                  {t('invoice.view')}
+                </ButtonLink>
+              ) : null}
             </div>
           </Card>
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import AppShell from '../components/AppShell.jsx';
+import CategoryPicker from '../components/CategoryPicker.jsx';
 import { LocationPreview } from '../components/LocationCapture.jsx';
 import ShopLocationField from '../components/ShopLocationField.jsx';
 import TextField, { TextArea } from '../components/TextField.jsx';
@@ -10,15 +11,13 @@ import { useAction, useApi } from '../hooks/useApi.js';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { navigate } from '../hooks/useRoute.js';
 import { meRequest, updateMeRequest } from '../services/authApi.js';
-import { servicesApi } from '../services/fixApi.js';
-import { formatCategory } from '../utils/format.js';
+import { categoriesApi } from '../services/fixApi.js';
 
 function formFromUser(user) {
   return {
     name: user.name || '',
     bio: user.bio || '',
     experienceYears: user.experienceYears === null || user.experienceYears === undefined ? '' : String(user.experienceYears),
-    serviceCategories: user.serviceCategories || [],
     isAvailable: user.isAvailable !== false,
   };
 }
@@ -163,12 +162,112 @@ function BusinessSection({ user, onSaved }) {
   );
 }
 
+// The categories a provider works in decide which requests they see and can accept.
+// Providers registered before categories existed start with none, so the section
+// opens ready to choose.
+function WorkCategoriesSection({ user, onSaved }) {
+  const { t } = useTranslation();
+  const held = user.categories || [];
+  const [editing, setEditing] = useState(held.length === 0);
+  const [value, setValue] = useState(held.map((category) => category.id));
+  const [error, setError] = useState('');
+  const options = useApi(() => categoriesApi.list(), []);
+  const save = useAction();
+
+  // Active categories, plus any the provider still holds that admin has since disabled.
+  const active = options.data?.categories || [];
+  const choices = [
+    ...active,
+    ...held.filter((category) => category.name && !active.some((item) => item.id === category.id)),
+  ];
+
+  function startEditing() {
+    setValue(held.map((category) => category.id));
+    setError('');
+    setEditing(true);
+  }
+
+  async function handleSave() {
+    if (value.length === 0) {
+      setError('auth.errors.categoriesRequired');
+      return;
+    }
+
+    const ok = await save.run('categories', async () => {
+      const result = await updateMeRequest({ categories: value });
+      await onSaved(result.user);
+    });
+
+    if (ok) setEditing(false);
+  }
+
+  return (
+    <Section
+      title={t('profile.categories.title')}
+      action={
+        !editing ? (
+          <button type="button" className="profile-section__action" onClick={startEditing}>
+            {t('profile.edit')}
+          </button>
+        ) : null
+      }
+    >
+      {!editing ? (
+        <div className="settings-row settings-row--block">
+          <div className="chip-row chip-row--static">
+            {held.map((category) => (
+              <span key={category.id} className="chip">
+                {category.name}
+              </span>
+            ))}
+          </div>
+          <p className="field-hint">{t('profile.categories.hint')}</p>
+        </div>
+      ) : (
+        <div className="settings-row settings-row--block">
+          <div className="form-stack">
+            {held.length === 0 ? <Notice tone="info">{t('profile.categories.missing')}</Notice> : null}
+            <Notice>{save.error}</Notice>
+            {options.loading ? <LoadingState label={t('profile.categories.loading')} /> : null}
+            {options.error ? <ErrorState error={options.error} onRetry={options.reload} /> : null}
+            {options.data ? (
+              <CategoryPicker
+                categories={choices}
+                value={value}
+                disabled={save.pending === 'categories'}
+                error={error ? t(error) : ''}
+                onChange={(next) => {
+                  setValue(next);
+                  setError('');
+                }}
+              />
+            ) : null}
+            <div className="profile-buttons">
+              <Button
+                onClick={handleSave}
+                loading={save.pending === 'categories'}
+                loadingText={t('profile.details.saving')}
+              >
+                {t('profile.categories.save')}
+              </Button>
+              {held.length > 0 ? (
+                <Button variant="secondary" onClick={() => setEditing(false)} disabled={save.pending === 'categories'}>
+                  {t('profile.shop.cancel')}
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
+    </Section>
+  );
+}
+
 function ProfilePage() {
   const { t } = useTranslation();
   const { user: authUser, logout, updateUser } = useAuth();
   const isProvider = authUser.role === 'PROVIDER';
   const me = useApi(() => meRequest(), []);
-  const services = useApi(() => (isProvider ? servicesApi.list() : Promise.resolve({ services: [] })), [isProvider]);
   const save = useAction();
   const [form, setForm] = useState(null);
   const [editing, setEditing] = useState(false);
@@ -226,7 +325,6 @@ function ProfilePage() {
     if (isProvider) {
       payload.bio = form.bio.trim() || null;
       payload.experienceYears = form.experienceYears === '' ? null : Number(form.experienceYears);
-      payload.serviceCategories = form.serviceCategories;
       payload.isAvailable = form.isAvailable;
     }
 
@@ -261,9 +359,6 @@ function ProfilePage() {
       </AppShell>
     );
   }
-
-  const categories = [...new Set((services.data?.services || []).map((service) => service.category))].sort();
-  const userCategories = (user.serviceCategories || []).map(formatCategory).join(', ');
 
   return (
     <AppShell width="narrow">
@@ -334,37 +429,6 @@ function ProfilePage() {
                   error={errors.experienceYears ? t(errors.experienceYears) : ''}
                   onChange={(event) => update('experienceYears', event.target.value.replace(/\D/g, ''))}
                 />
-                <div className="field">
-                  <label>{t('profile.provider.categories')}</label>
-                  {categories.length === 0 ? (
-                    <p className="field-hint">{t('profile.provider.noCategories')}</p>
-                  ) : (
-                    <div className="chip-row" role="group" aria-label={t('profile.provider.categoriesLabel')}>
-                      {categories.map((category) => {
-                        const selected = form.serviceCategories.includes(category);
-                        return (
-                          <button
-                            key={category}
-                            type="button"
-                            className={`chip${selected ? ' is-active' : ''}`}
-                            aria-pressed={selected}
-                            onClick={() =>
-                              update(
-                                'serviceCategories',
-                                selected
-                                  ? form.serviceCategories.filter((item) => item !== category)
-                                  : [...form.serviceCategories, category],
-                              )
-                            }
-                          >
-                            {formatCategory(category)}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                  <p className="field-hint">{t('profile.provider.categoriesHint')}</p>
-                </div>
                 <label className="toggle">
                   <input
                     type="checkbox"
@@ -409,12 +473,22 @@ function ProfilePage() {
                   }
                   muted={user.experienceYears === null || user.experienceYears === undefined}
                 />
-                <InfoRow icon="🧰" label={t('profile.provider.categories')} value={userCategories || t('profile.allServices')} />
               </>
             ) : null}
           </>
         )}
       </Section>
+
+      {isProvider ? (
+        <WorkCategoriesSection
+          key={(user.categories || []).map((category) => category.id).join(',')}
+          user={user}
+          onSaved={async (updated) => {
+            updateUser(updated);
+            await me.refresh();
+          }}
+        />
+      ) : null}
 
       {isProvider ? (
         <BusinessSection

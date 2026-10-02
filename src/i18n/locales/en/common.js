@@ -55,6 +55,7 @@ export default {
   },
   adminNav: {
     dashboard: 'Dashboard',
+    categories: 'Categories',
     services: 'Services',
     providers: 'Providers',
     customers: 'Customers',
@@ -168,6 +169,11 @@ export default {
       INVALID_STATE_TRANSITION: 'That step isn’t possible right now. Refresh to see the latest status.',
       RATE_LIMITED: 'Too many attempts from this network. Please try again in a while.',
       INVALID_TOKEN: 'This link or session is no longer valid.',
+      CATEGORY_NOT_ELIGIBLE: 'You can only accept requests in the categories you work in.',
+      CATEGORY_EXISTS: 'A category with this name already exists.',
+      CATEGORY_IN_USE: 'This category still has services, so it can’t be deleted. Disable it instead.',
+      CATEGORY_NOT_FOUND: 'Category not found.',
+      INVOICE_NOT_FOUND: 'The invoice is available once the job is completed.',
     },
     // Known backend validation messages (VALIDATION_ERROR) mapped by exact text.
     validation: {
@@ -187,6 +193,10 @@ export default {
       'Customer name must be at least 2 characters': 'Name must be at least 2 characters.',
       'Shop address must be at least 5 characters': 'Shop address must be at least 5 characters.',
       'Shop location is required': 'Set your shop location.',
+      'Choose at least one category': 'Choose at least one category you work in.',
+      'One or more categories are not available': 'One of the chosen categories is no longer available. Please choose again.',
+      'Category is required': 'Choose a category for this service.',
+      'Category does not exist': 'That category no longer exists. Choose another one.',
     },
   },
 };

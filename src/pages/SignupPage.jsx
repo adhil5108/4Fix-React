@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import CategoryPicker from '../components/CategoryPicker.jsx';
 import PasswordField from '../components/PasswordField.jsx';
 import PhonePrefix from '../components/PhonePrefix.jsx';
 import ShopLocationField from '../components/ShopLocationField.jsx';
 import TextField from '../components/TextField.jsx';
 import { Link } from '../components/ui.jsx';
+import { useApi } from '../hooks/useApi.js';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { navigate, useQueryParam } from '../hooks/useRoute.js';
+import { categoriesApi } from '../services/fixApi.js';
 import { getSafeReturnTo, resolvePostAuthRoute } from '../utils/roles.js';
 
 const initialForm = {
@@ -17,7 +20,7 @@ const initialForm = {
 };
 
 // Returns translation keys (translated where rendered) so errors follow a language switch.
-function validateForm(form, shopLocation) {
+function validateForm(form, shopLocation, categories) {
   const errors = {};
 
   if (!form.phoneNumber.trim()) {
@@ -48,6 +51,10 @@ function validateForm(form, shopLocation) {
     errors.shopLocationAddress = 'auth.errors.shopAddressShort';
   }
 
+  if (categories.length === 0) {
+    errors.categories = 'auth.errors.categoriesRequired';
+  }
+
   return errors;
 }
 
@@ -59,6 +66,8 @@ function SignupPage() {
   const returnQuery = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : '';
   const [form, setForm] = useState(initialForm);
   const [shopLocation, setShopLocation] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const categoryList = useApi(() => categoriesApi.list(), []);
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,7 +85,7 @@ function SignupPage() {
       return;
     }
 
-    const nextErrors = validateForm(form, shopLocation);
+    const nextErrors = validateForm(form, shopLocation, categories);
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
@@ -91,6 +100,7 @@ function SignupPage() {
       const result = await signupProvider({
         ...form,
         shopLocation: { address: shopLocation.address.trim() },
+        categories,
       });
       navigate(resolvePostAuthRoute(result.user.role, returnTo), { replace: true });
     } catch (error) {
@@ -173,6 +183,32 @@ function SignupPage() {
                 setFormError('');
               }}
             />
+          </fieldset>
+
+          <fieldset className="auth-fieldset">
+            <legend className="auth-legend">{t('auth.signup.categoriesTitle')}</legend>
+            {categoryList.loading ? <p className="field-hint">{t('auth.signup.categoriesLoading')}</p> : null}
+            {categoryList.error ? (
+              <p className="field-error">
+                {categoryList.error.message}{' '}
+                <button type="button" className="text-link" onClick={categoryList.reload}>
+                  {t('common.actions.tryAgain')}
+                </button>
+              </p>
+            ) : null}
+            {categoryList.data ? (
+              <CategoryPicker
+                categories={categoryList.data.categories}
+                value={categories}
+                disabled={isSubmitting}
+                error={errors.categories ? t(errors.categories) : ''}
+                onChange={(next) => {
+                  setCategories(next);
+                  setErrors((current) => ({ ...current, categories: '' }));
+                  setFormError('');
+                }}
+              />
+            ) : null}
           </fieldset>
 
           <button className="primary-button" type="submit" disabled={isSubmitting}>

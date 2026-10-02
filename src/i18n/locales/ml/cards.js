@@ -1,5 +1,13 @@
 // Shared components used across customer, provider and admin pages.
 export default {
+  categoryCard: {
+    services_one: '{{count}} സേവനം',
+    services_other: '{{count}} സേവനങ്ങൾ',
+  },
+  categoryPicker: {
+    hint: 'നിങ്ങൾ ജോലി ചെയ്യുന്ന എല്ലാ വിഭാഗങ്ങളും തിരഞ്ഞെടുക്കുക. ഇവയിലെ അഭ്യർത്ഥനകൾ മാത്രമേ നിങ്ങൾക്ക് കാണൂ.',
+    none: 'ഇതുവരെ വിഭാഗങ്ങളൊന്നും ലഭ്യമല്ല. പിന്നീട് വീണ്ടും ശ്രമിക്കുക.',
+  },
   serviceCard: {
     from: '{{price}} മുതൽ',
     book: 'ബുക്ക് ചെയ്യൂ →',

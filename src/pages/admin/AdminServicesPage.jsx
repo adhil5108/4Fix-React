@@ -7,7 +7,7 @@ import { ServiceIcon } from '../../components/cards.jsx';
 import { ButtonLink } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { navigate, useQueryParam } from '../../hooks/useRoute.js';
-import { formatCategory, formatMoney } from '../../utils/format.js';
+import { formatMoney } from '../../utils/format.js';
 import { adminApi } from '../../services/fixApi.js';
 
 // Column labels are i18n keys, translated at render.
@@ -22,7 +22,16 @@ const COLUMNS = [
       </span>
     ),
   },
-  { key: 'category', label: 'admin.services.columns.category', render: (row) => formatCategory(row.category) },
+  {
+    key: 'category',
+    label: 'admin.services.columns.category',
+    render: (row, t) =>
+      row.category?.name ? (
+        <span className="badge badge--info">{row.category.name}</span>
+      ) : (
+        <span className="badge badge--neutral">{t('admin.services.noCategory')}</span>
+      ),
+  },
   {
     key: 'startingPrice',
     label: 'admin.services.columns.startingPrice',
@@ -51,7 +60,12 @@ function AdminServicesPage() {
   const { t } = useTranslation();
   const page = Number(useQueryParam('page')) || 1;
   const isActive = useQueryParam('isActive') || '';
-  const services = useApi(() => adminApi.services({ page, isActive: isActive || undefined }), [page, isActive]);
+  const category = useQueryParam('category') || '';
+  const categories = useApi(() => adminApi.categories(), []);
+  const services = useApi(
+    () => adminApi.services({ page, isActive: isActive || undefined, category: category || undefined }),
+    [page, isActive, category],
+  );
 
   const columns = COLUMNS.map((column) => ({
     ...column,
@@ -61,7 +75,12 @@ function AdminServicesPage() {
   const statusOptions = STATUS_OPTIONS.map((option) => ({ ...option, label: t(option.label) }));
 
   function updateQuery(next) {
-    const params = new URLSearchParams({ ...(isActive ? { isActive } : {}), page: '1', ...next });
+    const params = new URLSearchParams({
+      ...(isActive ? { isActive } : {}),
+      ...(category ? { category } : {}),
+      page: '1',
+      ...next,
+    });
 
     for (const [key, value] of [...params.entries()]) {
       if (!value) params.delete(key);
@@ -77,9 +96,14 @@ function AdminServicesPage() {
           <h1 className="admin-content__title">{t('common.adminNav.services')}</h1>
           <p className="admin-content__subtitle">{t('admin.services.subtitle')}</p>
         </div>
-        <ButtonLink to="/app/admin/services/new" size="sm">
-          {t('admin.services.newService')}
-        </ButtonLink>
+        <div className="admin-header-actions">
+          <ButtonLink to="/app/admin/categories" size="sm" variant="secondary">
+            {t('admin.services.manageCategories')}
+          </ButtonLink>
+          <ButtonLink to="/app/admin/services/new" size="sm">
+            {t('admin.services.newService')}
+          </ButtonLink>
+        </div>
       </div>
 
       <div className="admin-filters">
@@ -89,6 +113,16 @@ function AdminServicesPage() {
           value={isActive}
           options={statusOptions}
           onChange={(event) => updateQuery({ isActive: event.target.value })}
+        />
+        <Select
+          id="categoryFilter"
+          label={t('admin.services.columns.category')}
+          value={category}
+          options={[
+            { value: '', label: t('admin.services.allCategories') },
+            ...(categories.data?.categories || []).map((item) => ({ value: item.id, label: item.name })),
+          ]}
+          onChange={(event) => updateQuery({ category: event.target.value })}
         />
       </div>
 

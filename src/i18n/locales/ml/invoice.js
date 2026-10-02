@@ -1,0 +1,21 @@
+// invoice UI text (ml). A completed job's invoice — a record, not a payment.
+export default {
+  title: 'ഇൻവോയ്സ്',
+  view: 'ഇൻവോയ്സ്',
+  loading: 'ഇൻവോയ്സ് ലോഡ് ചെയ്യുന്നു…',
+  notAvailable: 'ജോലി പൂർത്തിയായ ശേഷം ഇൻവോയ്സ് ലഭ്യമാകും.',
+  print: 'പ്രിന്റ് ചെയ്യുക',
+  heading: 'ഇൻവോയ്സ്',
+  number: 'ഇൻവോയ്സ് നമ്പർ',
+  date: 'തീയതി',
+  from: 'നൽകിയത്',
+  to: 'ലഭിക്കുന്നയാൾ',
+  providerFallback: 'സേവനദാതാവ്',
+  customerFallback: 'ഉപഭോക്താവ്',
+  job: 'ജോലി',
+  amount: 'തുക',
+  completedOn: 'ജോലി പൂർത്തിയായത് {{date}}',
+  amountAgreed: 'സേവനദാതാവുമായി നേരിട്ട് തീരുമാനിച്ചത്',
+  paymentNote: '4Fix പണമിടപാടുകൾ കൈകാര്യം ചെയ്യുന്നില്ല. ഈ ജോലിയുടെ തുക ഉപഭോക്താവും സേവനദാതാവും നേരിട്ട് തീരുമാനിച്ച് നൽകിയതാണ്.',
+  thanks: '4Fix ഉപയോഗിച്ചതിന് നന്ദി.',
+};

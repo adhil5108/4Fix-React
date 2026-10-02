@@ -374,3 +374,26 @@ a.admin-header__brand {
     align-items: start;
   }
 }
+
+.admin-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Categories: table plus an editor card beside it on wide screens. */
+.admin-split {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-split__main {
+  min-width: 0;
+}
+
+@media (min-width: 1000px) {
+  .admin-split {
+    grid-template-columns: minmax(0, 1.4fr) minmax(300px, 1fr);
+    align-items: start;
+  }
+}

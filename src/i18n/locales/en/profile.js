@@ -18,12 +18,15 @@ export default {
     bioHint: 'Shown to customers on your profile.',
     bioPlaceholder: 'e.g. 8 years fixing split and window ACs across Bengaluru.',
     experience: 'Years of experience',
-    categories: 'Services you offer',
-    categoriesLabel: 'Service categories',
-    noCategories: 'Categories will appear once services are available.',
-    categoriesHint: 'Leave all unselected to be shown for every service.',
     available: 'Available for new bookings',
     availableHint: 'Turn off to hide yourself from customers for a while.',
+  },
+  categories: {
+    title: 'Categories I work in',
+    hint: 'You only see and accept requests in these categories.',
+    missing: 'Choose the categories you work in to start seeing customer requests.',
+    loading: 'Loading categories…',
+    save: 'Save categories',
   },
   account: {
     title: 'Account',
@@ -59,7 +62,6 @@ export default {
   notSet: 'Not added yet',
   years_one: '{{count}} year',
   years_other: '{{count}} years',
-  allServices: 'All services',
   availableBadge: 'Available for jobs',
   unavailableBadge: 'Not taking jobs',
   actions: {

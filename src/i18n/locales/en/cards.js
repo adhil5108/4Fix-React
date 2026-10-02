@@ -1,4 +1,12 @@
 export default {
+  categoryCard: {
+    services_one: '{{count}} service',
+    services_other: '{{count}} services',
+  },
+  categoryPicker: {
+    hint: 'Choose every category you work in. You’ll only see requests from these.',
+    none: 'No categories are available yet. Please try again later.',
+  },
   serviceCard: {
     from: 'From {{price}}',
     book: 'Book →',

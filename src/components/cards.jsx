@@ -1,6 +1,6 @@
+import { categoryPath } from '../pages/public/publicLinks.js';
 import {
   formatAddress,
-  formatCategory,
   formatIssueLabel,
   formatMoney,
   formatRating,
@@ -27,7 +27,31 @@ export function ServiceIcon({ service, size = 'md' }) {
   );
 }
 
-export function ServiceCard({ service }) {
+// A category tile on the customer's first browsing step. Uses the same icon tile as
+// services (the category's uploaded icon, or its initials).
+export function CategoryCard({ category }) {
+  const { t } = useTranslation();
+
+  return (
+    <Link to={categoryPath(category.id)} className="card card--link category-card">
+      <ServiceIcon service={category} size="lg" />
+      <span className="category-card__text">
+        <span className="category-card__name">{category.name}</span>
+        {category.serviceCount !== undefined ? (
+          <span className="category-card__count">
+            {t('cards.categoryCard.services', { count: category.serviceCount })}
+          </span>
+        ) : null}
+      </span>
+      <span className="category-card__chevron" aria-hidden="true">
+        ›
+      </span>
+    </Link>
+  );
+}
+
+// `showCategory` is off inside a category page, where the category is the page title.
+export function ServiceCard({ service, showCategory = true }) {
   const { t } = useTranslation();
 
   return (
@@ -35,7 +59,9 @@ export function ServiceCard({ service }) {
       <span className="service-card__head">
         <ServiceIcon service={service} />
         <span className="service-card__title">
-          <span className="service-card__category">{formatCategory(service.category)}</span>
+          {showCategory && service.category?.name ? (
+            <span className="service-card__category">{service.category.name}</span>
+          ) : null}
           <span className="service-card__name">{service.name}</span>
         </span>
       </span>
@@ -111,8 +137,8 @@ export function ProviderFacts({ provider }) {
       ? t('cards.providerFacts.experience', { count: provider.experienceYears })
       : null,
     t('cards.providerFacts.jobsCompleted', { count: provider.completedJobs }),
-    provider.serviceCategories?.length
-      ? provider.serviceCategories.map(formatCategory).join(' · ')
+    provider.categories?.length
+      ? provider.categories.map((category) => category.name).filter(Boolean).join(' · ')
       : null,
   ].filter(Boolean);
 

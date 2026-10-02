@@ -7,14 +7,18 @@ import { useApi } from '../../hooks/useApi.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { navigate } from '../../hooks/useRoute.js';
 import { servicesApi } from '../../services/fixApi.js';
-import { formatCategory, formatMoney } from '../../utils/format.js';
-import { bookPath } from './publicLinks.js';
+import { formatMoney } from '../../utils/format.js';
+import { bookPath, categoryPath } from './publicLinks.js';
 
 function ServiceDetailsPage({ serviceId }) {
   const { t } = useTranslation();
   const { isAuthenticated, user } = useAuth();
   const service = useApi(() => servicesApi.get(serviceId), [serviceId]);
-  const back = { to: '/services', label: t('public.allServices') };
+  const category = service.data?.service.category;
+  // Back to the category this service was chosen from (all categories if it has none).
+  const back = category?.id
+    ? { to: categoryPath(category.id), label: category.name }
+    : { to: '/services', label: t('public.allServices') };
   const isProvider = isAuthenticated && user.role === 'PROVIDER';
 
   // Customers book without an account, so choosing an issue goes straight to booking.
@@ -53,7 +57,7 @@ function ServiceDetailsPage({ serviceId }) {
   return (
     <AppShell width="narrow">
       <StepIndicator current="issue" />
-      <PageHeader back={back} title={details.name} subtitle={formatCategory(details.category)} />
+      <PageHeader back={back} title={details.name} subtitle={details.category?.name} />
 
       <Card>
         <div className="service-summary">

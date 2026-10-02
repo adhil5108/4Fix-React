@@ -8,6 +8,7 @@ import AreaSwitcher from './AreaSwitcher.jsx';
 
 const NAV_ITEMS = [
   { to: '/app/admin', label: 'dashboard', exact: true },
+  { to: '/app/admin/categories', label: 'categories' },
   { to: '/app/admin/services', label: 'services' },
   { to: '/app/admin/providers', label: 'providers' },
   { to: '/app/admin/customers', label: 'customers' },

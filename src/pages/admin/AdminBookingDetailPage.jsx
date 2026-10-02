@@ -3,7 +3,7 @@ import AdminShell from '../../components/admin/AdminShell.jsx';
 import AdminConversationView from '../../components/admin/AdminConversationView.jsx';
 import TrackingTimeline from '../../components/TrackingTimeline.jsx';
 import { AddressBlock, ServiceLocationBlock, AttachmentList, VoiceNoteBlock } from '../../components/cards.jsx';
-import { Card, DetailList, ErrorState, Link, LoadingState, PageHeader, StatusBadge } from '../../components/ui.jsx';
+import { ButtonLink, Card, DetailList, ErrorState, Link, LoadingState, PageHeader, StatusBadge } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { adminApi } from '../../services/fixApi.js';
 import { formatDateTime, formatIssueLabel } from '../../utils/format.js';
@@ -38,7 +38,16 @@ function AdminBookingDetailPage({ bookingId }) {
         back={back}
         title={booking.service?.name || t('admin.bookingDetail.fallbackTitle')}
         subtitle={formatIssueLabel(booking.request?.issueKey, booking.request?.issueLabel)}
-        actions={<StatusBadge status={booking.status} audience="booking" />}
+        actions={
+          <>
+            {booking.status === 'COMPLETED' ? (
+              <ButtonLink to={`/bookings/${booking.id}/invoice`} variant="secondary" size="sm">
+                {t('invoice.view')}
+              </ButtonLink>
+            ) : null}
+            <StatusBadge status={booking.status} audience="booking" />
+          </>
+        }
       />
 
       <div className="admin-detail">

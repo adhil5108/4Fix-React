@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import AdminShell from '../../components/admin/AdminShell.jsx';
-import TextField, { TextArea } from '../../components/TextField.jsx';
+import TextField, { Select, TextArea } from '../../components/TextField.jsx';
 import {
   Button,
   Card,
@@ -19,7 +19,7 @@ import { adminApi, uploadsApi } from '../../services/fixApi.js';
 const EMPTY_FORM = {
   name: '',
   description: '',
-  category: '',
+  categoryId: '',
   image: '',
   startingPrice: '',
   isPopular: false,
@@ -30,7 +30,7 @@ function formFromService(service) {
   return {
     name: service.name,
     description: service.description,
-    category: service.category,
+    categoryId: service.categoryId || '',
     image: service.image || '',
     startingPrice: service.startingPrice === null ? '' : String(service.startingPrice),
     isPopular: service.isPopular,
@@ -51,7 +51,7 @@ function validate(form, t) {
 
   if (form.name.trim().length < 2) errors.name = t('admin.serviceForm.validation.name');
   if (form.description.trim().length < 5) errors.description = t('admin.serviceForm.validation.description');
-  if (form.category.trim().length < 2) errors.category = t('admin.serviceForm.validation.category');
+  if (!form.categoryId) errors.categoryId = t('admin.serviceForm.validation.category');
 
   if (form.startingPrice !== '' && (Number.isNaN(Number(form.startingPrice)) || Number(form.startingPrice) < 0)) {
     errors.startingPrice = t('admin.serviceForm.validation.startingPrice');
@@ -64,7 +64,7 @@ function buildPayload(form, issues) {
   return {
     name: form.name.trim(),
     description: form.description.trim(),
-    category: form.category.trim(),
+    categoryId: form.categoryId,
     image: form.image.trim() || null,
     startingPrice: form.startingPrice === '' ? null : Number(form.startingPrice),
     isPopular: form.isPopular,
@@ -93,7 +93,8 @@ function validateServiceImageFile(file, t) {
 // (POST /api/uploads/image via uploadsApi) — no separate upload path. `value`/`onChange`
 // plug straight into the form's existing `image` field, so the rest of the form (and the
 // create/update payload) is unchanged from when this was a plain URL text input.
-function ServiceImageField({ value, onChange, onUploadingChange }) {
+// Also used for category icons (AdminCategoriesPage): same upload, same icon treatment.
+export function ServiceImageField({ value, onChange, onUploadingChange, label }) {
   const { t } = useTranslation();
   const [previewUrl, setPreviewUrl] = useState(null);
   const [status, setStatus] = useState('idle');
@@ -147,7 +148,7 @@ function ServiceImageField({ value, onChange, onUploadingChange }) {
 
   return (
     <div className="field">
-      <label htmlFor="serviceImageInput">{t('admin.serviceForm.image.label')}</label>
+      <label htmlFor="serviceImageInput">{label ?? t('admin.serviceForm.image.label')}</label>
       <input
         ref={inputRef}
         id="serviceImageInput"
@@ -279,6 +280,7 @@ function AdminServiceFormPage({ serviceId }) {
     () => (isEdit ? adminApi.service(serviceId) : Promise.resolve(null)),
     [serviceId],
   );
+  const categories = useApi(() => adminApi.categories(), []);
   const [form, setForm] = useState(EMPTY_FORM);
   const [issues, setIssues] = useState([]);
   const [errors, setErrors] = useState({});
@@ -394,14 +396,22 @@ function AdminServiceFormPage({ serviceId }) {
               onChange={(event) => update('description', event.target.value)}
             />
             <div className="form-row">
-              <TextField
-                id="category"
+              <Select
+                id="categoryId"
                 label={t('admin.serviceForm.category')}
-                value={form.category}
-                error={errors.category}
-                maxLength={60}
-                placeholder="AC"
-                onChange={(event) => update('category', event.target.value)}
+                value={form.categoryId}
+                error={errors.categoryId || categories.error?.message}
+                hint={t('admin.serviceForm.categoryHint')}
+                placeholder={
+                  categories.loading ? t('admin.serviceForm.categoryLoading') : t('admin.serviceForm.categoryPlaceholder')
+                }
+                options={(categories.data?.categories || []).map((category) => ({
+                  value: category.id,
+                  label: category.isActive
+                    ? category.name
+                    : t('admin.serviceForm.categoryInactive', { name: category.name }),
+                }))}
+                onChange={(event) => update('categoryId', event.target.value)}
               />
               <TextField
                 id="startingPrice"

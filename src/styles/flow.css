@@ -1456,201 +1456,6 @@ a.provider-card__name:hover {
   flex: 1 1 auto;
 }
 
-/* Booking as a conversation: 4Fix asks one thing at a time, answers appear as replies. */
-.convo {
-  display: grid;
-  gap: 12px;
-  max-width: 760px;
-  margin: 0 auto;
-  padding-bottom: 24px;
-}
-
-.convo .page-header {
-  margin-bottom: 4px;
-}
-
-.convo-step {
-  display: grid;
-  gap: 12px;
-}
-
-.convo-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-.convo-row--me {
-  justify-content: flex-end;
-}
-
-.convo-avatar {
-  display: grid;
-  flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-  border-radius: 999px;
-  background: var(--green);
-  color: #fff;
-  font-size: 0.9rem;
-  font-weight: 900;
-}
-
-.convo-bubble {
-  display: grid;
-  gap: 6px;
-  max-width: min(560px, 85%);
-  border-radius: 18px;
-  padding: 11px 14px;
-  font-size: 1rem;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-
-.convo-bubble p {
-  margin: 0;
-}
-
-.convo-bubble--bot {
-  border: 1px solid var(--line);
-  border-bottom-left-radius: 6px;
-  background: var(--surface);
-  color: var(--ink);
-}
-
-.convo-bubble--me {
-  border: 1px solid #cfe3d8;
-  border-bottom-right-radius: 6px;
-  background: var(--green-soft);
-  color: var(--ink);
-}
-
-.convo-bubble__sub,
-.convo-bubble__meta {
-  color: var(--muted);
-  font-size: 0.92rem;
-}
-
-.convo-bubble__text {
-  white-space: pre-line;
-}
-
-.convo-edit {
-  justify-self: end;
-  border: 0;
-  background: none;
-  color: var(--green);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.88rem;
-  font-weight: 750;
-  padding: 2px 0;
-  text-decoration: none;
-}
-
-.convo-thumbs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.convo-thumb {
-  width: 56px;
-  height: 56px;
-  border-radius: 10px;
-  object-fit: cover;
-}
-
-.convo-voice {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: min(300px, 64vw);
-}
-
-.convo-voice audio {
-  flex: 1;
-  min-width: 0;
-  height: 40px;
-}
-
-.convo-voice__icon {
-  display: grid;
-  flex: 0 0 auto;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  border-radius: 999px;
-  background: var(--surface);
-}
-
-/* The current question's answer box sits under the question, sized for thumbs. */
-.convo-composer {
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-  background: var(--surface);
-  padding: 16px;
-}
-
-.convo-composer[hidden] {
-  display: none !important;
-}
-
-.convo-options {
-  margin-left: 40px;
-}
-
-.convo-summary {
-  display: grid;
-  margin: 0;
-}
-
-.convo-summary__row {
-  display: grid;
-  gap: 2px;
-  border-bottom: 1px solid var(--line);
-  padding: 10px 0;
-}
-
-.convo-summary__row:last-child {
-  border-bottom: 0;
-}
-
-.convo-summary dt {
-  color: var(--muted);
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.convo-summary dd {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 0;
-}
-
-.convo-summary__value {
-  display: -webkit-box;
-  overflow: hidden;
-  color: var(--ink);
-  font-size: 1rem;
-  overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
-.convo-footnote {
-  text-align: center;
-}
-
-@media (max-width: 559px) {
-  .convo-options {
-    margin-left: 0;
-  }
-}
-
 /* ---------- Unread chat: badges and in-app notifications ---------- */
 
 .unread-badge {
@@ -1828,5 +1633,428 @@ a.provider-card__name:hover {
     bottom: 24px;
     left: auto;
     width: 360px;
+  }
+}
+
+/* ---------- Categories: the first browsing step ---------- */
+
+.category-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.category-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 84px;
+}
+
+.category-card__text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.category-card__name {
+  color: var(--ink);
+  font-size: 1.1rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.category-card__count {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.category-card__chevron {
+  color: var(--green);
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+@media (min-width: 560px) {
+  .category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .category-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Provider category choice: big checkbox tiles, two per row on phones. */
+.category-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.category-picker:focus {
+  outline: none;
+}
+
+.category-picker__option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+  padding: 10px 12px;
+}
+
+.category-picker__option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.category-picker__option:focus-within {
+  outline: 3px solid rgba(0, 91, 62, 0.25);
+  outline-offset: 2px;
+}
+
+.category-picker__option.is-selected {
+  border-color: var(--green);
+  background: var(--green-soft);
+}
+
+.category-picker__check {
+  display: grid;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.is-selected .category-picker__check {
+  border-color: var(--green);
+  background: var(--green);
+}
+
+.category-picker__name {
+  color: var(--ink);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.chip-row--static {
+  margin-bottom: 8px;
+}
+
+.provider-categories-note {
+  margin: 0 0 12px;
+}
+
+/* ---------- Booking: a plain, sectioned form ---------- */
+
+.book-form {
+  display: grid;
+  gap: 12px;
+}
+
+.book-form .card + .card {
+  margin-top: 0;
+}
+
+.book-section {
+  display: grid;
+  gap: 12px;
+}
+
+.book-section__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.book-section__number {
+  display: grid;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--green);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.book-section__optional {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.book-service {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.book-service__text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.book-service__name {
+  color: var(--ink);
+  font-size: 1.05rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.book-service__category {
+  color: var(--green);
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.book-service__change {
+  flex: 0 0 auto;
+  color: var(--green);
+}
+
+.book-submit {
+  display: grid;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.book-submit__note {
+  margin: 0;
+  text-align: center;
+}
+
+/* ---------- Invoice: a document, not a card ---------- */
+
+.invoice-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.invoice-toolbar .page-header {
+  margin-bottom: 0;
+}
+
+.invoice-doc {
+  display: grid;
+  gap: 24px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(5, 7, 13, 0.04), 0 8px 24px rgba(5, 7, 13, 0.06);
+  color: var(--ink);
+  padding: 28px 22px;
+}
+
+.invoice-doc__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 3px solid var(--green);
+  padding-bottom: 18px;
+}
+
+.invoice-doc__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.invoice-doc__title-block {
+  display: grid;
+  gap: 8px;
+  text-align: right;
+}
+
+.invoice-doc__title {
+  margin: 0;
+  color: var(--green);
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.invoice-doc__meta {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.invoice-doc__meta div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.invoice-doc__meta dt {
+  color: var(--muted);
+}
+
+.invoice-doc__meta dd {
+  margin: 0;
+  font-weight: 750;
+}
+
+.invoice-doc__parties {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.invoice-doc__party {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  overflow-wrap: anywhere;
+}
+
+.invoice-doc__label,
+.invoice-doc__table th {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.invoice-doc__name {
+  font-size: 1.02rem;
+}
+
+.invoice-doc__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.invoice-doc__table th {
+  border-bottom: 1px solid var(--line-strong);
+  padding: 0 0 8px;
+  text-align: left;
+}
+
+.invoice-doc__table td {
+  border-bottom: 1px solid var(--line);
+  padding: 14px 0;
+  vertical-align: top;
+}
+
+.invoice-doc__table td:first-child {
+  display: grid;
+  gap: 4px;
+  padding-right: 12px;
+}
+
+.invoice-doc__table .invoice-doc__amount-col {
+  width: 38%;
+  text-align: right;
+}
+
+td.invoice-doc__amount-col {
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.invoice-doc__issue {
+  color: var(--text);
+}
+
+.invoice-doc__description {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.invoice-doc__completed {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.invoice-doc__foot {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.invoice-doc__foot p {
+  margin: 0;
+}
+
+@media (max-width: 479px) {
+  .invoice-doc__parties {
+    grid-template-columns: 1fr;
+  }
+
+  .invoice-doc__title-block {
+    text-align: left;
+  }
+
+  .invoice-doc__meta div {
+    justify-content: flex-start;
+  }
+}
+
+/* Printing an invoice prints only the document. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .invoice-doc,
+  .invoice-doc * {
+    visibility: visible;
+  }
+
+  .invoice-doc {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .no-print {
+    display: none !important;
   }
 }

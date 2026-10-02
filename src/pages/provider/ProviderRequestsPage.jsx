@@ -153,6 +153,7 @@ function ProviderRequestsPage() {
   );
   // Admin previews this feed from Provider View but can never accept.
   const canAccept = user.role === 'PROVIDER';
+  const myCategories = (user.categories || []).map((category) => category.name).filter(Boolean);
 
   // Jobs disappear as other providers accept them; keep the feed fresh.
   usePolling(() => requests.refresh(), 20000, !requests.loading);
@@ -196,7 +197,25 @@ function ProviderRequestsPage() {
           <ErrorState error={requests.error} onRetry={requests.reload} />
         ) : null}
 
-        {requests.data && list.length === 0 ? (
+        {/* Requests are filtered by the categories the provider works in (server-side). */}
+        {requests.data && canAccept && !requests.data.needsCategories && myCategories.length > 0 ? (
+          <p className="field-hint provider-categories-note">
+            {t('provider.requests.categoriesNote', { categories: myCategories.join(' · ') })}{' '}
+            <Link to="/provider/profile" className="text-link">
+              {t('provider.requests.changeCategories')}
+            </Link>
+          </p>
+        ) : null}
+
+        {requests.data?.needsCategories ? (
+          <EmptyState
+            title={t('provider.requests.needsCategoriesTitle')}
+            message={t('provider.requests.needsCategoriesMessage')}
+            action={<ButtonLink to="/provider/profile">{t('provider.requests.chooseCategories')}</ButtonLink>}
+          />
+        ) : null}
+
+        {requests.data && !requests.data.needsCategories && list.length === 0 ? (
           <EmptyState title={t('provider.requests.emptyTitle')} message={t('provider.requests.emptyMessage')} />
         ) : null}
 

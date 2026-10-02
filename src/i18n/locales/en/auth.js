@@ -17,6 +17,8 @@ export default {
     submitting: 'Creating account…',
     haveAccount: 'Already have an account?',
     shopLocationTitle: 'Shop location',
+    categoriesTitle: 'Which categories do you work in?',
+    categoriesLoading: 'Loading categories…',
     shopLocationHint: 'Your shop or business location, saved on your profile. 4Fix never tracks your live location.',
   },
   fields: {
@@ -33,6 +35,7 @@ export default {
     hide: 'Hide {{field}}',
   },
   errors: {
+    categoriesRequired: 'Choose at least one category you work in.',
     phoneRequired: 'Enter your phone number.',
     passwordRequired: 'Enter your password.',
     nameRequired: 'Enter your full name.',

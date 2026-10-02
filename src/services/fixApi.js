@@ -8,6 +8,12 @@ export const uploadsApi = {
   audio: (file) => uploadFile('/api/uploads/audio', file, 'audio'),
 };
 
+// Customers browse categories first, then the services inside one.
+export const categoriesApi = {
+  list: () => apiRequest('/api/categories', { auth: false }),
+  services: (categoryId) => apiRequest(`/api/categories/${id(categoryId)}/services`, { auth: false }),
+};
+
 export const servicesApi = {
   list: ({ search, category, popular } = {}) =>
     apiRequest(`/api/services${toQueryString({ search, category, popular })}`, { auth: false }),
@@ -49,6 +55,7 @@ export const customerBookingsApi = {
   markRead: (bookingId) =>
     apiRequest(`/api/bookings/${id(bookingId)}/messages/read`, { method: 'POST', ...forBooking(bookingId) }),
   review: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}/review`, forBooking(bookingId)),
+  invoice: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}/invoice`, forBooking(bookingId)),
   createReview: (bookingId, { rating, comment }) =>
     apiRequest(`/api/bookings/${id(bookingId)}/review`, {
       method: 'POST',
@@ -82,6 +89,8 @@ export const bookingsApi = {
     apiRequest(`/api/bookings/${id(bookingId)}/messages/read`, { method: 'POST' }),
 
   review: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}/review`),
+  // The completed job's invoice — the assigned provider or admin.
+  invoice: (bookingId) => apiRequest(`/api/bookings/${id(bookingId)}/invoice`),
 
   // Private to the provider — never returned in the customer/admin booking payload.
   notes: {
@@ -100,6 +109,13 @@ export const bookingsApi = {
 
 export const adminApi = {
   dashboard: () => apiRequest('/api/admin/dashboard'),
+
+  categories: () => apiRequest('/api/admin/categories'),
+  createCategory: (payload) => apiRequest('/api/admin/categories', { method: 'POST', body: payload }),
+  updateCategory: (categoryId, payload) =>
+    apiRequest(`/api/admin/categories/${id(categoryId)}`, { method: 'PATCH', body: payload }),
+  deleteCategory: (categoryId) =>
+    apiRequest(`/api/admin/categories/${id(categoryId)}`, { method: 'DELETE' }),
 
   services: (params = {}) => apiRequest(`/api/admin/services${toQueryString(params)}`),
   service: (serviceId) => apiRequest(`/api/admin/services/${id(serviceId)}`),

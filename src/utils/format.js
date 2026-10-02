@@ -48,18 +48,6 @@ export function statusTone(status) {
   }
 }
 
-export function formatCategory(category) {
-  if (!category) {
-    return '';
-  }
-
-  if (category.length <= 3) {
-    return category;
-  }
-
-  return category.charAt(0) + category.slice(1).toLowerCase();
-}
-
 // Backend dates are calendar dates (YYYY-MM-DD), so format them without timezone shifts.
 export function formatDate(dateOnly) {
   if (!dateOnly) {
