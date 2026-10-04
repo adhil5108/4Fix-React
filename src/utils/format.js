@@ -29,23 +29,40 @@ export function formatIssueLabel(issueKey, issueLabel) {
   return issueKey === 'OTHER' ? i18n.t('common.issueOther') : issueLabel;
 }
 
+// Badge colour family: amber = waiting/open, blue = assigned, purple = being worked on,
+// green = done, grey = cancelled.
 export function statusTone(status) {
   switch (status) {
+    case 'PENDING':
+      return 'open';
     case 'ACCEPTED':
     case 'ASSIGNED':
     case 'SCHEDULED':
-      return 'info';
+      return 'assigned';
     case 'IN_PROGRESS':
     case 'ON_THE_WAY':
     case 'ARRIVED':
-      return 'active';
+      return 'progress';
     case 'COMPLETED':
-      return 'success';
+      return 'done';
     case 'CANCELLED':
       return 'muted';
     default:
-      return 'neutral';
+      return 'muted';
   }
+}
+
+// A short, human-friendly reference for a request/job, derived from its id.
+export function shortRef(id) {
+  return id ? `#${String(id).slice(-6).toUpperCase()}` : '';
+}
+
+// Greeting by the device's local time: morning / afternoon / evening.
+export function dayPeriod(date = new Date()) {
+  const hour = date.getHours();
+  if (hour < 12) return 'morning';
+  if (hour < 17) return 'afternoon';
+  return 'evening';
 }
 
 // Backend dates are calendar dates (YYYY-MM-DD), so format them without timezone shifts.
@@ -88,6 +105,23 @@ export function formatTimestamp(value) {
     month: 'short',
     year: 'numeric',
   });
+}
+
+// "5 minutes ago", "yesterday" — in the UI language. Falls back to a date after a week.
+export function formatRelative(value, now = Date.now()) {
+  if (!value) {
+    return '';
+  }
+
+  const seconds = Math.round((new Date(value).getTime() - now) / 1000);
+  const abs = Math.abs(seconds);
+  const rtf = new Intl.RelativeTimeFormat(currentDateLocale(), { numeric: 'auto' });
+
+  if (abs < 60) return rtf.format(Math.round(seconds), 'second');
+  if (abs < 3600) return rtf.format(Math.round(seconds / 60), 'minute');
+  if (abs < 86400) return rtf.format(Math.round(seconds / 3600), 'hour');
+  if (abs < 7 * 86400) return rtf.format(Math.round(seconds / 86400), 'day');
+  return formatTimestamp(value);
 }
 
 export function formatDateTime(value) {

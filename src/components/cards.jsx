@@ -1,97 +1,84 @@
+import { useTranslation } from 'react-i18next';
+import { ChevronRight, Clock, ExternalLink, Image as ImageIcon, MapPin, Mic, Navigation, Star, User } from 'lucide-react';
 import { categoryPath } from '../pages/public/publicLinks.js';
 import {
   formatAddress,
   formatIssueLabel,
   formatMoney,
   formatRating,
-  formatSlot,
+  formatRelative,
   formatTimestamp,
   initials,
 } from '../utils/format.js';
-import { useTranslation } from 'react-i18next';
-import { Link, StatusBadge } from './ui.jsx';
+import { artFor, issueIcon } from './serviceArt.js';
+import { ButtonLink, Link, ListRow, StatusBadge } from './ui.jsx';
 import { ChatCount } from './Unread.jsx';
 
-// A service's uploaded asset (API field `image`) is its ICON: always shown small, in a
-// consistent square tile, scaled to fit (never cropped) so transparent, square and
-// non-square uploads all work. Services without one show their initials instead.
+// The icon of a service or category. An uploaded asset (API field `image`) is always an
+// ICON: shown small, contain-fit, never cropped or used as a banner. Without one, drawn
+// art matching the name is shown (see serviceArt.js).
 export function ServiceIcon({ service, size = 'md' }) {
+  const art = artFor(service);
+  const Art = art.icon;
+
   return (
-    <span className={`service-icon service-icon--${size}`} aria-hidden="true">
+    <span className={`service-icon service-icon--${size} tone-${art.tone}`} aria-hidden="true">
       {service?.image ? (
         <img src={service.image} alt="" loading="lazy" />
+      ) : Art ? (
+        <Art />
       ) : (
-        <span className="service-icon__fallback">{initials(service?.name) || '•'}</span>
+        <span className="service-icon__initials">{initials(service?.name) || '•'}</span>
       )}
     </span>
   );
 }
 
-// A category tile on the customer's first browsing step. Uses the same icon tile as
-// services (the category's uploaded icon, or its initials).
-export function CategoryCard({ category }) {
+// First browsing step: one category tile.
+export function CategoryTile({ category, showCount = false }) {
   const { t } = useTranslation();
 
   return (
-    <Link to={categoryPath(category.id)} className="card card--link category-card">
+    <Link to={categoryPath(category.id)} className="category-tile">
       <ServiceIcon service={category} size="lg" />
-      <span className="category-card__text">
-        <span className="category-card__name">{category.name}</span>
-        {category.serviceCount !== undefined ? (
-          <span className="category-card__count">
-            {t('cards.categoryCard.services', { count: category.serviceCount })}
-          </span>
-        ) : null}
-      </span>
-      <span className="category-card__chevron" aria-hidden="true">
-        ›
-      </span>
+      <span className="category-tile__name">{category.name}</span>
+      {showCount && category.serviceCount !== undefined ? (
+        <span className="category-tile__count">{t('cards.categoryCard.services', { count: category.serviceCount })}</span>
+      ) : null}
     </Link>
   );
 }
 
-// `showCategory` is off inside a category page, where the category is the page title.
-export function ServiceCard({ service, showCategory = true }) {
+// A service in a list (category page, search results). Opens the service.
+export function ServiceRow({ service, showCategory = false }) {
   const { t } = useTranslation();
+  const hasPrice = service.startingPrice !== null && service.startingPrice !== undefined;
 
   return (
-    <Link to={`/services/${service.id}`} className="card card--link service-card">
-      <span className="service-card__head">
-        <ServiceIcon service={service} />
-        <span className="service-card__title">
-          {showCategory && service.category?.name ? (
-            <span className="service-card__category">{service.category.name}</span>
-          ) : null}
-          <span className="service-card__name">{service.name}</span>
-        </span>
-      </span>
-      <span className="service-card__description">{service.description}</span>
-      <span className="service-card__footer">
-        {service.startingPrice !== null && service.startingPrice !== undefined ? (
-          <span className="service-card__price">
-            {t('cards.serviceCard.from', { price: formatMoney(service.startingPrice) })}
-          </span>
-        ) : (
-          <span />
-        )}
-        <span className="service-card__cta" aria-hidden="true">
-          {t('cards.serviceCard.book')}
-        </span>
-      </span>
-    </Link>
+    <ListRow to={`/services/${service.id}`} leading={<ServiceIcon service={service} />}>
+      <span className="list-row__title">{service.name}</span>
+      {showCategory && service.category?.name ? <span className="list-row__label">{service.category.name}</span> : null}
+      {service.description ? <span className="service-row__desc">{service.description}</span> : null}
+      {hasPrice ? (
+        <span className="service-row__price">{t('cards.serviceCard.from', { price: formatMoney(service.startingPrice) })}</span>
+      ) : null}
+    </ListRow>
   );
 }
 
-export function IssueCard({ issue, selected = false, onSelect }) {
+export function IssueTile({ issue, selected = false, onSelect }) {
+  const Icon = issueIcon(issue);
+
   return (
     <button
       type="button"
-      className={`issue-card${selected ? ' is-selected' : ''}`}
+      className={`issue-tile${selected ? ' is-selected' : ''}`}
       aria-pressed={selected}
       onClick={() => onSelect(issue)}
     >
-      <span className="issue-card__label">{formatIssueLabel(issue.key, issue.label)}</span>
-      {issue.description ? <span className="issue-card__description">{issue.description}</span> : null}
+      <Icon aria-hidden="true" />
+      <span className="issue-tile__label">{formatIssueLabel(issue.key, issue.label)}</span>
+      {issue.description ? <span className="issue-tile__description">{issue.description}</span> : null}
     </button>
   );
 }
@@ -112,15 +99,11 @@ export function RatingSummary({ rating, reviewCount }) {
 
   return (
     <span className="rating-summary">
-      <span className="rating-summary__star" aria-hidden="true">
-        ★
-      </span>
+      <Star aria-hidden="true" />
       {value ? (
         <>
           <strong>{value}</strong>
-          <span className="rating-summary__count">
-            {t('cards.rating.reviews', { count: reviewCount })}
-          </span>
+          <span className="rating-summary__count">{t('cards.rating.reviews', { count: reviewCount })}</span>
         </>
       ) : (
         <span className="rating-summary__count">{t('cards.rating.noReviews')}</span>
@@ -151,84 +134,221 @@ export function ProviderFacts({ provider }) {
   );
 }
 
-export function RequestCard({ request, to, audience = 'customer' }) {
-  const { t } = useTranslation();
-  // Only legacy requests carry a preferred slot; V1 jobs have no scheduling step.
-  const slot = request.preferredDate
-    ? t('cards.requestCard.preferred', { slot: formatSlot(request.preferredDate, request.preferredTime) })
-    : '';
+// ---------------------------------------------------------------- Job cards
+// One card system for every request/job list. The wrappers below decide what goes in.
+
+export function JobCard({
+  to,
+  service,
+  title,
+  subtitle,
+  badge,
+  chatBookingId,
+  description,
+  meta = [],
+  actions,
+  compact = false,
+  highlight = false,
+  showChevron = false,
+}) {
+  const Element = to ? Link : 'article';
+  const classes = ['job-card', compact ? 'job-card--compact' : '', highlight ? 'job-card--highlight' : '']
+    .filter(Boolean)
+    .join(' ');
 
   return (
-    <Link to={to} className="card card--link request-card">
-      <span className="request-card__top">
-        <span className="request-card__service">
-          {request.service?.name || t('cards.requestCard.fallbackService')}
-          {formatIssueLabel(request.issueKey, request.issueLabel) ? <span className="request-card__issue"> · {formatIssueLabel(request.issueKey, request.issueLabel)}</span> : null}
+    <Element {...(to ? { to } : {})} className={classes}>
+      <span className="job-card__head">
+        <ServiceIcon service={service} size={compact ? 'sm' : 'md'} />
+        <span className="job-card__title">
+          <span className="job-card__service">{title}</span>
+          {subtitle ? <span className="job-card__sub">{subtitle}</span> : null}
+          {badge ? <span className="job-card__badge">{badge}</span> : null}
         </span>
-        <span className="job-card__badges">
-          {audience === 'customer' && request.booking?.id ? <ChatCount bookingId={request.booking.id} /> : null}
-          <StatusBadge status={request.status} audience={audience} />
-        </span>
-      </span>
-      <span className="request-card__description">{request.description}</span>
-      <span className="request-card__meta">
-        {slot ? <span>{slot}</span> : null}
-        {audience === 'provider' && request.address ? (
-          <span>{[request.address.city, request.address.pincode].filter(Boolean).join(' · ')}</span>
+        {chatBookingId ? (
+          <span className="job-card__side">
+            <ChatCount bookingId={chatBookingId} />
+          </span>
         ) : null}
-        {audience === 'customer' && request.selectedProvider ? (
-          <span>{t('cards.requestCard.provider', { name: request.selectedProvider.name })}</span>
-        ) : null}
-        {audience === 'provider' || !request.selectedProvider ? (
-          <span>{t('cards.requestCard.requested', { time: formatTimestamp(request.createdAt) })}</span>
-        ) : null}
-      </span>
-    </Link>
-  );
-}
-
-// Booking list card for both roles; the counterpart shown depends on who is looking.
-export function BookingCard({ booking, to, audience = 'customer' }) {
-  const { t } = useTranslation();
-  const counterpart = audience === 'provider' ? booking.customer : booking.provider;
-  const slot = booking.request?.preferredDate
-    ? t('cards.requestCard.preferred', {
-        slot: formatSlot(booking.request.preferredDate, booking.request.preferredTime),
-      })
-    : '';
-
-  return (
-    <Link to={to} className="card card--link booking-card">
-      <span className="request-card__top">
-        <span className="request-card__service">
-          {booking.service?.name || t('cards.requestCard.fallbackBooking')}
-          {formatIssueLabel(booking.request?.issueKey, booking.request?.issueLabel) ? (
-            <span className="request-card__issue"> · {formatIssueLabel(booking.request.issueKey, booking.request.issueLabel)}</span>
-          ) : null}
-        </span>
-        <StatusBadge status={booking.status} audience="booking" />
-      </span>
-      <span className="booking-card__row">
-        {counterpart ? (
-          <span className="booking-card__person">
-            <Avatar name={counterpart.name} image={counterpart.profileImage} size="sm" />
-            {counterpart.name}
+        {showChevron ? (
+          <span className="job-card__chevron" aria-hidden="true">
+            <ChevronRight />
           </span>
         ) : null}
       </span>
-      <span className="request-card__meta">
-        {slot ? <span>{slot}</span> : null}
-        {audience === 'provider' && booking.request?.address ? (
-          <span>{booking.request.address.city}</span>
-        ) : null}
-        <span>{t('cards.requestCard.booked', { time: formatTimestamp(booking.createdAt) })}</span>
-      </span>
-    </Link>
+      {description ? <span className="job-card__desc">{description}</span> : null}
+      {meta.length ? (
+        <span className="job-card__meta">
+          {meta.map(({ icon: Icon, text }) => (
+            <span key={text}>
+              {Icon ? <Icon aria-hidden="true" /> : null}
+              {text}
+            </span>
+          ))}
+        </span>
+      ) : null}
+      {actions ? <span className="job-card__actions">{actions}</span> : null}
+    </Element>
   );
 }
 
-// A customer's recorded voice message, wherever a request/job/booking with one is
-// shown. Native controls only (play/pause/seek); never autoplays.
+// A customer's request (My requests, Home).
+export function CustomerRequestCard({ request, compact = false }) {
+  const { t } = useTranslation();
+  const issue = formatIssueLabel(request.issueKey, request.issueLabel);
+  const meta = request.selectedProvider
+    ? [{ icon: User, text: request.selectedProvider.name }]
+    : [{ text: t('cards.requestCard.requested', { time: formatTimestamp(request.createdAt) }) }];
+
+  return (
+    <JobCard
+      to={`/requests/${request.id}`}
+      compact={compact}
+      service={request.service}
+      title={request.service?.name || t('cards.requestCard.fallbackService')}
+      subtitle={issue || request.description}
+      badge={<StatusBadge status={request.status} />}
+      chatBookingId={request.booking?.id}
+      meta={meta}
+    />
+  );
+}
+
+// A job in the provider's "My jobs" (4Fix or external) or the home summary.
+export function ProviderJobCard({ job, compact = false }) {
+  const { t } = useTranslation();
+  const isExternal = job.source === 'EXTERNAL';
+  const issue = formatIssueLabel(job.issueKey, job.issueLabel);
+  const place = job.location?.address || [job.address?.city, job.address?.pincode].filter(Boolean).join(' · ');
+  const customer = isExternal ? job.customerName : job.customer?.name;
+  const path = isExternal
+    ? `/provider/jobs/external/${job.id}`
+    : job.bookingId
+      ? `/provider/jobs/${job.bookingId}`
+      : `/provider/requests/${job.id}`;
+
+  return (
+    <JobCard
+      to={path}
+      compact={compact}
+      service={job.service || { name: job.serviceLabel }}
+      title={job.service?.name || job.serviceLabel || t('provider.shared.job')}
+      subtitle={[isExternal ? t('provider.shared.external') : null, issue].filter(Boolean).join(' · ') || null}
+      badge={
+        isExternal ? (
+          <StatusBadge status={job.status} audience="externalJob" />
+        ) : job.bookingStatus ? (
+          <StatusBadge status={job.bookingStatus} audience="booking" />
+        ) : (
+          <StatusBadge status={job.status} audience="provider" />
+        )
+      }
+      chatBookingId={job.bookingId}
+      meta={[
+        customer ? { icon: User, text: customer } : null,
+        place ? { icon: MapPin, text: place } : null,
+      ].filter(Boolean)}
+    />
+  );
+}
+
+// An open request in the provider feed: area only — never the customer's identity or
+// exact location before acceptance.
+export function OpenRequestCard({ request, actions, compact = false, to }) {
+  const { t } = useTranslation();
+  const issue = formatIssueLabel(request.issueKey, request.issueLabel);
+  const area = [request.address?.city, request.address?.pincode].filter(Boolean).join(' · ');
+  const photos = (request.attachments || []).length;
+
+  return (
+    <JobCard
+      to={to}
+      compact={compact}
+      showChevron={compact}
+      service={request.service}
+      title={request.service?.name || t('provider.requests.fallbackService')}
+      subtitle={issue}
+      description={compact ? null : request.description}
+      meta={[
+        { icon: Clock, text: formatRelative(request.createdAt) },
+        area ? { icon: MapPin, text: area } : null,
+        photos ? { icon: ImageIcon, text: t('provider.requests.photos', { count: photos }) } : null,
+        request.voiceNote?.url ? { icon: Mic, text: t('provider.requests.voiceNote') } : null,
+      ].filter(Boolean)}
+      actions={actions}
+    />
+  );
+}
+
+// ---------------------------------------------------------------- Contact
+
+// The other person on a job, with the ways to reach them. `actions` are
+// { key, icon, label, href|to|onClick, primary, badge }.
+export function ContactCard({ role, name, phone, image, profileTo, actions = [] }) {
+  return (
+    <div className="contact-card">
+      <div className="contact-card__person">
+        <Avatar name={name} image={image} />
+        <div className="contact-card__who">
+          <span className="contact-card__role">{role}</span>
+          {profileTo ? (
+            <Link to={profileTo} className="contact-card__name">
+              {name}
+            </Link>
+          ) : (
+            <span className="contact-card__name">{name}</span>
+          )}
+          {phone ? <span className="contact-card__phone">{phone}</span> : null}
+        </div>
+      </div>
+      {actions.length ? (
+        <div className="contact-actions">
+          {actions.map(({ key, icon: Icon, label, href, to, onClick, primary, badge, external }) => {
+            const className = `contact-action${primary ? ' contact-action--primary' : ''}`;
+            const content = (
+              <>
+                <Icon aria-hidden="true" />
+                <span>{label}</span>
+                {badge}
+              </>
+            );
+
+            if (to) {
+              return (
+                <Link key={key} to={to} className={className}>
+                  {content}
+                </Link>
+              );
+            }
+
+            if (href) {
+              return (
+                <a
+                  key={key}
+                  href={href}
+                  className={className}
+                  {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                >
+                  {content}
+                </a>
+              );
+            }
+
+            return (
+              <button key={key} type="button" className={className} onClick={onClick}>
+                {content}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- Job content blocks
+
+// A customer's recorded voice message. Native controls only; never autoplays.
 export function VoiceNoteBlock({ voiceNote }) {
   const { t } = useTranslation();
 
@@ -253,41 +373,60 @@ export function AddressBlock({ address }) {
 
   return (
     <address className="address-block">
-      {address.label ? <strong>{address.label}</strong> : null}
-      <span>{formatAddress(address)}</span>
+      {address.label ? <strong>{address.label} · </strong> : null}
+      {formatAddress(address)}
     </address>
   );
 }
 
-// Pinned customer location. Providers get turn-by-turn via Google Maps (`navigate`);
-// everyone else just views the pin. Without coordinates, no link is rendered at all.
-// `fallback` from callers is already translated; `undefined` uses the default text, `null` hides it.
-export function ServiceLocationBlock({ location, navigate = false, fallback }) {
-  const { t } = useTranslation();
-  const hasCoordinates = Number.isFinite(location?.latitude) && Number.isFinite(location?.longitude);
+export function mapsLink(location, { navigate = false } = {}) {
+  const coordinates = `${location.latitude},${location.longitude}`;
+  return navigate
+    ? location.navigationUrl || `https://www.google.com/maps/dir/?api=1&destination=${coordinates}`
+    : `https://www.google.com/maps/search/?api=1&query=${coordinates}`;
+}
 
-  if (!hasCoordinates) {
+export function hasCoordinates(location) {
+  return Number.isFinite(location?.latitude) && Number.isFinite(location?.longitude);
+}
+
+// Where the job is: pinned coordinates and/or a typed address, with one maps action.
+// `navigate` (providers) opens turn-by-turn; everyone else just views the pin.
+// `fallback`: already translated; `undefined` uses the default text, `null` hides it.
+export function ServiceLocationBlock({ location, address, navigate = false, fallback, showAction = true }) {
+  const { t } = useTranslation();
+  const pinned = hasCoordinates(location);
+
+  if (!pinned && !address) {
     const text = fallback === undefined ? t('cards.serviceLocation.notShared') : fallback;
     return text ? <p className="field-hint">{text}</p> : null;
   }
 
-  const coordinates = `${location.latitude},${location.longitude}`;
-  const href = navigate
-    ? location.navigationUrl || `https://www.google.com/maps/dir/?api=1&destination=${coordinates}`
-    : `https://www.google.com/maps/search/?api=1&query=${coordinates}`;
-
   return (
     <div className="service-location">
-      <span className="service-location__label">{t('cards.serviceLocation.pinned')}</span>
-      {location.address ? <span>{location.address}</span> : null}
-      <a
-        className={`btn ${navigate ? 'btn--primary' : 'btn--secondary'} btn--sm`}
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {navigate ? t('cards.serviceLocation.navigate') : t('cards.serviceLocation.openInMaps')}
-      </a>
+      <span className="list-row__icon" aria-hidden="true">
+        <MapPin />
+      </span>
+      <span className="service-location__text">
+        {pinned ? <span className="list-row__label">{t('cards.serviceLocation.pinned')}</span> : null}
+        {location?.address ? <span>{location.address}</span> : null}
+        <AddressBlock address={address} />
+        {pinned && showAction ? (
+          <span>
+            <ButtonLink
+              href={mapsLink(location, { navigate })}
+              target="_blank"
+              rel="noopener noreferrer"
+              size="sm"
+              variant={navigate ? 'primary' : 'secondary'}
+              icon={navigate ? Navigation : ExternalLink}
+            >
+              {navigate ? t('cards.serviceLocation.navigate') : t('cards.serviceLocation.openInMaps')}
+            </ButtonLink>
+          </span>
+        ) : null}
+        {!pinned && fallback ? <span className="field-hint">{fallback}</span> : null}
+      </span>
     </div>
   );
 }
@@ -295,7 +434,7 @@ export function ServiceLocationBlock({ location, navigate = false, fallback }) {
 const IMAGE_ATTACHMENT_RE = /^https?:\/\/.*\.(?:jpe?g|png|gif|webp|avif|bmp|svg)(?:\?.*)?$/i;
 
 // Uploaded photos (Cloudinary URLs) render as thumbnails; any other attachment
-// (a plain note, or a non-image link) keeps the original text/link treatment.
+// (a plain note, or a non-image link) keeps the text/link treatment.
 export function AttachmentList({ attachments }) {
   const { t } = useTranslation();
 
@@ -309,7 +448,7 @@ export function AttachmentList({ attachments }) {
   return (
     <>
       {images.length > 0 ? (
-        <ul className="attachment-thumbs">
+        <ul className="media-thumbs">
           {images.map((url, index) => (
             <li key={`${url}-${index}`}>
               <a
@@ -332,7 +471,7 @@ export function AttachmentList({ attachments }) {
             return (
               <li key={`${attachment}-${index}`}>
                 {isUrl ? (
-                  <a href={attachment} target="_blank" rel="noopener noreferrer" className="text-link">
+                  <a href={attachment} target="_blank" rel="noopener noreferrer" className="link">
                     {attachment}
                   </a>
                 ) : (

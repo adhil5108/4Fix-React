@@ -1,5 +1,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  CalendarCheck,
+  ClipboardList,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Star,
+  Tags,
+  UserRound,
+  Users,
+  Wrench,
+} from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { navigate, useRoute } from '../../hooks/useRoute.js';
 import { Link } from '../ui.jsx';
@@ -7,14 +19,14 @@ import LanguageSwitcher from '../LanguageSwitcher.jsx';
 import AreaSwitcher from './AreaSwitcher.jsx';
 
 const NAV_ITEMS = [
-  { to: '/app/admin', label: 'dashboard', exact: true },
-  { to: '/app/admin/categories', label: 'categories' },
-  { to: '/app/admin/services', label: 'services' },
-  { to: '/app/admin/providers', label: 'providers' },
-  { to: '/app/admin/customers', label: 'customers' },
-  { to: '/app/admin/requests', label: 'requests' },
-  { to: '/app/admin/bookings', label: 'bookings' },
-  { to: '/app/admin/reviews', label: 'reviews' },
+  { to: '/app/admin', label: 'dashboard', icon: LayoutDashboard, exact: true },
+  { to: '/app/admin/categories', label: 'categories', icon: Tags },
+  { to: '/app/admin/services', label: 'services', icon: Wrench },
+  { to: '/app/admin/providers', label: 'providers', icon: Users },
+  { to: '/app/admin/customers', label: 'customers', icon: UserRound },
+  { to: '/app/admin/requests', label: 'requests', icon: ClipboardList },
+  { to: '/app/admin/bookings', label: 'bookings', icon: CalendarCheck },
+  { to: '/app/admin/reviews', label: 'reviews', icon: Star },
 ];
 
 // Nested detail routes (e.g. /app/admin/requests/:id) still highlight their parent
@@ -56,15 +68,15 @@ function AdminShell({ children }) {
           aria-expanded={drawerOpen}
           onClick={() => setDrawerOpen(true)}
         >
-          <span aria-hidden="true">☰</span>
+          <Menu aria-hidden="true" />
         </button>
         <Link to="/app/admin" className="brand-logo admin-header__brand" aria-label={t('common.brand.adminAria')}>
-          <span className="brand-logo__mark">4</span>Fix <span className="admin-header__tag">{t('common.brand.adminTag')}</span>
+          <span className="brand-mark">4</span>Fix <span className="admin-header__tag">{t('common.brand.adminTag')}</span>
         </Link>
         <LanguageSwitcher className="admin-header__lang" />
         <div className="admin-header__actions">
           <span className="admin-header__user">{user.name}</span>
-          <button type="button" className="text-link" onClick={handleLogout}>
+          <button type="button" className="link" onClick={handleLogout}>
             {t('common.nav.logOut')}
           </button>
         </div>
@@ -87,7 +99,7 @@ function AdminShell({ children }) {
             aria-label={t('common.brand.adminAria')}
             onClick={closeDrawer}
           >
-            <span className="brand-logo__mark">4</span>Fix <span className="admin-header__tag">{t('common.brand.adminTag')}</span>
+            <span className="brand-mark">4</span>Fix <span className="admin-header__tag">{t('common.brand.adminTag')}</span>
           </Link>
 
           <AreaSwitcher
@@ -106,6 +118,7 @@ function AdminShell({ children }) {
                 aria-current={isActive(item, path) ? 'page' : undefined}
                 onClick={closeDrawer}
               >
+                <item.icon aria-hidden="true" />
                 {t(`common.adminNav.${item.label}`)}
               </Link>
             ))}
@@ -113,7 +126,8 @@ function AdminShell({ children }) {
 
           <div className="admin-sidebar__footer">
             <span className="admin-sidebar__user">{user.name}</span>
-            <button type="button" className="text-link" onClick={handleLogout}>
+            <button type="button" className="link" onClick={handleLogout}>
+              <LogOut aria-hidden="true" />
               {t('common.nav.logOut')}
             </button>
           </div>

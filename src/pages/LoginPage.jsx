@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PasswordField from '../components/PasswordField.jsx';
-import PhonePrefix from '../components/PhonePrefix.jsx';
 import TextField from '../components/TextField.jsx';
-import { Link } from '../components/ui.jsx';
+import AuthLayout from '../components/AuthLayout.jsx';
+import { Button, Notice } from '../components/ui.jsx';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { navigate, useQueryParam } from '../hooks/useRoute.js';
 import { getSafeReturnTo, resolvePostAuthRoute } from '../utils/roles.js';
@@ -61,33 +61,38 @@ function LoginPage() {
   }
 
   return (
-    <main className="auth-shell">
-      <section className="auth-card" aria-labelledby="login-heading">
-        <Link to="/" className="brand-logo" aria-label={t('common.brand.homeAria')}>
-          <span className="brand-logo__mark">4</span>Fix
-        </Link>
-
-        <h1 id="login-heading" className="auth-heading">
-          {t('auth.login.heading')}
-        </h1>
-        <p className="auth-subtext">{t('auth.login.subtext')}</p>
-
-        <form className="auth-form" onSubmit={handleSubmit} noValidate>
-          {formError ? (
-            <div className="form-alert" role="alert">
-              {formError}
-            </div>
-          ) : null}
-
+    <AuthLayout
+      heading={t('auth.login.heading')}
+      subtext={t('auth.login.subtext')}
+      footer={
+        <>
+          <p>
+            {t('auth.login.newHere')}{' '}
+            <button type="button" className="link" onClick={() => navigate('/signup/provider' + returnQuery)}>
+              {t('auth.login.createAccount')}
+            </button>
+          </p>
+          <p>
+            {t('auth.login.customerNote')}{' '}
+            <button type="button" className="link" onClick={() => navigate('/services')}>
+              {t('common.nav.bookService')}
+            </button>
+          </p>
+        </>
+      }
+    >
+      <form className="auth__form" onSubmit={handleSubmit} noValidate>
+        <Notice>{formError}</Notice>
+        <div className="form-stack">
           <TextField
             id="username"
             label={t('auth.fields.phone')}
             value={form.username}
             error={errors.username ? t(errors.username) : ''}
             type="text"
+            inputMode="tel"
             autoComplete="username"
             placeholder={t('auth.fields.phonePlaceholder')}
-            prefix={<PhonePrefix />}
             onChange={(event) => updateField('username', event.target.value)}
           />
           <PasswordField
@@ -99,26 +104,12 @@ function LoginPage() {
             placeholder={t('auth.fields.passwordPlaceholder')}
             onChange={(event) => updateField('password', event.target.value)}
           />
-
-          <button className="primary-button" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? t('auth.login.submitting') : t('common.nav.logIn')}
-          </button>
-        </form>
-
-        <p className="auth-footer">
-          {t('auth.login.newHere')}{' '}
-          <button type="button" className="text-link" onClick={() => navigate(`/signup/provider${returnQuery}`)}>
-            {t('auth.login.createAccount')}
-          </button>
-        </p>
-        <p className="auth-footer auth-footer--note">
-          {t('auth.login.customerNote')}{' '}
-          <button type="button" className="text-link" onClick={() => navigate('/services')}>
-            {t('common.nav.bookService')}
-          </button>
-        </p>
-      </section>
-    </main>
+        </div>
+        <Button type="submit" block size="lg" loading={isSubmitting} loadingText={t('auth.login.submitting')}>
+          {t('common.nav.logIn')}
+        </Button>
+      </form>
+    </AuthLayout>
   );
 }
 

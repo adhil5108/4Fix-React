@@ -8,6 +8,12 @@ export default {
     submit: 'Search',
   },
   home: {
+    greet: {
+      morning: 'Good morning',
+      afternoon: 'Good afternoon',
+      evening: 'Good evening',
+    },
+    question: 'What do you need help with today?',
     greeting: 'Hi {{name}},',
     eyebrow: 'Repairs, maintenance and home services',
     title: 'Something broken? Get it fixed with 4Fix.',
@@ -29,8 +35,8 @@ export default {
         text: 'A nearby provider takes the job — no quotes to compare.',
       },
       track: {
-        title: 'Track, chat, rate',
-        text: 'Follow the technician, chat in the app and leave a review when it’s done.',
+        title: 'Chat and rate',
+        text: 'Chat with your provider in the app, then rate the job when it’s done.',
       },
     },
     providerTitle: 'Are you a service provider?',
@@ -47,7 +53,7 @@ export default {
     customersText: 'Pick a service, describe the problem, add photos or a voice note, share your location and follow your request until the job is done.',
     browse: 'Browse services',
     providersTitle: 'For service providers',
-    providersText: 'See open requests near you, accept the jobs you want, navigate to the customer and manage each job from scheduling to completion.',
+    providersText: 'See open requests in your categories, accept the jobs you want, navigate to the customer and move each job from start to completion.',
     joinProvider: 'Join as a provider',
   },
   notFound: {
@@ -56,6 +62,7 @@ export default {
     goHome: 'Go to home',
   },
   category: {
+    services: 'Services',
     loading: 'Loading services…',
     fallbackTitle: 'Category',
     unavailable: 'This category does not exist or is no longer available.',
@@ -78,6 +85,10 @@ export default {
     showAll: 'Show all services',
   },
   serviceDetails: {
+    startingFrom: 'Starting from',
+    priceAgreed: 'Final price agreed with your provider',
+    continue: 'Continue',
+    noAccount: 'No account needed. You can choose or change the problem on the next step.',
     loading: 'Loading service…',
     fallbackTitle: 'Service',
     unavailable: 'This service does not exist or is no longer available.',
@@ -86,7 +97,6 @@ export default {
     whatsWrong: 'What’s wrong?',
     providerNotice: 'You are logged in as a provider. Only customers can book a service.',
     pickClosest: 'Pick the closest match. You can add details on the next step.',
-    loginHint: 'You’ll be asked to log in or create an account to continue.',
   },
   providerProfile: {
     loading: 'Loading provider…',

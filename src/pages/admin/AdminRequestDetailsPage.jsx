@@ -83,7 +83,7 @@ function AdminRequestDetailsPage({ requestId }) {
             <Card>
               <h2 className="card__title">{t('admin.requestDetail.conversation')}</h2>
               <p className="body-text">{t('admin.requestDetail.conversationBody')}</p>
-              <Link to={`/app/admin/bookings/${booking.id}`} className="text-link">
+              <Link to={`/app/admin/bookings/${booking.id}`} className="link">
                 {t('admin.requestDetail.viewConversation')}
               </Link>
             </Card>
@@ -101,7 +101,7 @@ function AdminRequestDetailsPage({ requestId }) {
                   { label: t('admin.fields.accepted'), value: formatTimestamp(booking.confirmedAt) },
                 ]}
               />
-              <Link to={`/app/admin/bookings/${booking.id}`} className="text-link">
+              <Link to={`/app/admin/bookings/${booking.id}`} className="link">
                 {t('admin.shared.viewBooking')}
               </Link>
             </Card>
@@ -130,7 +130,7 @@ function AdminRequestDetailsPage({ requestId }) {
               ]}
             />
             {request.customerId ? (
-              <Link to={`/app/admin/customers/${request.customerId}`} className="text-link">
+              <Link to={`/app/admin/customers/${request.customerId}`} className="link">
                 {t('admin.shared.viewCustomer')}
               </Link>
             ) : null}
@@ -143,7 +143,7 @@ function AdminRequestDetailsPage({ requestId }) {
               <p className="body-text">{t('admin.requestDetail.noProvider')}</p>
             )}
             {request.selectedProvider ? (
-              <Link to={`/app/admin/providers/${request.selectedProviderId}`} className="text-link">
+              <Link to={`/app/admin/providers/${request.selectedProviderId}`} className="link">
                 {t('admin.shared.viewProvider')}
               </Link>
             ) : null}

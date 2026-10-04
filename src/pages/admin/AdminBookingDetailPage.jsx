@@ -95,7 +95,7 @@ function AdminBookingDetailPage({ bookingId }) {
               ]}
             />
             {booking.customerId ? (
-              <Link to={`/app/admin/customers/${booking.customerId}`} className="text-link">
+              <Link to={`/app/admin/customers/${booking.customerId}`} className="link">
                 {t('admin.shared.viewCustomer')}
               </Link>
             ) : null}
@@ -104,14 +104,14 @@ function AdminBookingDetailPage({ bookingId }) {
             <h2 className="card__title">{t('admin.fields.provider')}</h2>
             <DetailList items={[{ label: t('admin.fields.name'), value: booking.provider?.name }]} />
             {booking.provider ? (
-              <Link to={`/app/admin/providers/${booking.provider.id}`} className="text-link">
+              <Link to={`/app/admin/providers/${booking.provider.id}`} className="link">
                 {t('admin.shared.viewProvider')}
               </Link>
             ) : null}
           </Card>
           <Card>
             <h2 className="card__title">{t('admin.bookingDetail.request')}</h2>
-            <Link to={`/app/admin/requests/${booking.requestId}`} className="text-link">
+            <Link to={`/app/admin/requests/${booking.requestId}`} className="link">
               {t('admin.bookingDetail.viewOriginalRequest')}
             </Link>
           </Card>

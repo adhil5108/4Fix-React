@@ -253,7 +253,7 @@ function IssueEditor({ issues, setIssues }) {
               </label>
               <button
                 type="button"
-                className="text-link"
+                className="link"
                 onClick={() => setIssues((current) => current.filter((item) => item.id !== row.id))}
               >
                 {t('admin.serviceForm.issueEditor.remove')}

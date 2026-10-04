@@ -1,217 +1,172 @@
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ClipboardList, House, Inbox, Menu, MessageCircle, User, Wrench } from 'lucide-react';
 import AreaSwitcher from './admin/AreaSwitcher.jsx';
-import LanguageSwitcher from './LanguageSwitcher.jsx';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { useUnread } from '../hooks/useUnread.jsx';
-import { navigate, useRoute } from '../hooks/useRoute.js';
-import { ButtonLink, Link } from './ui.jsx';
+import { useRoute } from '../hooks/useRoute.js';
+import { BackButton, Link } from './ui.jsx';
 import { NavBadge, UnreadToasts } from './Unread.jsx';
 
-const icons = {
-  home: <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />,
-  grid: (
-    <>
-      <rect x="3" y="3" width="7" height="7" rx="1.5" />
-      <rect x="14" y="3" width="7" height="7" rx="1.5" />
-      <rect x="3" y="14" width="7" height="7" rx="1.5" />
-      <rect x="14" y="14" width="7" height="7" rx="1.5" />
-    </>
-  ),
-  plus: (
-    <>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 8v8M8 12h8" />
-    </>
-  ),
-  calendar: (
-    <>
-      <rect x="3" y="5" width="18" height="16" rx="2" />
-      <path d="M3 10h18M8 3v4M16 3v4" />
-    </>
-  ),
-  user: (
-    <>
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21a8 8 0 0 1 16 0" />
-    </>
-  ),
-  briefcase: (
-    <>
-      <rect x="3" y="7" width="18" height="13" rx="2" />
-      <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
-    </>
-  ),
-  wrench: (
-    <path d="M14.7 6.3a4 4 0 0 0 5 5L13 18l-3-3 6.7-8.7zM4 20l4-4" />
-  ),
-  info: (
-    <>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 8h.01M11 12h1v4h1" />
-    </>
-  ),
-};
+const isChatPath = (path) => /^\/bookings\/[^/]+\/chat$/.test(path);
 
-function Icon({ name }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {icons[name]}
-    </svg>
-  );
-}
-
-// Mobile keeps to Home / Book / My requests / About; desktop swaps Book for Services.
-// `label`/`shortLabel` are keys under common.nav. `unread` marks the item that carries
-// the unread-chat badge: where that person's conversations live.
-const NAV_BY_ROLE = {
-  // Customers never sign in: everyone who isn't a provider/admin sees this navigation.
-  PUBLIC: [
-    { to: '/', label: 'home', icon: 'home', exact: true },
-    { to: '/services', label: 'services', icon: 'grid', desktopOnly: true },
-    { to: '/services', label: 'book', icon: 'plus', mobileOnly: true },
-    { to: '/requests', label: 'myRequests', icon: 'calendar', unread: true },
-    { to: '/about', label: 'about', icon: 'info' },
+// Bottom navigation per side. `label` is a key under common.navShort; `unread` marks the
+// tab that carries the unread-chat count; `match` decides the active tab.
+const NAV_BY_SIDE = {
+  // Customers never sign in: everyone who isn't a provider sees this navigation.
+  CUSTOMER: [
+    { to: '/', label: 'home', icon: House, match: (path) => path === '/' || path.startsWith('/services') || path.startsWith('/categories') || path.startsWith('/book/') },
+    { to: '/requests', label: 'myRequests', icon: ClipboardList, match: (path) => path.startsWith('/requests') || (path.startsWith('/bookings/') && !isChatPath(path)) },
+    { to: '/chats', label: 'chat', icon: MessageCircle, unread: true, match: (path) => path === '/chats' || isChatPath(path) },
+    { to: '/more', label: 'more', icon: Menu, match: (path) => path === '/more' || path === '/about' },
   ],
   PROVIDER: [
-    { to: '/provider', label: 'dashboard', icon: 'home', exact: true },
-    { to: '/provider/requests', label: 'requests', icon: 'briefcase' },
-    { to: '/provider/jobs', label: 'myJobs', shortLabel: 'jobs', icon: 'wrench', unread: true },
-    { to: '/provider/profile', label: 'profile', icon: 'user' },
+    { to: '/provider', label: 'home', icon: House, match: (path) => path === '/provider' },
+    { to: '/provider/requests', label: 'requests', icon: Inbox, match: (path) => path.startsWith('/provider/requests') },
+    { to: '/provider/jobs', label: 'jobs', icon: Wrench, match: (path) => path.startsWith('/provider/jobs') || (path.startsWith('/bookings/') && !isChatPath(path)) },
+    { to: '/provider/chats', label: 'chat', icon: MessageCircle, unread: true, match: (path) => path === '/provider/chats' || isChatPath(path) },
+    { to: '/provider/profile', label: 'profile', icon: User, match: (path) => path === '/provider/profile' },
   ],
-  ADMIN: [{ to: '/app/admin', label: 'admin', icon: 'home', exact: true }],
 };
 
-function isActive(item, path) {
-  if (item.exact) {
-    return path === item.to;
-  }
-
-  return path === item.to || path.startsWith(`${item.to}/`);
-}
-
-function Header({ navItems, path, previewRole, unreadTotal }) {
+function BottomNav({ items, path, unreadTotal }) {
   const { t } = useTranslation();
-  const { isAuthenticated, user, logout } = useAuth();
-  const homeTarget = user?.role === 'PROVIDER' ? '/provider' : '/';
-
-  function handleLogout() {
-    logout();
-    navigate('/login');
-  }
 
   return (
-    <header className="site-header">
-      <div className="site-header__inner">
-        <Link to={homeTarget} className="brand-logo brand-logo--header" aria-label={t('common.brand.homeAria')}>
-          <span className="brand-logo__mark">4</span>Fix
-        </Link>
+    <nav className="bottom-nav" aria-label={t('common.nav.main')}>
+      <div className="bottom-nav__inner">
+        {items.map((item) => {
+          const active = item.match(path);
+          const Icon = item.icon;
 
-        <nav className="site-nav" aria-label={t('common.nav.main')}>
-          {navItems
-            .filter((item) => !item.mobileOnly)
-            .map((item) => (
-              <Link
-                key={item.label}
-                to={item.to}
-                className={`site-nav__link${isActive(item, path) ? ' is-active' : ''}`}
-                aria-current={isActive(item, path) ? 'page' : undefined}
-              >
-                {t(`common.nav.${item.label}`)}
+          return (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`bottom-nav__item${active ? ' is-active' : ''}`}
+              aria-current={active ? 'page' : undefined}
+            >
+              <span className="bottom-nav__icon">
+                <Icon aria-hidden="true" />
                 {item.unread ? <NavBadge count={unreadTotal} /> : null}
-              </Link>
-            ))}
-        </nav>
-
-        <div className="site-header__actions">
-          <LanguageSwitcher />
-          {!isAuthenticated ? (
-            <>
-              <Link to="/login" className="text-link site-header__login">
-                {t('common.nav.providerLogin')}
-              </Link>
-              <ButtonLink to="/services" size="sm" className="hide-mobile">
-                {t('common.nav.bookService')}
-              </ButtonLink>
-            </>
-          ) : null}
-          {isAuthenticated && user.role === 'ADMIN' ? (
-            <button type="button" className="text-link" onClick={handleLogout}>
-              {t('common.nav.logOut')}
-            </button>
-          ) : null}
-        </div>
+              </span>
+              <span className="bottom-nav__label">{t(`common.navShort.${item.label}`)}</span>
+            </Link>
+          );
+        })}
       </div>
-
-      {previewRole ? (
-        <div className="admin-preview-banner">
-          <span className="admin-preview-banner__label">
-            {t('common.areas.previewBanner', {
-              side: t(previewRole === 'PROVIDER' ? 'common.areas.providerSide' : 'common.areas.customerSide'),
-            })}
-          </span>
-          <AreaSwitcher current={previewRole} className="admin-preview-banner__areas" linkClassName="chip" />
-        </div>
-      ) : null}
-    </header>
-  );
-}
-
-function MobileNav({ navItems, path, unreadTotal }) {
-  const { t } = useTranslation();
-  const items = navItems.filter((item) => !item.desktopOnly && item.icon);
-
-  return (
-    <nav className="mobile-nav" aria-label={t('common.nav.main')}>
-      {items.map((item) => (
-        <Link
-          key={item.label}
-          to={item.to}
-          className={`mobile-nav__link${isActive(item, path) && !item.mobileOnly ? ' is-active' : ''}${
-            item.icon === 'plus' ? ' mobile-nav__link--primary' : ''
-          }`}
-          aria-current={isActive(item, path) ? 'page' : undefined}
-        >
-          <span className="mobile-nav__icon">
-            <Icon name={item.icon} />
-            {item.unread ? <NavBadge count={unreadTotal} /> : null}
-          </span>
-          <span>{t(`common.navShort.${item.shortLabel || item.label}`)}</span>
-        </Link>
-      ))}
     </nav>
   );
 }
 
-// AppShell only ever renders customer/provider/public pages (the admin console uses
-// AdminShell), so an authenticated ADMIN here is always previewing — never their own
-// area — which side is inferred from the current path.
-function resolvePreviewRole(path) {
-  return path === '/provider' || path.startsWith('/provider/') ? 'PROVIDER' : 'CUSTOMER';
+// A fixed action bar covers the bottom of the screen, and browsers treat a field hidden
+// behind it as "already in view". Keep the focused field clear of the bar — on focus and
+// again when the on-screen keyboard resizes the viewport.
+function useKeepFocusAboveBar(enabled) {
+  useEffect(() => {
+    if (!enabled) return undefined;
+
+    function reveal() {
+      const field = document.activeElement;
+      const bar = document.querySelector('.sticky-bar');
+      if (!bar || !field?.matches?.('input, textarea, select')) return;
+      const fieldBottom = field.getBoundingClientRect().bottom;
+      const barTop = bar.getBoundingClientRect().top;
+      if (fieldBottom > barTop - 12) {
+        window.scrollBy({ top: fieldBottom - barTop + 24, behavior: 'smooth' });
+      }
+    }
+
+    const onFocus = () => window.setTimeout(reveal, 60);
+    document.addEventListener('focusin', onFocus);
+    window.visualViewport?.addEventListener('resize', onFocus);
+    return () => {
+      document.removeEventListener('focusin', onFocus);
+      window.visualViewport?.removeEventListener('resize', onFocus);
+    };
+  }, [enabled]);
 }
 
-function AppShell({ children, width = 'default' }) {
-  const { path } = useRoute();
-  const { isAuthenticated, user } = useAuth();
-  const isAdminPreview = isAuthenticated && user.role === 'ADMIN';
-  const previewRole = isAdminPreview ? resolvePreviewRole(path) : null;
-  const navRole = isAdminPreview ? (previewRole === 'PROVIDER' ? 'PROVIDER' : 'PUBLIC') : isAuthenticated ? user.role : 'PUBLIC';
-  const navItems = NAV_BY_ROLE[navRole] || NAV_BY_ROLE.PUBLIC;
-  // Admin (previewing) never has unread chats: it is not a participant.
-  const { total: unreadTotal } = useUnread();
+function useScrolled() {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  return scrolled;
+}
+
+// The one mobile top bar. Three looks:
+//   brand  — 4Fix wordmark (Home)
+//   large  — a big title with no back button (root tabs)
+//   default — back button + title (everything else)
+export function TopBar({ title, back, actions, large = false, brand = false, bordered = false }) {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const scrolled = useScrolled();
+  const homeTarget = user?.role === 'PROVIDER' ? '/provider' : '/';
 
   return (
-    <div className="app-shell">
-      <Header navItems={navItems} path={path} previewRole={previewRole} unreadTotal={unreadTotal} />
-      <main className={`app-main app-main--${width}`}>{children}</main>
-      <MobileNav navItems={navItems} path={path} unreadTotal={unreadTotal} />
+    <header
+      className={['topbar', large ? 'topbar--large' : '', bordered ? 'topbar--bordered' : '', scrolled ? 'is-scrolled' : '']
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <div className="topbar__inner">
+        {back ? <BackButton to={back.to} label={back.label || t('common.actions.goBack')} history={back.history} /> : null}
+        {brand ? (
+          <Link to={homeTarget} className="topbar__brand" aria-label={t('common.brand.homeAria')}>
+            <span className="brand-mark">4</span>Fix
+          </Link>
+        ) : (
+          <h1 className="topbar__title">{title}</h1>
+        )}
+        {actions ? <div className="topbar__actions">{actions}</div> : null}
+      </div>
+    </header>
+  );
+}
+
+// Which side's navigation to show: providers get theirs; an ADMIN browsing the app is
+// previewing a side (inferred from the path); everyone else is an anonymous customer.
+function resolveSide(user, path) {
+  if (user?.role === 'PROVIDER') return 'PROVIDER';
+  if (user?.role === 'ADMIN') return path === '/provider' || path.startsWith('/provider/') ? 'PROVIDER' : 'CUSTOMER';
+  return 'CUSTOMER';
+}
+
+// Customer/provider layout. Phone-first: a single column, a top bar, and the bottom
+// navigation (hidden on task screens — forms, chat — with `nav={false}`). `bar` reserves
+// room for a <StickyActionBar> rendered by the page.
+function AppShell({ children, title, back, actions, large = false, brand = false, nav = true, bar = false }) {
+  const { path } = useRoute();
+  const { user } = useAuth();
+  const side = resolveSide(user, path);
+  const previewSide = user?.role === 'ADMIN' ? side : null;
+  // Admin (previewing) never has unread chats: it is not a participant.
+  const { total: unreadTotal } = useUnread();
+  const { t } = useTranslation();
+  useKeepFocusAboveBar(bar);
+
+  return (
+    <div className={['app', nav ? '' : 'app--no-nav', bar ? 'app--with-bar' : ''].filter(Boolean).join(' ')}>
+      <TopBar title={title} back={back} actions={actions} large={large} brand={brand} />
+      {previewSide ? (
+        <div className="preview-banner">
+          <span className="preview-banner__label">
+            {t('common.areas.previewBanner', {
+              side: t(previewSide === 'PROVIDER' ? 'common.areas.providerSide' : 'common.areas.customerSide'),
+            })}
+          </span>
+          <AreaSwitcher current={previewSide} className="preview-banner__areas" linkClassName="chip" />
+        </div>
+      ) : null}
+      <main className="app__main">{children}</main>
+      {nav ? <BottomNav items={NAV_BY_SIDE[side]} path={path} unreadTotal={unreadTotal} /> : null}
       <UnreadToasts />
     </div>
   );

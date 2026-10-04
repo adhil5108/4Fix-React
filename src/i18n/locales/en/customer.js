@@ -18,6 +18,7 @@ export default {
     allServices: 'All services',
     unavailable: 'This service is no longer available. Choose another one.',
     sections: {
+      media: 'Photos and voice note',
       service: 'Service',
       issue: 'What’s the problem?',
       description: 'Describe the problem',
@@ -29,7 +30,7 @@ export default {
     subtitle: 'Fill in the form below and send your request.',
     optional: 'Optional',
     photosLabel: 'Add photos of the problem',
-    change: 'change',
+    change: 'Change',
     describeLabel: 'Describe the problem',
     anythingLabel: 'Anything the technician should know?',
     describePlaceholder: 'e.g. The unit trips the power after a few minutes.',
@@ -59,6 +60,20 @@ export default {
       namePlaceholder: 'e.g. Asha Nair',
       phone: 'Phone number',
       phonePlaceholder: 'e.g. 98765 43210',
+    },
+  },
+  job: {
+    progress: 'Progress',
+    call: 'Call',
+    chat: 'Chat',
+    callName: 'Call {{name}}',
+    openElsewhere: 'Open on another phone',
+    openElsewhereHint: 'Get a private link to follow this request elsewhere.',
+    stages: {
+      sent: 'Request sent',
+      assigned: 'Provider assigned',
+      inProgress: 'Work in progress',
+      completed: 'Completed',
     },
   },
   request: {
@@ -128,6 +143,7 @@ export default {
     viewRequest: 'View original request',
   },
   chat: {
+    providerRole: 'Your provider',
     opening: 'Opening chat…',
   },
   review: {

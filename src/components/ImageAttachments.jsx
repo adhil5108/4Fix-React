@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Camera, Check, X } from 'lucide-react';
 import { uploadsApi } from '../services/fixApi.js';
 
 export const MAX_ATTACHMENTS = 10;
@@ -149,7 +150,7 @@ function ImageAttachments({
               ) : null}
               {item.status === 'success' ? (
                 <span className="image-picker__badge" aria-hidden="true">
-                  ✓
+                  <Check />
                 </span>
               ) : null}
             </div>
@@ -159,12 +160,12 @@ function ImageAttachments({
               onClick={() => removeItem(item)}
               aria-label={t('cards.photos.remove')}
             >
-              ×
+              <X aria-hidden="true" />
             </button>
             {item.status === 'error' ? (
               <div className="image-picker__error">
                 <span>{item.error?.key ? t(item.error.key, item.error.values) : item.error}</span>
-                <button type="button" className="text-link" onClick={() => retryItem(item)}>
+                <button type="button" className="link" onClick={() => retryItem(item)}>
                   {t('cards.photos.retry')}
                 </button>
               </div>
@@ -173,7 +174,7 @@ function ImageAttachments({
         ))}
         {items.length < MAX_ATTACHMENTS ? (
           <button type="button" className="image-picker__add" onClick={() => inputRef.current?.click()}>
-            <span aria-hidden="true">+</span>
+            <Camera aria-hidden="true" />
             <span>{t('cards.photos.add')}</span>
           </button>
         ) : null}

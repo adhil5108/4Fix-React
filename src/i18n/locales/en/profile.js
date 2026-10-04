@@ -54,6 +54,7 @@ export default {
     statusLabel: 'Location status',
   },
   sections: {
+    app: 'App',
     details: 'My details',
     business: 'Business',
     quickActions: 'Quick actions',

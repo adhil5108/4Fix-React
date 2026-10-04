@@ -1,23 +1,28 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Inbox } from 'lucide-react';
 import AcceptJobButton from '../../components/AcceptJobButton.jsx';
 import AppShell from '../../components/AppShell.jsx';
-import { AddressBlock, ServiceLocationBlock, AttachmentList, VoiceNoteBlock } from '../../components/cards.jsx';
+import { AttachmentList, ServiceIcon, ServiceLocationBlock, VoiceNoteBlock } from '../../components/cards.jsx';
 import {
   ButtonLink,
   Card,
-  DetailList,
+  EmptyState,
   ErrorState,
+  ListRow,
   LoadingState,
   Notice,
-  PageHeader,
+  SectionHeader,
   StatusBadge,
+  StickyActionBar,
 } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { providerApi } from '../../services/fixApi.js';
-import { formatIssueLabel, formatSlot, formatTimestamp } from '../../utils/format.js';
+import { formatAddress, formatIssueLabel, formatRelative, formatSlot, shortRef } from '../../utils/format.js';
 
+// An open request before acceptance: the problem and the area only. The customer's name,
+// phone and exact location arrive once this provider accepts.
 function ProviderRequestDetailsPage({ requestId }) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -28,7 +33,7 @@ function ProviderRequestDetailsPage({ requestId }) {
 
   if (data.loading) {
     return (
-      <AppShell>
+      <AppShell title={t('provider.requestDetails.title')} back={back}>
         <LoadingState label={t('provider.requestDetails.loading')} />
       </AppShell>
     );
@@ -43,8 +48,7 @@ function ProviderRequestDetailsPage({ requestId }) {
           : data.error;
 
     return (
-      <AppShell>
-        <PageHeader title={t('provider.requestDetails.title')} back={back} />
+      <AppShell title={t('provider.requestDetails.title')} back={back}>
         <ErrorState error={error} />
       </AppShell>
     );
@@ -57,113 +61,94 @@ function ProviderRequestDetailsPage({ requestId }) {
   // Admin reaches this page from Provider View, but is never a real provider — the
   // backend rejects ADMIN on accept, so the button is never offered.
   const canAccept = isOpen && !isAdminViewer;
-  const posted = formatTimestamp(request.createdAt);
+  const issue = formatIssueLabel(request.issueKey, request.issueLabel);
+  const area = request.address ? formatAddress(request.address) : '';
 
   return (
-    <AppShell>
-      <PageHeader
-        back={back}
-        title={request.service?.name || t('provider.requestDetails.fallbackTitle')}
-        subtitle={
-          formatIssueLabel(request.issueKey, request.issueLabel)
-            ? t('provider.requestDetails.postedWithIssue', { issue: formatIssueLabel(request.issueKey, request.issueLabel), time: posted })
-            : t('provider.requestDetails.posted', { time: posted })
-        }
-        actions={<StatusBadge status={taken ? 'ACCEPTED' : request.status} audience="provider" />}
-      />
-
-      <div className="detail-layout">
-        <div className="detail-layout__main">
-          {canAccept ? (
-            <Card className="card--accent">
-              <h2 className="card__title">{t('provider.requestDetails.takeTitle')}</h2>
-              <p className="body-text">{t('provider.requestDetails.takeText')}</p>
-              <AcceptJobButton
-                requestId={request.id}
-                size="lg"
-                onTaken={() => setTaken(true)}
-                onFailed={() => data.refresh()}
-              />
-            </Card>
-          ) : null}
-
-          {isOpen && isAdminViewer ? (
-            <Notice tone="info">{t('provider.requestDetails.adminReadOnly')}</Notice>
-          ) : null}
-
-          {isAssigned && request.bookingId ? (
-            <Card className="card--accent">
-              <h2 className="card__title">{t('provider.requestDetails.yoursTitle')}</h2>
-              <p className="body-text">{t('provider.requestDetails.yoursText')}</p>
-              <ButtonLink to={`/provider/jobs/${request.bookingId}`} block>
-                {t('provider.requestDetails.openJob')}
-              </ButtonLink>
-            </Card>
-          ) : null}
-
-          {taken ? (
-            <Card>
-              <h2 className="card__title">{t('provider.requestDetails.goneTitle')}</h2>
-              <p className="body-text">{t('provider.requestDetails.alreadyAccepted')}</p>
-              <ButtonLink to="/provider/requests" variant="secondary" block>
-                {t('provider.requestDetails.seeOther')}
-              </ButtonLink>
-            </Card>
-          ) : null}
-
-          {request.status === 'CANCELLED' ? (
-            <Card>
-              <h2 className="card__title">{t('provider.requestDetails.cancelledTitle')}</h2>
-              <p className="body-text">{t('provider.requestDetails.cancelledText')}</p>
-            </Card>
-          ) : null}
+    <AppShell title={request.service?.name || t('provider.requestDetails.fallbackTitle')} back={back} bar={canAccept}>
+      <header className="job-header">
+        <ServiceIcon service={request.service} size="lg" />
+        <div className="job-header__text">
+          <p className="job-header__ref">
+            {shortRef(request.id)} · {formatRelative(request.createdAt)}
+          </p>
+          <h2 className="job-header__title">{request.service?.name || t('provider.requestDetails.fallbackTitle')}</h2>
+          {issue ? <p className="job-header__sub">{issue}</p> : null}
         </div>
+        <StatusBadge status={taken ? 'ACCEPTED' : request.status} audience="provider" />
+      </header>
 
-        <aside className="detail-layout__side">
-          <Card>
-            <h2 className="card__title">{t('provider.requestDetails.detailsTitle')}</h2>
-            <DetailList
-              items={[
-                // Contact details arrive only once this provider has accepted the job.
-                { label: t('provider.shared.customer'), value: request.customer?.name },
-                {
-                  label: t('provider.shared.phone'),
-                  value: request.customer?.phone ? (
-                    <a href={`tel:${request.customer.phone}`} className="text-link">
-                      {request.customer.phone}
-                    </a>
-                  ) : null,
-                },
-                { label: t('provider.shared.issue'), value: formatIssueLabel(request.issueKey, request.issueLabel) },
-                { label: t('provider.shared.problem'), value: request.description },
-                {
-                  label: t('provider.shared.preferredTime'),
-                  value: request.preferredDate ? formatSlot(request.preferredDate, request.preferredTime) : '',
-                },
-              ]}
-            />
-            <h3 className="card__subtitle">{isAssigned ? t('provider.shared.serviceLocation') : t('provider.shared.area')}</h3>
-            <AddressBlock address={request.address} />
-            <ServiceLocationBlock
-              location={request.location}
-              navigate
-              fallback={
-                isAssigned
-                  ? t('provider.shared.noMapPin')
-                  : t('provider.requestDetails.locationAfterAccept')
-              }
-            />
-            {request.attachments?.length ? (
-              <>
-                <h3 className="card__subtitle">{t('provider.shared.photos')}</h3>
-                <AttachmentList attachments={request.attachments} />
-              </>
-            ) : null}
-            <VoiceNoteBlock voiceNote={request.voiceNote} />
-          </Card>
-        </aside>
+      <div className="stack section-gap">
+        {isOpen && isAdminViewer ? <Notice tone="info">{t('provider.requestDetails.adminReadOnly')}</Notice> : null}
+        {canAccept ? <Notice tone="info">{t('provider.requestDetails.takeText')}</Notice> : null}
       </div>
 
+      {isAssigned && request.bookingId ? (
+        <Card tint className="status-panel">
+          <p className="status-panel__text">{t('provider.requestDetails.yoursText')}</p>
+          <ButtonLink to={`/provider/jobs/${request.bookingId}`} block>
+            {t('provider.requestDetails.openJob')}
+          </ButtonLink>
+        </Card>
+      ) : null}
+
+      {taken ? (
+        <EmptyState
+          icon={Inbox}
+          title={t('provider.requestDetails.goneTitle')}
+          message={t('provider.requestDetails.alreadyAccepted')}
+          action={
+            <ButtonLink to="/provider/requests" variant="secondary">
+              {t('provider.requestDetails.seeOther')}
+            </ButtonLink>
+          }
+        />
+      ) : null}
+
+      {request.status === 'CANCELLED' ? (
+        <Notice tone="info">{t('provider.requestDetails.cancelledText')}</Notice>
+      ) : null}
+
+      <section className="section" aria-labelledby="request-details-heading">
+        <SectionHeader id="request-details-heading" title={t('provider.requestDetails.detailsTitle')} />
+        <div className="list-group">
+          {request.customer?.name ? <ListRow label={t('provider.shared.customer')} value={request.customer.name} /> : null}
+          {issue ? <ListRow label={t('provider.shared.issue')} value={issue} /> : null}
+          <ListRow label={t('provider.shared.problem')} value={request.description} />
+          {request.preferredDate ? (
+            <ListRow label={t('provider.shared.preferredTime')} value={formatSlot(request.preferredDate, request.preferredTime)} />
+          ) : null}
+          <div className="list-block">
+            <span className="list-row__label">{isAssigned ? t('provider.shared.serviceLocation') : t('provider.shared.area')}</span>
+            {isAssigned ? (
+              <ServiceLocationBlock location={request.location} address={request.address} navigate fallback={t('provider.shared.noMapPin')} />
+            ) : (
+              <>
+                <p className="list-row__value">{area || '—'}</p>
+                <p className="field-hint">{t('provider.requestDetails.locationAfterAccept')}</p>
+              </>
+            )}
+          </div>
+          {request.attachments?.length || request.voiceNote?.url ? (
+            <div className="list-block stack">
+              <span className="list-row__label">{t('provider.shared.photos')}</span>
+              <AttachmentList attachments={request.attachments} />
+              <VoiceNoteBlock voiceNote={request.voiceNote} />
+            </div>
+          ) : null}
+        </div>
+      </section>
+
+      {canAccept ? (
+        <StickyActionBar>
+          <AcceptJobButton
+            requestId={request.id}
+            size="lg"
+            onTaken={() => setTaken(true)}
+            onFailed={() => data.refresh()}
+          />
+        </StickyActionBar>
+      ) : null}
     </AppShell>
   );
 }

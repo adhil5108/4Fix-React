@@ -1,25 +1,28 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { MapPin, NotebookPen, Pencil, Phone, Trash2 } from 'lucide-react';
 import AppShell from '../../components/AppShell.jsx';
 import JobNotes from '../../components/JobNotes.jsx';
 import TrackingTimeline from '../../components/TrackingTimeline.jsx';
-import { AddressBlock, AttachmentList } from '../../components/cards.jsx';
+import { AttachmentList, ContactCard, ServiceIcon } from '../../components/cards.jsx';
 import {
   Button,
-  ButtonLink,
   Card,
   ConfirmDialog,
-  DetailList,
   ErrorState,
+  IconButton,
+  ListRow,
   LoadingState,
   Notice,
-  PageHeader,
+  SectionHeader,
+  Sheet,
   StatusBadge,
+  StickyActionBar,
 } from '../../components/ui.jsx';
 import { useAction, useApi } from '../../hooks/useApi.js';
 import { navigate } from '../../hooks/useRoute.js';
 import { providerExternalJobsApi } from '../../services/fixApi.js';
-import { formatSlot } from '../../utils/format.js';
+import { formatAddress, formatSlot, shortRef } from '../../utils/format.js';
 
 // Labels come from provider.externalJob.stages.<status>, translated at render.
 const EXTERNAL_STAGES = [
@@ -55,16 +58,19 @@ const ACTION_COPY = {
   complete: 'complete',
 };
 
+// A job the provider recorded themselves (work from outside 4Fix): same layout as a 4Fix
+// job, clearly tagged "External", with its own lifecycle.
 function ProviderExternalJobPage({ jobId }) {
   const { t } = useTranslation();
   const data = useApi(() => providerExternalJobsApi.get(jobId), [jobId]);
   const action = useAction();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
   const back = { to: '/provider/jobs', label: t('provider.shared.myJobs') };
 
   if (data.loading) {
     return (
-      <AppShell>
+      <AppShell title={t('provider.shared.job')} back={back}>
         <LoadingState label={t('provider.shared.loadingJob')} />
       </AppShell>
     );
@@ -72,8 +78,7 @@ function ProviderExternalJobPage({ jobId }) {
 
   if (data.error) {
     return (
-      <AppShell>
-        <PageHeader title={t('provider.shared.job')} back={back} />
+      <AppShell title={t('provider.shared.job')} back={back}>
         <ErrorState
           error={data.error.status === 404 ? { status: 404, message: t('provider.shared.jobNotFound') } : data.error}
           onRetry={data.reload}
@@ -85,6 +90,7 @@ function ProviderExternalJobPage({ jobId }) {
   const { job } = data.data;
   const step = nextAction(job.status);
   const stages = EXTERNAL_STAGES.map((stage) => ({ ...stage, label: t(`provider.externalJob.stages.${stage.status}`) }));
+  const address = formatAddress(job.address);
 
   const runners = {
     'on-the-way': () => action.run('on-the-way', () => providerExternalJobsApi.onTheWay(job.id)),
@@ -104,90 +110,111 @@ function ProviderExternalJobPage({ jobId }) {
   }
 
   return (
-    <AppShell>
-      <PageHeader
-        back={back}
-        title={job.serviceLabel}
-        subtitle={t('provider.shared.forCustomer', { name: job.customer.name })}
-        actions={
-          <>
-            <span className="badge badge--muted">{t('provider.shared.external')}</span>
-            <StatusBadge status={job.status} audience="externalJob" />
-          </>
-        }
-      />
-
-      <div className="stack">
-        <Notice>{action.error}</Notice>
-      </div>
-
-      <div className="detail-layout">
-        <div className="detail-layout__main">
-          {step ? (
-            <Card className="card--accent">
-              <h2 className="card__title">{t(`provider.externalJob.actions.${ACTION_COPY[step]}.text`)}</h2>
-              <Button
-                block
-                onClick={runStep}
-                loading={action.pending === step}
-                loadingText={t('provider.shared.updating')}
-                disabled={Boolean(action.pending) && action.pending !== step}
-              >
-                {t(`provider.externalJob.actions.${ACTION_COPY[step]}.button`)}
-              </Button>
-            </Card>
-          ) : (
-            <Card>
-              <h2 className="card__title">{t('provider.externalJob.completedTitle')}</h2>
-            </Card>
-          )}
-
-          <Card>
-            <h2 className="card__title">{t('provider.shared.progress')}</h2>
-            <TrackingTimeline status={job.status} timeline={job.timeline} stages={stages} rank={EXTERNAL_RANK} />
-          </Card>
-
-          <Card>
-            <h2 className="card__title">{t('provider.shared.privateNotes')}</h2>
-            <p className="field-hint">{t('provider.externalJob.notesHint')}</p>
-            <JobNotes jobId={job.id} notesApi={providerExternalJobsApi.notes} />
-          </Card>
+    <AppShell
+      title={`${t('provider.shared.job')} ${shortRef(job.id)}`}
+      back={back}
+      bar={Boolean(step)}
+      actions={<IconButton icon={Pencil} to={`/provider/jobs/external/${job.id}/edit`} label={t('provider.externalJob.edit')} />}
+    >
+      <header className="job-header">
+        <ServiceIcon service={{ name: job.serviceLabel }} size="lg" />
+        <div className="job-header__text">
+          <p className="job-header__ref">
+            <span className="badge badge--plain badge--muted">{t('provider.shared.external')}</span>
+          </p>
+          <h2 className="job-header__title">{job.serviceLabel}</h2>
+          <p className="job-header__sub">{t('provider.shared.forCustomer', { name: job.customer.name })}</p>
         </div>
+        <StatusBadge status={job.status} audience="externalJob" />
+      </header>
 
-        <aside className="detail-layout__side">
-          <Card>
-            <h2 className="card__title">{t('provider.shared.customerAndJob')}</h2>
-            <DetailList
-              items={[
-                { label: t('provider.shared.customer'), value: job.customer.name },
-                { label: t('provider.shared.phone'), value: job.customer.phone },
-                { label: t('provider.shared.serviceType'), value: job.serviceLabel },
-                { label: t('provider.shared.description'), value: job.description },
-                {
-                  label: t('provider.shared.scheduledVisit'),
-                  value: job.scheduledDate ? formatSlot(job.scheduledDate, job.scheduledTime) : t('provider.shared.notScheduled'),
-                },
-              ]}
-            />
-            <h3 className="card__subtitle">{t('provider.shared.location')}</h3>
-            <AddressBlock address={job.address} />
-            {job.attachments?.length ? (
-              <>
-                <h3 className="card__subtitle">{t('provider.shared.attachments')}</h3>
-                <AttachmentList attachments={job.attachments} />
-              </>
-            ) : null}
-            <div className="card__actions">
-              <ButtonLink to={`/provider/jobs/external/${job.id}/edit`} variant="secondary" block>
-                {t('provider.externalJob.edit')}
-              </ButtonLink>
-              <Button variant="danger-ghost" block onClick={() => setConfirmDelete(true)}>
-                {t('provider.externalJob.delete')}
-              </Button>
-            </div>
-          </Card>
-        </aside>
+      <div className="stack section-gap">
+        <Notice>{action.error}</Notice>
+        {step ? <Notice tone="info">{t(`provider.externalJob.actions.${ACTION_COPY[step]}.text`)}</Notice> : null}
+        {!step ? <Notice tone="success">{t('provider.externalJob.completedTitle')}</Notice> : null}
       </div>
+
+      <section className="section" aria-labelledby="external-customer-heading">
+        <SectionHeader id="external-customer-heading" title={t('provider.shared.customer')} />
+        <Card>
+          <ContactCard
+            role={t('provider.shared.customer')}
+            name={job.customer.name}
+            phone={job.customer.phone}
+            actions={[
+              job.customer.phone ? { key: 'call', icon: Phone, label: t('provider.job.call'), href: `tel:${job.customer.phone}`, primary: true } : null,
+              address
+                ? {
+                    key: 'map',
+                    icon: MapPin,
+                    label: t('cards.serviceLocation.openInMaps'),
+                    href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
+                    external: true,
+                  }
+                : null,
+            ].filter(Boolean)}
+          />
+        </Card>
+      </section>
+
+      <section className="section" aria-labelledby="external-details-heading">
+        <SectionHeader id="external-details-heading" title={t('provider.shared.customerAndJob')} />
+        <div className="list-group">
+          <ListRow label={t('provider.shared.description')} value={job.description} />
+          <ListRow
+            label={t('provider.shared.scheduledVisit')}
+            value={job.scheduledDate ? formatSlot(job.scheduledDate, job.scheduledTime) : t('provider.shared.notScheduled')}
+            muted={!job.scheduledDate}
+          />
+          <ListRow label={t('provider.shared.location')} value={address} />
+          {job.attachments?.length ? (
+            <div className="list-block stack">
+              <span className="list-row__label">{t('provider.shared.attachments')}</span>
+              <AttachmentList attachments={job.attachments} />
+            </div>
+          ) : null}
+          <ListRow
+            icon={NotebookPen}
+            title={t('provider.shared.privateNotes')}
+            value={t('provider.externalJob.notesHint')}
+            muted
+            onClick={() => setNotesOpen(true)}
+            chevron
+          />
+        </div>
+      </section>
+
+      <section className="section" aria-labelledby="external-progress-heading">
+        <SectionHeader id="external-progress-heading" title={t('provider.shared.progress')} />
+        <Card>
+          <TrackingTimeline status={job.status} timeline={job.timeline} stages={stages} rank={EXTERNAL_RANK} />
+        </Card>
+      </section>
+
+      <section className="section">
+        <div className="list-group">
+          <ListRow icon={Trash2} danger title={t('provider.externalJob.delete')} onClick={() => setConfirmDelete(true)} />
+        </div>
+      </section>
+
+      {step ? (
+        <StickyActionBar>
+          <Button
+            block
+            size="lg"
+            onClick={runStep}
+            loading={action.pending === step}
+            loadingText={t('provider.shared.updating')}
+            disabled={Boolean(action.pending) && action.pending !== step}
+          >
+            {t(`provider.externalJob.actions.${ACTION_COPY[step]}.button`)}
+          </Button>
+        </StickyActionBar>
+      ) : null}
+
+      <Sheet open={notesOpen} title={t('provider.shared.privateNotes')} onClose={() => setNotesOpen(false)}>
+        <JobNotes jobId={job.id} notesApi={providerExternalJobsApi.notes} />
+      </Sheet>
 
       <ConfirmDialog
         open={confirmDelete}

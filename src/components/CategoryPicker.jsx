@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Check } from 'lucide-react';
 
 // "Which categories do you work in?" — provider signup and profile. Real checkboxes in
 // large tap targets, two per row on phones. `value` holds category ids.
@@ -37,10 +38,10 @@ function CategoryPicker({ id = 'categories', categories, value, onChange, error,
                 disabled={disabled}
                 onChange={() => toggle(category.id)}
               />
-              <span className="category-picker__check" aria-hidden="true">
-                {isSelected ? '✓' : ''}
-              </span>
               <span className="category-picker__name">{category.name}</span>
+              <span className="category-picker__check" aria-hidden="true">
+                {isSelected ? <Check /> : null}
+              </span>
             </label>
           );
         })}

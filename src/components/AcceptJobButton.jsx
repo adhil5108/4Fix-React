@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Check } from 'lucide-react';
 import { useAction } from '../hooks/useApi.js';
 import { navigate } from '../hooks/useRoute.js';
 import { providerApi } from '../services/fixApi.js';
@@ -33,9 +34,9 @@ function AcceptJobButton({ requestId, size, block = true, onTaken, onFailed }) {
   }
 
   return (
-    <>
+    <div className="accept-job">
       <Notice>{action.error}</Notice>
-      <Button block={block} size={size} onClick={() => setConfirming(true)} disabled={Boolean(action.pending)}>
+      <Button block={block} size={size} icon={Check} onClick={() => setConfirming(true)} disabled={Boolean(action.pending)}>
         {t('provider.acceptJob.button')}
       </Button>
       <ConfirmDialog
@@ -47,7 +48,7 @@ function AcceptJobButton({ requestId, size, block = true, onTaken, onFailed }) {
         onConfirm={accept}
         onCancel={() => setConfirming(false)}
       />
-    </>
+    </div>
   );
 }
 

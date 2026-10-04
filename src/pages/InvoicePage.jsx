@@ -1,10 +1,11 @@
 import { useTranslation } from 'react-i18next';
+import { Printer, Smartphone } from 'lucide-react';
 import AppShell from '../components/AppShell.jsx';
 import AdminShell from '../components/admin/AdminShell.jsx';
-import { Button, EmptyState, ErrorState, LoadingState, PageHeader } from '../components/ui.jsx';
+import { EmptyState, ErrorState, IconButton, LoadingState, PageHeader } from '../components/ui.jsx';
 import { useApi } from '../hooks/useApi.js';
 import { useAuth } from '../hooks/useAuth.jsx';
-import { tokenForBooking } from '../services/customerAccess.js';
+import { requestIdForBooking, tokenForBooking } from '../services/customerAccess.js';
 import { bookingsApi, customerBookingsApi } from '../services/fixApi.js';
 import { formatDateTime, formatIssueLabel, formatTimestamp } from '../utils/format.js';
 
@@ -18,6 +19,24 @@ function Party({ label, contact, fallback }) {
   );
 }
 
+// Admin sees the invoice inside the console; customers and providers inside the app.
+function Frame({ isAdmin, title, back, actions, children }) {
+  if (isAdmin) {
+    return (
+      <AdminShell>
+        <PageHeader title={title} back={back} actions={actions} />
+        {children}
+      </AdminShell>
+    );
+  }
+
+  return (
+    <AppShell title={title} back={back} actions={actions}>
+      {children}
+    </AppShell>
+  );
+}
+
 // The invoice of a completed 4Fix job, as a printable document. The provider/admin read
 // it with their account; the (anonymous) customer with this browser's request token.
 // The API admits only those three, so changing the id in the URL reveals nothing.
@@ -26,7 +45,8 @@ function InvoicePage({ bookingId }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const role = user?.role;
-  const usesAccount = role === 'PROVIDER' || role === 'ADMIN';
+  const isAdmin = role === 'ADMIN';
+  const usesAccount = role === 'PROVIDER' || isAdmin;
   const requestToken = usesAccount ? null : tokenForBooking(bookingId);
   const canRead = usesAccount || Boolean(requestToken);
   const invoice = useApi(
@@ -37,28 +57,28 @@ function InvoicePage({ bookingId }) {
     [bookingId],
   );
 
-  const Shell = role === 'ADMIN' ? AdminShell : AppShell;
+  const requestId = usesAccount ? null : requestIdForBooking(bookingId);
   const back =
     role === 'PROVIDER'
       ? { to: `/provider/jobs/${bookingId}`, label: t('customer.shared.job') }
-      : role === 'ADMIN'
+      : isAdmin
         ? { to: `/app/admin/bookings/${bookingId}`, label: t('customer.shared.booking') }
-        : { to: `/bookings/${bookingId}`, label: t('customer.shared.booking') };
+        : { to: requestId ? `/requests/${requestId}` : '/requests', label: t('customer.shared.job') };
+  const title = t('invoice.title');
 
   if (!canRead) {
     return (
-      <Shell width="narrow">
-        <PageHeader title={t('invoice.title')} back={{ to: '/requests', label: t('common.nav.myRequests') }} />
-        <EmptyState title={t('customer.access.noAccessTitle')} message={t('customer.access.noAccessMessage')} />
-      </Shell>
+      <Frame isAdmin={isAdmin} title={title} back={{ to: '/requests', label: t('common.nav.myRequests') }}>
+        <EmptyState icon={Smartphone} title={t('customer.access.noAccessTitle')} message={t('customer.access.noAccessMessage')} />
+      </Frame>
     );
   }
 
   if (invoice.loading) {
     return (
-      <Shell width="narrow">
+      <Frame isAdmin={isAdmin} title={title} back={back}>
         <LoadingState label={t('invoice.loading')} />
-      </Shell>
+      </Frame>
     );
   }
 
@@ -66,13 +86,12 @@ function InvoicePage({ bookingId }) {
     const notReady = invoice.error.status === 404 || invoice.error.status === 400;
 
     return (
-      <Shell width="narrow">
-        <PageHeader title={t('invoice.title')} back={back} />
+      <Frame isAdmin={isAdmin} title={title} back={back}>
         <ErrorState
           error={notReady ? { status: 404, message: t('invoice.notAvailable') } : invoice.error}
           onRetry={invoice.reload}
         />
-      </Shell>
+      </Frame>
     );
   }
 
@@ -80,23 +99,21 @@ function InvoicePage({ bookingId }) {
   const issue = formatIssueLabel(doc.issueKey, doc.issueLabel);
 
   return (
-    <Shell width="narrow">
-      <div className="invoice-toolbar no-print">
-        <PageHeader title={t('invoice.title')} back={back} />
-        <Button variant="secondary" onClick={() => window.print()}>
-          {t('invoice.print')}
-        </Button>
-      </div>
-
+    <Frame
+      isAdmin={isAdmin}
+      title={title}
+      back={back}
+      actions={<IconButton icon={Printer} label={t('invoice.print')} onClick={() => window.print()} />}
+    >
       <article className="invoice-doc" aria-labelledby="invoice-heading">
         <header className="invoice-doc__head">
           <span className="invoice-doc__brand">
-            <span className="brand-logo__mark">4</span>Fix
+            <span className="brand-mark">4</span>Fix
           </span>
           <div className="invoice-doc__title-block">
-            <h1 id="invoice-heading" className="invoice-doc__title">
+            <h2 id="invoice-heading" className="invoice-doc__title">
               {t('invoice.heading')}
-            </h1>
+            </h2>
             <dl className="invoice-doc__meta">
               <div>
                 <dt>{t('invoice.number')}</dt>
@@ -144,7 +161,7 @@ function InvoicePage({ bookingId }) {
           <p>{t('invoice.thanks')}</p>
         </footer>
       </article>
-    </Shell>
+    </Frame>
   );
 }
 

@@ -5,7 +5,8 @@ import PasswordField from '../components/PasswordField.jsx';
 import PhonePrefix from '../components/PhonePrefix.jsx';
 import ShopLocationField from '../components/ShopLocationField.jsx';
 import TextField from '../components/TextField.jsx';
-import { Link } from '../components/ui.jsx';
+import AuthLayout from '../components/AuthLayout.jsx';
+import { Button, Notice } from '../components/ui.jsx';
 import { useApi } from '../hooks/useApi.js';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { navigate, useQueryParam } from '../hooks/useRoute.js';
@@ -111,119 +112,119 @@ function SignupPage() {
   }
 
   return (
-    <main className="auth-shell">
-      <section className="auth-card" aria-labelledby="signup-heading">
-        <Link to="/" className="brand-logo" aria-label={t('common.brand.homeAria')}>
-          <span className="brand-logo__mark">4</span>Fix
-        </Link>
-
-        <h1 id="signup-heading" className="auth-heading">
-          {t('auth.signup.PROVIDER.heading')}
-        </h1>
-        <p className="auth-subtext">{t('auth.signup.PROVIDER.subtext')}</p>
-
-        <form className="auth-form" onSubmit={handleSubmit} noValidate>
-          {formError ? (
-            <div className="form-alert" role="alert">
-              {formError}
-            </div>
-          ) : null}
-
-          <TextField
-            id="phoneNumber"
-            label={t('auth.fields.phone')}
-            value={form.phoneNumber}
-            error={errors.phoneNumber ? t(errors.phoneNumber) : ''}
-            type="tel"
-            inputMode="numeric"
-            autoComplete="tel"
-            placeholder={t('auth.fields.phonePlaceholder')}
-            prefix={<PhonePrefix />}
-            onChange={(event) => updateField('phoneNumber', event.target.value)}
-          />
-          <TextField
-            id="name"
-            label={t('auth.fields.fullName')}
-            value={form.name}
-            error={errors.name ? t(errors.name) : ''}
-            autoComplete="name"
-            placeholder={t('auth.fields.fullNamePlaceholder')}
-            onChange={(event) => updateField('name', event.target.value)}
-          />
-          <PasswordField
-            id="password"
-            label={t('auth.fields.password')}
-            value={form.password}
-            error={errors.password ? t(errors.password) : ''}
-            autoComplete="new-password"
-            placeholder={t('auth.fields.newPasswordPlaceholder')}
-            onChange={(event) => updateField('password', event.target.value)}
-          />
-          <PasswordField
-            id="confirmPassword"
-            label={t('auth.fields.confirmPassword')}
-            value={form.confirmPassword}
-            error={errors.confirmPassword ? t(errors.confirmPassword) : ''}
-            autoComplete="new-password"
-            placeholder={t('auth.fields.confirmPasswordPlaceholder')}
-            onChange={(event) => updateField('confirmPassword', event.target.value)}
-          />
-
-          <fieldset className="auth-fieldset">
-            <legend className="auth-legend">{t('auth.signup.shopLocationTitle')}</legend>
-            <p className="field-hint">{t('auth.signup.shopLocationHint')}</p>
-            <ShopLocationField
-              manualOnly
-              value={shopLocation}
-              error={errors.shopLocationAddress ? t(errors.shopLocationAddress) : ''}
-              disabled={isSubmitting}
-              onChange={(next) => {
-                setShopLocation(next);
-                setErrors((current) => ({ ...current, shopLocationAddress: '' }));
-                setFormError('');
-              }}
-            />
-          </fieldset>
-
-          <fieldset className="auth-fieldset">
-            <legend className="auth-legend">{t('auth.signup.categoriesTitle')}</legend>
-            {categoryList.loading ? <p className="field-hint">{t('auth.signup.categoriesLoading')}</p> : null}
-            {categoryList.error ? (
-              <p className="field-error">
-                {categoryList.error.message}{' '}
-                <button type="button" className="text-link" onClick={categoryList.reload}>
-                  {t('common.actions.tryAgain')}
-                </button>
-              </p>
-            ) : null}
-            {categoryList.data ? (
-              <CategoryPicker
-                categories={categoryList.data.categories}
-                value={categories}
-                disabled={isSubmitting}
-                error={errors.categories ? t(errors.categories) : ''}
-                onChange={(next) => {
-                  setCategories(next);
-                  setErrors((current) => ({ ...current, categories: '' }));
-                  setFormError('');
-                }}
-              />
-            ) : null}
-          </fieldset>
-
-          <button className="primary-button" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? t('auth.signup.submitting') : t('auth.signup.PROVIDER.cta')}
-          </button>
-        </form>
-
-        <p className="auth-footer">
+    <AuthLayout
+      heading={t('auth.signup.PROVIDER.heading')}
+      subtext={t('auth.signup.PROVIDER.subtext')}
+      footer={
+        <p>
           {t('auth.signup.haveAccount')}{' '}
-          <button type="button" className="text-link" onClick={() => navigate(`/login${returnQuery}`)}>
+          <button type="button" className="link" onClick={() => navigate('/login' + returnQuery)}>
             {t('common.nav.logIn')}
           </button>
         </p>
-      </section>
-    </main>
+      }
+    >
+      <form className="auth__form" onSubmit={handleSubmit} noValidate>
+        <Notice>{formError}</Notice>
+
+        <section className="form-section" aria-labelledby="signup-you">
+          <h2 id="signup-you" className="form-section__title">
+            {t('auth.signup.aboutYouTitle')}
+          </h2>
+          <div className="form-stack">
+            <TextField
+              id="phoneNumber"
+              label={t('auth.fields.phone')}
+              value={form.phoneNumber}
+              error={errors.phoneNumber ? t(errors.phoneNumber) : ''}
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel"
+              placeholder={t('auth.fields.phonePlaceholder')}
+              prefix={<PhonePrefix />}
+              onChange={(event) => updateField('phoneNumber', event.target.value)}
+            />
+            <TextField
+              id="name"
+              label={t('auth.fields.fullName')}
+              value={form.name}
+              error={errors.name ? t(errors.name) : ''}
+              autoComplete="name"
+              placeholder={t('auth.fields.fullNamePlaceholder')}
+              onChange={(event) => updateField('name', event.target.value)}
+            />
+            <PasswordField
+              id="password"
+              label={t('auth.fields.password')}
+              value={form.password}
+              error={errors.password ? t(errors.password) : ''}
+              autoComplete="new-password"
+              placeholder={t('auth.fields.newPasswordPlaceholder')}
+              onChange={(event) => updateField('password', event.target.value)}
+            />
+            <PasswordField
+              id="confirmPassword"
+              label={t('auth.fields.confirmPassword')}
+              value={form.confirmPassword}
+              error={errors.confirmPassword ? t(errors.confirmPassword) : ''}
+              autoComplete="new-password"
+              placeholder={t('auth.fields.confirmPasswordPlaceholder')}
+              onChange={(event) => updateField('confirmPassword', event.target.value)}
+            />
+          </div>
+        </section>
+
+        <section className="form-section" aria-labelledby="signup-categories">
+          <h2 id="signup-categories" className="form-section__title">
+            {t('auth.signup.categoriesTitle')}
+          </h2>
+          {categoryList.loading ? <p className="field-hint">{t('auth.signup.categoriesLoading')}</p> : null}
+          {categoryList.error ? (
+            <p className="field-error">
+              {categoryList.error.message}{' '}
+              <button type="button" className="link" onClick={categoryList.reload}>
+                {t('common.actions.tryAgain')}
+              </button>
+            </p>
+          ) : null}
+          {categoryList.data ? (
+            <CategoryPicker
+              categories={categoryList.data.categories}
+              value={categories}
+              disabled={isSubmitting}
+              error={errors.categories ? t(errors.categories) : ''}
+              onChange={(next) => {
+                setCategories(next);
+                setErrors((current) => ({ ...current, categories: '' }));
+                setFormError('');
+              }}
+            />
+          ) : null}
+        </section>
+
+        <section className="form-section" aria-labelledby="signup-shop">
+          <h2 id="signup-shop" className="form-section__title">
+            {t('auth.signup.shopLocationTitle')}
+          </h2>
+          <p className="field-hint section-hint">{t('auth.signup.shopLocationHint')}</p>
+          <ShopLocationField
+            manualOnly
+            value={shopLocation}
+            error={errors.shopLocationAddress ? t(errors.shopLocationAddress) : ''}
+            disabled={isSubmitting}
+            onChange={(next) => {
+              setShopLocation(next);
+              setErrors((current) => ({ ...current, shopLocationAddress: '' }));
+              setFormError('');
+            }}
+          />
+        </section>
+
+        <Button type="submit" block size="lg" loading={isSubmitting} loadingText={t('auth.signup.submitting')}>
+          {t('auth.signup.PROVIDER.cta')}
+        </Button>
+      </form>
+    </AuthLayout>
   );
 }
 

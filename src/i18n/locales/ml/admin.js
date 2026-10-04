@@ -41,13 +41,20 @@ export default {
     viewBooking: 'ബുക്കിംഗ് കാണുക →',
   },
   dashboard: {
+    viewAll: 'എല്ലാം കാണുക',
+    groups: {
+      jobs: 'ജോലികൾ',
+      marketplace: 'മാർക്കറ്റ്പ്ലേസ്',
+    },
     greeting: 'ഹായ് {{name}}',
     subtitle: 'മാർക്കറ്റ്പ്ലേസിന്റെ അവലോകനവും സമീപകാല പ്രവർത്തനങ്ങളും.',
     loading: 'ഡാഷ്ബോർഡ് ലോഡ് ചെയ്യുന്നു…',
     tiles: {
       totalCustomers: 'ഉപഭോക്താക്കൾ',
-      totalProviders: 'സേവനദാതാക്കൾ',
-      totalServices: 'സേവനങ്ങൾ',
+      activeProviders: 'സജീവ സേവനദാതാക്കൾ',
+      totalProviders: 'എല്ലാ സേവനദാതാക്കളും',
+      activeServices: 'സജീവ സേവനങ്ങൾ',
+      totalServices: 'എല്ലാ സേവനങ്ങളും',
       openRequests: 'തുറന്ന അഭ്യർത്ഥനകൾ',
       acceptedRequests: 'സ്വീകരിച്ച അഭ്യർത്ഥനകൾ',
       activeBookings: 'സജീവ ബുക്കിംഗുകൾ',

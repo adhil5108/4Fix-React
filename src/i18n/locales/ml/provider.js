@@ -30,6 +30,11 @@ export default {
     accepted: 'സ്വീകരിച്ചത്',
   },
   dashboard: {
+    greet: {
+      morning: 'സുപ്രഭാതം,',
+      afternoon: 'നമസ്കാരം,',
+      evening: 'ശുഭസായാഹ്നം,',
+    },
     greeting: 'ഹായ് {{name}}',
     subtitle: 'പുതിയ ജോലികൾ കണ്ടെത്തുക, നിങ്ങളുടെ ജോലികൾ മുന്നോട്ട് കൊണ്ടുപോകുക.',
     browseRequests: 'അഭ്യർത്ഥനകൾ കാണുക',
@@ -120,6 +125,9 @@ export default {
     },
   },
   job: {
+    acceptedOn: '{{time}}-ന് സ്വീകരിച്ചു',
+    call: 'വിളിക്കുക',
+    chatShort: 'ചാറ്റ്',
     justAccepted: 'ജോലി സ്വീകരിച്ചു. ഉപഭോക്താവിന്റെ അടുത്തേക്ക് നാവിഗേറ്റ് ചെയ്യുക, ജോലി തുടങ്ങുമ്പോൾ “ജോലി തുടങ്ങുക” അമർത്തുക.',
     actions: {
       start: {

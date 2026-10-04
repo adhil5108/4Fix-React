@@ -35,16 +35,16 @@ function AdminReviewDetailPage({ reviewId }) {
       <PageHeader back={back} title={t('admin.reviewDetail.title', { name: review.customer?.name || t('admin.shared.customerFallback') })} />
 
       <Card className="review-card">
-        <div className="review-card__top">
+        <div className="review-item__top">
           <StarRating value={review.rating} readOnly />
-          <span className="review-card__meta">{formatTimestamp(review.createdAt)}</span>
+          <span className="field-hint">{formatTimestamp(review.createdAt)}</span>
         </div>
-        {review.comment ? <p className="review-card__comment">{review.comment}</p> : null}
+        {review.comment ? <p className="body-text">{review.comment}</p> : null}
         <div className="card__links">
-          <Link to={`/app/admin/bookings/${review.bookingId}`} className="text-link">
+          <Link to={`/app/admin/bookings/${review.bookingId}`} className="link">
             {t('admin.reviewDetail.viewBooking')}
           </Link>
-          <Link to={`/app/admin/providers/${review.providerId}`} className="text-link">
+          <Link to={`/app/admin/providers/${review.providerId}`} className="link">
             {t('admin.reviewDetail.viewProvider')}
           </Link>
         </div>

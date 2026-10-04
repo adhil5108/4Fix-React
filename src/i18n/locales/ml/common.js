@@ -29,6 +29,8 @@ export default {
     providerLogin: 'സേവനദാതാവ് ലോഗിൻ',
   },
   navShort: {
+    chat: 'ചാറ്റ്',
+    more: 'കൂടുതൽ',
     home: 'ഹോം',
     services: 'സേവനം',
     about: 'വിവരം',

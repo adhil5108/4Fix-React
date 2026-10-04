@@ -1,12 +1,26 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  Eye,
+  Hourglass,
+  IdCard,
+  Languages,
+  LogOut,
+  MapPin,
+  NotebookText,
+  Phone,
+  Store,
+  User,
+  Wrench,
+} from 'lucide-react';
 import AppShell from '../components/AppShell.jsx';
 import CategoryPicker from '../components/CategoryPicker.jsx';
+import LanguageSwitcher from '../components/LanguageSwitcher.jsx';
 import { LocationPreview } from '../components/LocationCapture.jsx';
 import ShopLocationField from '../components/ShopLocationField.jsx';
 import TextField, { TextArea } from '../components/TextField.jsx';
 import { Avatar } from '../components/cards.jsx';
-import { Button, ErrorState, Link, LoadingState, Notice, PageHeader } from '../components/ui.jsx';
+import { Button, ErrorState, ListRow, LoadingState, Notice } from '../components/ui.jsx';
 import { useAction, useApi } from '../hooks/useApi.js';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { navigate } from '../hooks/useRoute.js';
@@ -22,52 +36,31 @@ function formFromUser(user) {
   };
 }
 
-// A titled group of rows — the profile is a settings-style list, not a stack of cards.
+// A titled group of rows with an optional "Edit" action — the profile is a settings list.
 function Section({ title, action, children }) {
   return (
     <section className="profile-section">
       <div className="profile-section__bar">
-        <h2 className="profile-section__title">{title}</h2>
+        <h2 className="list-group__title">{title}</h2>
         {action}
       </div>
-      <div className="settings-group">{children}</div>
+      <div className="list-group">{children}</div>
     </section>
   );
 }
 
-function InfoRow({ icon, label, value, muted = false }) {
-  return (
-    <div className="settings-row">
-      {icon ? (
-        <span className="settings-row__icon" aria-hidden="true">
-          {icon}
-        </span>
-      ) : null}
-      <div className="settings-row__text">
-        <span className="settings-row__label">{label}</span>
-        <span className={`settings-row__value${muted ? ' is-muted' : ''}`}>{value}</span>
-      </div>
-    </div>
-  );
-}
+function EditAction({ onClick }) {
+  const { t } = useTranslation();
 
-function LinkRow({ icon, to, children, tone }) {
   return (
-    <Link to={to} className={`settings-row settings-row--link${tone ? ` settings-row--${tone}` : ''}`}>
-      <span className="settings-row__icon" aria-hidden="true">
-        {icon}
-      </span>
-      <span className="settings-row__text settings-row__title">{children}</span>
-      <span className="settings-row__chevron" aria-hidden="true">
-        ›
-      </span>
-    </Link>
+    <button type="button" className="link" onClick={onClick}>
+      {t('profile.edit')}
+    </button>
   );
 }
 
 // The provider's registered shop/business location — fixed profile data, not a live
-// position. Shown to the provider and admin only; never on the public profile. The
-// editing flow (device location or typed coordinates) is unchanged.
+// position. Shown to the provider and admin only; never on the public profile.
 function BusinessSection({ user, onSaved }) {
   const { t } = useTranslation();
   const current = user.shopLocation;
@@ -103,58 +96,55 @@ function BusinessSection({ user, onSaved }) {
   return (
     <Section
       title={t('profile.sections.business')}
-      action={
-        current && !editing ? (
-          <button type="button" className="profile-section__action" onClick={() => setEditing(true)}>
-            {t('profile.edit')}
-          </button>
-        ) : null
-      }
+      action={current && !editing ? <EditAction onClick={() => setEditing(true)} /> : null}
     >
       {current && !editing ? (
         <>
-          <InfoRow icon="🏪" label={t('profile.shop.addressLabel')} value={current.address || t('profile.shop.noAddress')} muted={!current.address} />
-          <InfoRow
-            icon="📍"
+          <ListRow
+            icon={Store}
+            label={t('profile.shop.addressLabel')}
+            value={current.address || t('profile.shop.noAddress')}
+            muted={!current.address}
+          />
+          <ListRow
+            icon={MapPin}
             label={t('profile.shop.statusLabel')}
             value={
-              <span className={`badge badge--${hasCoordinates ? 'success' : 'muted'}`}>
+              <span className={`badge ${hasCoordinates ? 'badge--done' : 'badge--muted'}`}>
                 {hasCoordinates ? t('profile.shop.pinSet') : t('profile.shop.pinMissing')}
               </span>
             }
           />
           {/* Providers who registered with an address only have no coordinates yet. */}
           {hasCoordinates ? (
-            <div className="settings-row settings-row--block">
+            <div className="list-block">
               <LocationPreview latitude={current.latitude} longitude={current.longitude} title={t('profile.shop.title')} />
             </div>
           ) : null}
         </>
       ) : (
-        <div className="settings-row settings-row--block">
-          <div className="form-stack">
-            <p className="field-hint">{t('profile.shop.hint')}</p>
-            {!current ? <Notice tone="info">{t('profile.shop.missing')}</Notice> : null}
-            <Notice>{save.error}</Notice>
-            <ShopLocationField
-              value={value}
-              error={error ? t(error) : ''}
-              disabled={save.pending === 'shop'}
-              onChange={(next) => {
-                setValue(next);
-                setError('');
-              }}
-            />
-            <div className="profile-buttons">
-              <Button onClick={handleSave} loading={save.pending === 'shop'} loadingText={t('profile.details.saving')}>
-                {t('profile.shop.save')}
+        <div className="list-block form-stack">
+          <p className="field-hint">{t('profile.shop.hint')}</p>
+          {!current ? <Notice tone="info">{t('profile.shop.missing')}</Notice> : null}
+          <Notice>{save.error}</Notice>
+          <ShopLocationField
+            value={value}
+            error={error ? t(error) : ''}
+            disabled={save.pending === 'shop'}
+            onChange={(next) => {
+              setValue(next);
+              setError('');
+            }}
+          />
+          <div className="button-row">
+            {current ? (
+              <Button variant="secondary" onClick={() => setEditing(false)} disabled={save.pending === 'shop'}>
+                {t('profile.shop.cancel')}
               </Button>
-              {current ? (
-                <Button variant="secondary" onClick={() => setEditing(false)} disabled={save.pending === 'shop'}>
-                  {t('profile.shop.cancel')}
-                </Button>
-              ) : null}
-            </div>
+            ) : null}
+            <Button onClick={handleSave} loading={save.pending === 'shop'} loadingText={t('profile.details.saving')}>
+              {t('profile.shop.save')}
+            </Button>
           </div>
         </div>
       )}
@@ -202,21 +192,12 @@ function WorkCategoriesSection({ user, onSaved }) {
   }
 
   return (
-    <Section
-      title={t('profile.categories.title')}
-      action={
-        !editing ? (
-          <button type="button" className="profile-section__action" onClick={startEditing}>
-            {t('profile.edit')}
-          </button>
-        ) : null
-      }
-    >
+    <Section title={t('profile.categories.title')} action={!editing ? <EditAction onClick={startEditing} /> : null}>
       {!editing ? (
-        <div className="settings-row settings-row--block">
-          <div className="chip-row chip-row--static">
+        <div className="list-block stack">
+          <div className="chip-row chip-row--wrap">
             {held.map((category) => (
-              <span key={category.id} className="chip">
+              <span key={category.id} className="chip chip--static">
                 {category.name}
               </span>
             ))}
@@ -224,38 +205,32 @@ function WorkCategoriesSection({ user, onSaved }) {
           <p className="field-hint">{t('profile.categories.hint')}</p>
         </div>
       ) : (
-        <div className="settings-row settings-row--block">
-          <div className="form-stack">
-            {held.length === 0 ? <Notice tone="info">{t('profile.categories.missing')}</Notice> : null}
-            <Notice>{save.error}</Notice>
-            {options.loading ? <LoadingState label={t('profile.categories.loading')} /> : null}
-            {options.error ? <ErrorState error={options.error} onRetry={options.reload} /> : null}
-            {options.data ? (
-              <CategoryPicker
-                categories={choices}
-                value={value}
-                disabled={save.pending === 'categories'}
-                error={error ? t(error) : ''}
-                onChange={(next) => {
-                  setValue(next);
-                  setError('');
-                }}
-              />
-            ) : null}
-            <div className="profile-buttons">
-              <Button
-                onClick={handleSave}
-                loading={save.pending === 'categories'}
-                loadingText={t('profile.details.saving')}
-              >
-                {t('profile.categories.save')}
+        <div className="list-block form-stack">
+          {held.length === 0 ? <Notice tone="info">{t('profile.categories.missing')}</Notice> : null}
+          <Notice>{save.error}</Notice>
+          {options.loading ? <LoadingState label={t('profile.categories.loading')} /> : null}
+          {options.error ? <ErrorState error={options.error} onRetry={options.reload} /> : null}
+          {options.data ? (
+            <CategoryPicker
+              categories={choices}
+              value={value}
+              disabled={save.pending === 'categories'}
+              error={error ? t(error) : ''}
+              onChange={(next) => {
+                setValue(next);
+                setError('');
+              }}
+            />
+          ) : null}
+          <div className="button-row">
+            {held.length > 0 ? (
+              <Button variant="secondary" onClick={() => setEditing(false)} disabled={save.pending === 'categories'}>
+                {t('profile.shop.cancel')}
               </Button>
-              {held.length > 0 ? (
-                <Button variant="secondary" onClick={() => setEditing(false)} disabled={save.pending === 'categories'}>
-                  {t('profile.shop.cancel')}
-                </Button>
-              ) : null}
-            </div>
+            ) : null}
+            <Button onClick={handleSave} loading={save.pending === 'categories'} loadingText={t('profile.details.saving')}>
+              {t('profile.categories.save')}
+            </Button>
           </div>
         </div>
       )}
@@ -343,58 +318,45 @@ function ProfilePage() {
     navigate('/login');
   }
 
-  if (me.loading || !form) {
-    if (me.error) {
-      return (
-        <AppShell width="narrow">
-          <PageHeader title={t('profile.title')} />
-          <ErrorState error={me.error} onRetry={me.reload} />
-        </AppShell>
-      );
-    }
+  async function handleSaved(updated) {
+    updateUser(updated);
+    await me.refresh();
+  }
 
+  if (me.loading || !form) {
     return (
-      <AppShell width="narrow">
-        <LoadingState label={t('profile.loading')} />
+      <AppShell title={t('profile.title')} large>
+        {me.error ? <ErrorState error={me.error} onRetry={me.reload} /> : <LoadingState label={t('profile.loading')} />}
       </AppShell>
     );
   }
 
-  return (
-    <AppShell width="narrow">
-      <h1 className="sr-only">{t('profile.title')}</h1>
+  const available = user.isAvailable !== false;
 
-      {/* Who you are, at a glance. */}
+  return (
+    <AppShell title={t('profile.title')} large>
       <header className="profile-hero">
         <Avatar name={user.name} image={user.profileImage} size="lg" />
         <div className="profile-hero__text">
           <p className="profile-hero__name">{user.name}</p>
           <p className="profile-hero__phone">{user.username}</p>
-          <div className="profile-hero__tags">
-            <span className="badge badge--info">{t(`profile.roles.${user.role}`)}</span>
+          <div className="row">
             {isProvider ? (
-              <span className={`badge badge--${user.isAvailable !== false ? 'success' : 'muted'}`}>
-                {user.isAvailable !== false ? t('profile.availableBadge') : t('profile.unavailableBadge')}
+              <span className={`badge ${available ? 'badge--done' : 'badge--muted'}`}>
+                {available ? t('profile.availableBadge') : t('profile.unavailableBadge')}
               </span>
-            ) : null}
+            ) : (
+              <span className="badge badge--assigned">{t(`profile.roles.${user.role}`)}</span>
+            )}
           </div>
         </div>
       </header>
 
       {saved ? <Notice tone="success">{t('profile.details.saved')}</Notice> : null}
 
-      <Section
-        title={t('profile.sections.details')}
-        action={
-          editing ? null : (
-            <button type="button" className="profile-section__action" onClick={startEditing}>
-              {t('profile.edit')}
-            </button>
-          )
-        }
-      >
+      <Section title={t('profile.sections.details')} action={editing ? null : <EditAction onClick={startEditing} />}>
         {editing ? (
-          <form className="settings-row settings-row--block form-stack" onSubmit={handleSubmit} noValidate>
+          <form className="list-block form-stack" onSubmit={handleSubmit} noValidate>
             <Notice>{save.error}</Notice>
             <TextField
               id="name"
@@ -443,28 +405,28 @@ function ProfilePage() {
               </>
             ) : null}
 
-            <div className="profile-buttons">
-              <Button type="submit" loading={save.pending === 'save'} loadingText={t('profile.details.saving')}>
-                {t('profile.details.save')}
-              </Button>
+            <div className="button-row">
               <Button variant="secondary" onClick={() => setEditing(false)} disabled={save.pending === 'save'}>
                 {t('profile.shop.cancel')}
+              </Button>
+              <Button type="submit" loading={save.pending === 'save'} loadingText={t('profile.details.saving')}>
+                {t('profile.details.save')}
               </Button>
             </div>
           </form>
         ) : (
           <>
-            <InfoRow icon="👤" label={t('profile.details.fullName')} value={user.name} />
-            <InfoRow
-              icon="📞"
+            <ListRow icon={User} label={t('profile.details.fullName')} value={user.name} />
+            <ListRow
+              icon={Phone}
               label={user.role === 'ADMIN' ? t('profile.account.username') : t('profile.account.phone')}
               value={user.username}
             />
             {isProvider ? (
               <>
-                <InfoRow icon="📝" label={t('profile.provider.bio')} value={user.bio || t('profile.notSet')} muted={!user.bio} />
-                <InfoRow
-                  icon="⏳"
+                <ListRow icon={NotebookText} label={t('profile.provider.bio')} value={user.bio || t('profile.notSet')} muted={!user.bio} />
+                <ListRow
+                  icon={Hourglass}
                   label={t('profile.provider.experience')}
                   value={
                     user.experienceYears === null || user.experienceYears === undefined
@@ -483,45 +445,25 @@ function ProfilePage() {
         <WorkCategoriesSection
           key={(user.categories || []).map((category) => category.id).join(',')}
           user={user}
-          onSaved={async (updated) => {
-            updateUser(updated);
-            await me.refresh();
-          }}
+          onSaved={handleSaved}
         />
       ) : null}
 
-      {isProvider ? (
-        <BusinessSection
-          user={user}
-          onSaved={async (updated) => {
-            updateUser(updated);
-            await me.refresh();
-          }}
-        />
-      ) : null}
+      {isProvider ? <BusinessSection user={user} onSaved={handleSaved} /> : null}
 
-      {isProvider ? (
-        <Section title={t('profile.sections.quickActions')}>
-          <LinkRow icon="🧾" to="/provider/requests">
-            {t('profile.actions.requests')}
-          </LinkRow>
-          <LinkRow icon="🛠️" to="/provider/jobs">
-            {t('common.nav.myJobs')}
-          </LinkRow>
-          <LinkRow icon="👁️" to={`/providers/${user.id}`}>
-            {t('profile.account.viewPublic')}
-          </LinkRow>
-        </Section>
-      ) : null}
+      <Section title={t('profile.sections.app')}>
+        <ListRow icon={Languages} title={t('common.language.label')} trailing={<LanguageSwitcher />} />
+        {isProvider ? (
+          <>
+            <ListRow icon={Wrench} to="/provider/jobs" title={t('common.nav.myJobs')} />
+            <ListRow icon={Eye} to={`/providers/${user.id}`} title={t('profile.account.viewPublic')} />
+          </>
+        ) : null}
+      </Section>
 
       <Section title={t('profile.account.title')}>
-        <InfoRow icon="🪪" label={t('profile.account.type')} value={t(`profile.roles.${user.role}`)} />
-        <button type="button" className="settings-row settings-row--link settings-row--danger" onClick={handleLogout}>
-          <span className="settings-row__icon" aria-hidden="true">
-            ⎋
-          </span>
-          <span className="settings-row__text settings-row__title">{t('common.nav.logOut')}</span>
-        </button>
+        <ListRow icon={IdCard} label={t('profile.account.type')} value={t(`profile.roles.${user.role}`)} />
+        <ListRow icon={LogOut} danger title={t('common.nav.logOut')} onClick={handleLogout} />
       </Section>
     </AppShell>
   );

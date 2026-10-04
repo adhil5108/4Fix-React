@@ -1,28 +1,39 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CircleCheck, FileText, MessageCircle, Navigation, NotebookPen, Phone, Play } from 'lucide-react';
 import AppShell from '../../components/AppShell.jsx';
 import JobNotes from '../../components/JobNotes.jsx';
 import TrackingTimeline from '../../components/TrackingTimeline.jsx';
-import { AddressBlock, ServiceLocationBlock, AttachmentList, VoiceNoteBlock } from '../../components/cards.jsx';
+import {
+  AttachmentList,
+  ContactCard,
+  ServiceIcon,
+  ServiceLocationBlock,
+  VoiceNoteBlock,
+  hasCoordinates,
+  mapsLink,
+} from '../../components/cards.jsx';
 import { ChatCount } from '../../components/Unread.jsx';
 import {
   Button,
-  ButtonLink,
   Card,
   ConfirmDialog,
-  DetailList,
   ErrorState,
+  ListRow,
   LoadingState,
   Notice,
-  PageHeader,
+  SectionHeader,
+  Sheet,
   StatusBadge,
+  StickyActionBar,
 } from '../../components/ui.jsx';
 import { useAction, useApi } from '../../hooks/useApi.js';
 import { useQueryParam } from '../../hooks/useRoute.js';
 import { bookingsApi, providerApi } from '../../services/fixApi.js';
-import { formatDateTime, formatIssueLabel } from '../../utils/format.js';
+import { formatDateTime, formatIssueLabel, shortRef } from '../../utils/format.js';
 
 const TERMINAL = ['COMPLETED', 'CANCELLED'];
+const ACTION_ICONS = { start: Play, complete: CircleCheck };
 
 // V1 job lifecycle: accepted → start → complete. Every button calls the backend and
 // refreshes; nothing changes state locally. There are no scheduling or travel steps and
@@ -42,6 +53,7 @@ function ProviderJobPage({ bookingId }) {
   const data = useApi(() => bookingsApi.get(bookingId), [bookingId]);
   const action = useAction();
   const [confirm, setConfirm] = useState(null);
+  const [notesOpen, setNotesOpen] = useState(false);
   // Stores a translation key so the notice follows a language switch.
   const [success, setSuccess] = useState('');
 
@@ -49,7 +61,7 @@ function ProviderJobPage({ bookingId }) {
 
   if (data.loading) {
     return (
-      <AppShell>
+      <AppShell title={t('provider.shared.job')} back={back}>
         <LoadingState label={t('provider.shared.loadingJob')} />
       </AppShell>
     );
@@ -57,8 +69,7 @@ function ProviderJobPage({ bookingId }) {
 
   if (data.error && !data.data) {
     return (
-      <AppShell>
-        <PageHeader title={t('provider.shared.job')} back={back} />
+      <AppShell title={t('provider.shared.job')} back={back}>
         <ErrorState
           error={data.error.status === 400 ? { status: 404, message: t('provider.shared.jobNotFound') } : data.error}
           onRetry={data.reload}
@@ -70,6 +81,10 @@ function ProviderJobPage({ bookingId }) {
   const { booking } = data.data;
   const request = booking.request;
   const step = nextAction(booking);
+  const issue = formatIssueLabel(request?.issueKey, request?.issueLabel);
+  const customer = booking.customer;
+  const location = request?.location;
+  const isLive = !TERMINAL.includes(booking.status);
 
   async function perform(key, operation, messageKey) {
     setSuccess('');
@@ -85,136 +100,138 @@ function ProviderJobPage({ bookingId }) {
     complete: () => perform('complete', () => providerApi.complete(booking.requestId), 'provider.job.success.complete'),
   };
 
-  const confirmContent = {
-    start: {
-      title: t('provider.job.confirm.start.title'),
-      message: t('provider.job.confirm.start.message'),
-      confirmLabel: t('provider.job.confirm.start.confirmLabel'),
-    },
-    complete: {
-      title: t('provider.job.confirm.complete.title'),
-      message: t('provider.job.confirm.complete.message'),
-      confirmLabel: t('provider.job.confirm.complete.confirmLabel'),
-    },
-  }[confirm];
+  const confirmContent = confirm
+    ? {
+        title: t(`provider.job.confirm.${confirm}.title`),
+        message: t(`provider.job.confirm.${confirm}.message`),
+        confirmLabel: t(`provider.job.confirm.${confirm}.confirmLabel`),
+      }
+    : null;
 
+  const contactActions = [
+    customer?.phone && isLive
+      ? { key: 'call', icon: Phone, label: t('provider.job.call'), href: `tel:${customer.phone}`, primary: true }
+      : null,
+    hasCoordinates(location) && isLive
+      ? { key: 'navigate', icon: Navigation, label: t('cards.serviceLocation.navigate'), href: mapsLink(location, { navigate: true }), external: true }
+      : null,
+    booking.status !== 'CANCELLED'
+      ? {
+          key: 'chat',
+          icon: MessageCircle,
+          label: t('provider.job.chatShort'),
+          to: `/bookings/${booking.id}/chat`,
+          badge: <ChatCount bookingId={booking.id} />,
+        }
+      : null,
+  ].filter(Boolean);
+
+  const StepIcon = step ? ACTION_ICONS[step] : null;
 
   return (
-    <AppShell>
-      <PageHeader
-        back={back}
-        title={booking.service?.name || t('provider.shared.job')}
-        subtitle={[formatIssueLabel(request?.issueKey, request?.issueLabel), booking.customer?.name ? t('provider.shared.forCustomer', { name: booking.customer.name }) : null].filter(Boolean).join(' · ')}
-        actions={<StatusBadge status={booking.status} audience="booking" />}
-      />
+    <AppShell title={`${t('provider.shared.job')} ${shortRef(booking.id)}`} back={back} bar={Boolean(step)}>
+      <header className="job-header">
+        <ServiceIcon service={booking.service} size="lg" />
+        <div className="job-header__text">
+          <p className="job-header__ref">{t('provider.job.acceptedOn', { time: formatDateTime(booking.timeline?.acceptedAt) })}</p>
+          <h2 className="job-header__title">{booking.service?.name || t('provider.shared.job')}</h2>
+          {issue ? <p className="job-header__sub">{issue}</p> : null}
+        </div>
+        <StatusBadge status={booking.status} audience="booking" />
+      </header>
 
-      <div className="stack">
-        {justAccepted && !success ? (
-          <Notice tone="success">{t('provider.job.justAccepted')}</Notice>
-        ) : null}
+      <div className="stack section-gap">
+        {justAccepted && !success ? <Notice tone="success">{t('provider.job.justAccepted')}</Notice> : null}
         <Notice tone="success">{success ? t(success) : ''}</Notice>
         <Notice>{action.error}</Notice>
         {data.error ? <Notice>{data.error.message}</Notice> : null}
+        {step ? <Notice tone="info">{t(`provider.job.actions.${step}.text`)}</Notice> : null}
+        {booking.status === 'CANCELLED' ? <Notice tone="info">{t('provider.job.cancelledText')}</Notice> : null}
       </div>
 
-      <div className="detail-layout">
-        <div className="detail-layout__main">
-          {step ? (
-            <Card className="card--accent">
-              <h2 className="card__title">{t(`provider.job.actions.${step}.title`)}</h2>
-              <p className="body-text">{t(`provider.job.actions.${step}.text`)}</p>
-              <div className="action-grid">
-                <Button
-                  block
-                  onClick={() => setConfirm(step)}
-                  loading={action.pending === step}
-                  loadingText={t('provider.shared.updating')}
-                  disabled={Boolean(action.pending) && action.pending !== step}
-                >
-                  {t(`provider.job.actions.${step}.button`)}
-                </Button>
-                <ButtonLink to={`/bookings/${booking.id}/chat`} variant="secondary" block>
-                  {t('provider.job.chat')}
-                <ChatCount bookingId={booking.id} />
-                </ButtonLink>
-              </div>
-              <ServiceLocationBlock location={request?.location} navigate fallback={null} />
-            </Card>
-          ) : null}
+      {booking.status === 'COMPLETED' ? (
+        <Card tint className="status-panel">
+          <p className="status-panel__text">
+            {t('provider.job.completedText', { time: formatDateTime(booking.timeline.completedAt) })}
+          </p>
+          <div className="list-group">
+            <ListRow icon={FileText} to={`/bookings/${booking.id}/invoice`} title={t('invoice.view')} />
+          </div>
+        </Card>
+      ) : null}
 
-          {booking.status === 'COMPLETED' ? (
-            <Card>
-              <h2 className="card__title">{t('provider.job.completedTitle')}</h2>
-              <p className="body-text">{t('provider.job.completedText', { time: formatDateTime(booking.timeline.completedAt) })}</p>
-              <div className="card__actions">
-                <ButtonLink to={`/bookings/${booking.id}/invoice`} variant="secondary" block>
-                  {t('invoice.view')}
-                </ButtonLink>
-              </div>
-            </Card>
-          ) : null}
-
-          {booking.status === 'CANCELLED' ? (
-            <Card>
-              <h2 className="card__title">{t('provider.job.cancelledTitle')}</h2>
-              <p className="body-text">{t('provider.job.cancelledText')}</p>
-            </Card>
-          ) : null}
-
+      {customer ? (
+        <section className="section" aria-labelledby="customer-heading">
+          <SectionHeader id="customer-heading" title={t('provider.shared.customer')} />
           <Card>
-            <h2 className="card__title">{t('provider.shared.progress')}</h2>
-            <TrackingTimeline status={booking.status} timeline={booking.timeline} />
-          </Card>
-
-          <Card>
-            <h2 className="card__title">{t('provider.shared.privateNotes')}</h2>
-            <p className="field-hint">{t('provider.job.notesHint')}</p>
-            <JobNotes jobId={booking.id} notesApi={bookingsApi.notes} />
-          </Card>
-        </div>
-
-        <aside className="detail-layout__side">
-          <Card>
-            <h2 className="card__title">{t('provider.shared.customerAndJob')}</h2>
-            <DetailList
-              items={[
-                { label: t('provider.shared.customer'), value: booking.customer?.name },
-                {
-                  label: t('provider.shared.phone'),
-                  value: booking.customer?.phone ? (
-                    <a href={`tel:${booking.customer.phone}`} className="text-link">
-                      {booking.customer.phone}
-                    </a>
-                  ) : null,
-                },
-                { label: t('provider.shared.issue'), value: formatIssueLabel(request?.issueKey, request?.issueLabel) },
-                { label: t('provider.shared.problem'), value: request?.description },
-                { label: t('provider.shared.accepted'), value: formatDateTime(booking.timeline?.acceptedAt) },
-              ]}
+            <ContactCard
+              role={t('provider.shared.customer')}
+              name={customer.name}
+              phone={customer.phone}
+              actions={contactActions}
             />
-            <h3 className="card__subtitle">{t('provider.shared.serviceLocation')}</h3>
-            <AddressBlock address={request?.address} />
+          </Card>
+        </section>
+      ) : null}
+
+      <section className="section" aria-labelledby="job-details-heading">
+        <SectionHeader id="job-details-heading" title={t('provider.shared.customerAndJob')} />
+        <div className="list-group">
+          {issue ? <ListRow label={t('provider.shared.issue')} value={issue} /> : null}
+          <ListRow label={t('provider.shared.problem')} value={request?.description} />
+          <div className="list-block">
+            <span className="list-row__label">{t('provider.shared.serviceLocation')}</span>
             <ServiceLocationBlock
-              location={request?.location}
+              location={location}
+              address={request?.address}
               navigate
+              showAction={false}
               fallback={t('provider.shared.noMapPin')}
             />
-            {request?.attachments?.length ? (
-              <>
-                <h3 className="card__subtitle">{t('provider.shared.attachments')}</h3>
-                <AttachmentList attachments={request.attachments} />
-              </>
-            ) : null}
-            <VoiceNoteBlock voiceNote={request?.voiceNote} />
-            <div className="card__actions">
-              <ButtonLink to={`/bookings/${booking.id}/chat`} variant="secondary" block>
-                {t('provider.job.chat')}
-                <ChatCount bookingId={booking.id} />
-              </ButtonLink>
+          </div>
+          {request?.attachments?.length || request?.voiceNote?.url ? (
+            <div className="list-block stack">
+              <span className="list-row__label">{t('provider.shared.attachments')}</span>
+              <AttachmentList attachments={request?.attachments} />
+              <VoiceNoteBlock voiceNote={request?.voiceNote} />
             </div>
-          </Card>
-        </aside>
-      </div>
+          ) : null}
+          <ListRow
+            icon={NotebookPen}
+            title={t('provider.shared.privateNotes')}
+            value={t('provider.job.notesHint')}
+            muted
+            onClick={() => setNotesOpen(true)}
+            chevron
+          />
+        </div>
+      </section>
+
+      <section className="section" aria-labelledby="progress-heading">
+        <SectionHeader id="progress-heading" title={t('provider.shared.progress')} />
+        <Card>
+          <TrackingTimeline status={booking.status} timeline={booking.timeline} />
+        </Card>
+      </section>
+
+      {step ? (
+        <StickyActionBar>
+          <Button
+            block
+            size="lg"
+            icon={StepIcon}
+            onClick={() => setConfirm(step)}
+            loading={action.pending === step}
+            loadingText={t('provider.shared.updating')}
+          >
+            {t(`provider.job.actions.${step}.button`)}
+          </Button>
+        </StickyActionBar>
+      ) : null}
+
+      <Sheet open={notesOpen} title={t('provider.shared.privateNotes')} onClose={() => setNotesOpen(false)}>
+        <JobNotes jobId={booking.id} notesApi={bookingsApi.notes} />
+      </Sheet>
 
       <ConfirmDialog
         open={Boolean(confirmContent)}

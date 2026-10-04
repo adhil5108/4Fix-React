@@ -6,14 +6,14 @@ import LocationCapture from '../../components/LocationCapture.jsx';
 import ImageAttachments, { MAX_ATTACHMENTS } from '../../components/ImageAttachments.jsx';
 import TextField, { TextArea } from '../../components/TextField.jsx';
 import VoiceRecorder from '../../components/VoiceRecorder.jsx';
-import { IssueCard, ServiceIcon } from '../../components/cards.jsx';
-import { Button, ErrorState, Link, LoadingState, Notice, PageHeader } from '../../components/ui.jsx';
+import { IssueTile, ServiceIcon } from '../../components/cards.jsx';
+import { Button, ErrorState, Link, LoadingState, Notice, StickyActionBar } from '../../components/ui.jsx';
 import { useAction, useApi } from '../../hooks/useApi.js';
 import { useTranslatedErrors } from '../../hooks/useTranslatedErrors.js';
 import { navigate, useQueryParam } from '../../hooks/useRoute.js';
 import { saveRequestAccess } from '../../services/customerAccess.js';
 import { requestsApi, servicesApi } from '../../services/fixApi.js';
-import { categoryPath } from '../public/publicLinks.js';
+import { categoryPath, servicePath } from '../public/publicLinks.js';
 
 const initialForm = {
   description: '',
@@ -68,27 +68,25 @@ function validate(form, issueKey, attachments, { location, manualAddress }, t) {
   return withAddress;
 }
 
-// One numbered, titled block of the form.
-function FormSection({ number, title, optional = false, children }) {
+// One titled block of the form.
+function FormSection({ id, title, optional = false, children }) {
   const { t } = useTranslation();
 
   return (
-    <section className="card book-section" aria-labelledby={`book-section-${number}`}>
-      <h2 id={`book-section-${number}`} className="book-section__title">
-        <span className="book-section__number" aria-hidden="true">
-          {number}
-        </span>
+    <section className="form-section" aria-labelledby={id}>
+      <h2 id={id} className="form-section__title">
         {title}
-        {optional ? <span className="book-section__optional">{t('customer.book.optional')}</span> : null}
+        {optional ? <span className="form-section__optional">{t('customer.book.optional')}</span> : null}
       </h2>
       {children}
     </section>
   );
 }
 
-// The booking form: service → issue → description → photos → voice → location → name →
+// The booking form: service → issue → description → photos/voice → location → name →
 // phone → send. Customers need no account; the request's access token is kept in
-// this browser after sending.
+// this browser after sending. The bottom navigation is hidden so "Send Request" (pinned
+// to the bottom) is the only primary action.
 function BookPage({ serviceId }) {
   const { t } = useTranslation();
   const initialIssue = (useQueryParam('issue') || '').toUpperCase();
@@ -106,10 +104,11 @@ function BookPage({ serviceId }) {
     validate(form, validIssueKey, attachments, { location, manualAddress }, t),
   );
   const submit = useAction();
+  const fallbackBack = { to: '/services', label: t('customer.book.allServices') };
 
   if (service.loading) {
     return (
-      <AppShell width="narrow">
+      <AppShell title={t('customer.book.title')} back={fallbackBack} nav={false}>
         <LoadingState label={t('customer.book.loading')} />
       </AppShell>
     );
@@ -117,8 +116,7 @@ function BookPage({ serviceId }) {
 
   if (service.error) {
     return (
-      <AppShell width="narrow">
-        <PageHeader title={t('customer.book.title')} back={{ to: '/services', label: t('customer.book.allServices') }} />
+      <AppShell title={t('customer.book.title')} back={fallbackBack} nav={false}>
         <ErrorState
           error={
             [400, 404].includes(service.error.status)
@@ -134,9 +132,8 @@ function BookPage({ serviceId }) {
   const issue = details.issues.find((item) => item.key === validIssueKey) || null;
   const isOther = issue?.key === 'OTHER';
   const busy = submit.pending === 'create';
-  const back = details.category?.id
-    ? { to: categoryPath(details.category.id), label: details.category.name }
-    : { to: '/services', label: t('customer.book.allServices') };
+  const back = { to: servicePath(serviceId), label: details.name };
+  const changeTo = details.category?.id ? categoryPath(details.category.id) : '/services';
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -203,36 +200,32 @@ function BookPage({ serviceId }) {
   }
 
   return (
-    <AppShell width="narrow">
-      <PageHeader back={back} title={t('customer.book.title')} subtitle={t('customer.book.subtitle')} />
-
-      <form className="book-form" onSubmit={handleSubmit} noValidate>
-        <FormSection number={1} title={t('customer.book.sections.service')}>
-          <div className="book-service">
+    <AppShell title={t('customer.book.title')} back={back} nav={false} bar>
+      <form id="book-form" className="book-form" onSubmit={handleSubmit} noValidate>
+        <FormSection id="book-service" title={t('customer.book.sections.service')}>
+          <div className="summary-row">
             <ServiceIcon service={details} />
-            <div className="book-service__text">
-              <span className="book-service__name">{details.name}</span>
-              {details.category?.name ? (
-                <span className="book-service__category">{details.category.name}</span>
-              ) : null}
+            <div className="summary-row__text">
+              <span className="summary-row__title">{details.name}</span>
+              {details.category?.name ? <span className="summary-row__sub">{details.category.name}</span> : null}
             </div>
-            <Link to={back.to} className="text-link book-service__change">
+            <Link to={changeTo} className="link">
               {t('customer.book.change')}
             </Link>
           </div>
         </FormSection>
 
-        <FormSection number={2} title={t('customer.book.sections.issue')}>
+        <FormSection id="book-issue" title={t('customer.book.sections.issue')}>
           <div
             id="book-issues"
             className="issue-grid"
             role="group"
             tabIndex={-1}
-            aria-label={t('customer.book.sections.issue')}
+            aria-labelledby="book-issue"
             aria-describedby={errors.issue ? 'book-issues-error' : undefined}
           >
             {details.issues.map((item) => (
-              <IssueCard key={item.key} issue={item} selected={item.key === validIssueKey} onSelect={chooseIssue} />
+              <IssueTile key={item.key} issue={item} selected={item.key === validIssueKey} onSelect={chooseIssue} />
             ))}
           </div>
           {errors.issue ? (
@@ -242,7 +235,7 @@ function BookPage({ serviceId }) {
           ) : null}
         </FormSection>
 
-        <FormSection number={3} title={t('customer.book.sections.description')}>
+        <FormSection id="book-description" title={t('customer.book.sections.description')}>
           <TextArea
             id="description"
             label={isOther ? t('customer.book.describeLabel') : t('customer.book.anythingLabel')}
@@ -255,32 +248,31 @@ function BookPage({ serviceId }) {
           />
         </FormSection>
 
-        <FormSection number={4} title={t('customer.book.sections.photos')} optional>
-          <ImageAttachments
-            attachments={attachments}
-            setAttachments={setAttachments}
-            error={errors.attachments}
-            label={t('customer.book.photosLabel')}
-            hint={t('customer.book.photosHint', { max: MAX_ATTACHMENTS })}
-          />
+        <FormSection id="book-media" title={t('customer.book.sections.media')} optional>
+          <div className="form-stack">
+            <ImageAttachments
+              attachments={attachments}
+              setAttachments={setAttachments}
+              error={errors.attachments}
+              label={t('customer.book.photosLabel')}
+              hint={t('customer.book.photosHint', { max: MAX_ATTACHMENTS })}
+            />
+            <VoiceRecorder value={voiceNote} onChange={setVoiceNote} disabled={busy} />
+          </div>
         </FormSection>
 
-        <FormSection number={5} title={t('customer.book.sections.voice')} optional>
-          <VoiceRecorder value={voiceNote} onChange={setVoiceNote} disabled={busy} />
-        </FormSection>
-
-        <FormSection number={6} title={t('customer.book.sections.location')}>
+        <FormSection id="book-location" title={t('customer.book.sections.location')}>
           {manualAddress ? (
-            <>
+            <div className="form-stack">
               <AddressForm form={form} errors={errors} onChange={updateField} />
               {geolocationSupported ? (
-                <button type="button" className="text-link location-switch" onClick={() => setManualAddress(false)}>
+                <button type="button" className="link location-switch" onClick={() => setManualAddress(false)}>
                   {t('customer.book.useLocation')}
                 </button>
               ) : null}
-            </>
+            </div>
           ) : (
-            <>
+            <div className="form-stack">
               <LocationCapture
                 value={location}
                 error={errors.location}
@@ -291,15 +283,15 @@ function BookPage({ serviceId }) {
                   submit.setError('');
                 }}
               />
-              <button type="button" className="text-link location-switch" onClick={() => setManualAddress(true)}>
+              <button type="button" className="link location-switch" onClick={() => setManualAddress(true)}>
                 {t('customer.book.enterManually')}
               </button>
-            </>
+            </div>
           )}
         </FormSection>
 
-        <FormSection number={7} title={t('customer.book.sections.contact')}>
-          <p className="field-hint">{t('customer.book.details.hint')}</p>
+        <FormSection id="book-contact" title={t('customer.book.sections.contact')}>
+          <p className="field-hint section-hint">{t('customer.book.details.hint')}</p>
           <div className="form-stack">
             <TextField
               id="customerName"
@@ -326,14 +318,14 @@ function BookPage({ serviceId }) {
           </div>
         </FormSection>
 
-        <div className="book-submit">
-          <Notice>{submit.error}</Notice>
-          <Button type="submit" block size="lg" loading={busy} loadingText={t('customer.book.sending')}>
-            {t('customer.book.submit')}
-          </Button>
-          <p className="field-hint book-submit__note">{t('customer.book.footnote')}</p>
-        </div>
+        <Notice>{submit.error}</Notice>
       </form>
+
+      <StickyActionBar note={t('customer.book.footnote')}>
+        <Button type="submit" form="book-form" block size="lg" loading={busy} loadingText={t('customer.book.sending')}>
+          {t('customer.book.submit')}
+        </Button>
+      </StickyActionBar>
     </AppShell>
   );
 }

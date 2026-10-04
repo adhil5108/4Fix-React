@@ -31,6 +31,8 @@ export default {
   },
   // Bottom navigation on phones: one short word per tab.
   navShort: {
+    chat: 'Chat',
+    more: 'More',
     home: 'Home',
     services: 'Services',
     about: 'About',

@@ -9,6 +9,7 @@ export default {
     customerNote: 'Need a repair? You don’t need an account.',
   },
   signup: {
+    aboutYouTitle: 'About you',
     PROVIDER: {
       heading: 'Join 4Fix as a service provider',
       subtext: 'Offer your services and connect with people who need them.',

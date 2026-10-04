@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import AdminShell from '../../components/admin/AdminShell.jsx';
+import AdminTable from '../../components/admin/AdminTable.jsx';
 import { Card, DetailList, ErrorState, LoadingState, PageHeader, StatusBadge } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
-import { navigate } from '../../hooks/useRoute.js';
 import { adminApi } from '../../services/fixApi.js';
 import { formatTimestamp } from '../../utils/format.js';
 
@@ -37,7 +37,7 @@ function AdminCustomerDetailPage({ customerId }) {
         title={customer.name}
         subtitle={customer.username}
         actions={
-          <span className={`badge badge--${customer.isActive ? 'success' : 'muted'}`}>
+          <span className={`badge badge--${customer.isActive ? 'done' : 'muted'}`}>
             {customer.isActive ? t('admin.shared.active') : t('admin.shared.deactivated')}
           </span>
         }
@@ -45,95 +45,54 @@ function AdminCustomerDetailPage({ customerId }) {
 
       <div className="admin-detail">
         <div>
-          <section className="section section--tight" aria-labelledby="customer-requests-heading">
-            <h2 id="customer-requests-heading" className="section__title">
-              {t('admin.customerDetail.requests')} {requests.length > 0 ? <span className="count">{requests.length}</span> : null}
+          <section className="section" aria-labelledby="customer-requests-heading">
+            <h2 id="customer-requests-heading" className="section-header__title">
+              {t('admin.customerDetail.requests')} {requests.length > 0 ? <span className="section-header__count">{requests.length}</span> : null}
             </h2>
-            {requests.length === 0 ? (
-              <p className="body-text">{t('admin.shared.noRequestsYet')}</p>
-            ) : (
-              <div className="admin-table-wrap">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>{t('admin.fields.service')}</th>
-                      <th>{t('admin.fields.status')}</th>
-                      <th>{t('admin.fields.created')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {requests.map((request) => (
-                      <tr
-                        key={request.id}
-                        className="admin-table__row--link"
-                        onClick={() => navigate(`/app/admin/requests/${request.id}`)}
-                      >
-                        <td>{request.service?.name || '—'}</td>
-                        <td>
-                          <StatusBadge status={request.status} />
-                        </td>
-                        <td>{formatTimestamp(request.createdAt)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            <AdminTable
+              columns={[
+                { key: 'service', label: t('admin.fields.service'), render: (row) => row.service?.name || '—' },
+                { key: 'status', label: t('admin.fields.status'), render: (row) => <StatusBadge status={row.status} /> },
+                { key: 'created', label: t('admin.fields.created'), render: (row) => formatTimestamp(row.createdAt) },
+              ]}
+              rows={requests}
+              emptyTitle={t('admin.shared.noRequestsYet')}
+              getRowHref={(row) => `/app/admin/requests/${row.id}`}
+            />
           </section>
 
-          <section className="section section--tight" aria-labelledby="customer-bookings-heading">
-            <h2 id="customer-bookings-heading" className="section__title">
-              {t('admin.customerDetail.bookings')} {bookings.length > 0 ? <span className="count">{bookings.length}</span> : null}
+          <section className="section" aria-labelledby="customer-bookings-heading">
+            <h2 id="customer-bookings-heading" className="section-header__title">
+              {t('admin.customerDetail.bookings')} {bookings.length > 0 ? <span className="section-header__count">{bookings.length}</span> : null}
             </h2>
-            {bookings.length === 0 ? (
-              <p className="body-text">{t('admin.shared.noBookingsYet')}</p>
-            ) : (
-              <div className="admin-table-wrap">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>{t('admin.fields.service')}</th>
-                      <th>{t('admin.fields.provider')}</th>
-                      <th>{t('admin.fields.status')}</th>
-                      <th>{t('admin.fields.visit')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bookings.map((booking) => (
-                      <tr
-                        key={booking.id}
-                        className="admin-table__row--link"
-                        onClick={() => navigate(`/app/admin/bookings/${booking.id}`)}
-                      >
-                        <td>{booking.service?.name || '—'}</td>
-                        <td>{booking.provider?.name || '—'}</td>
-                        <td>
-                          <StatusBadge status={booking.status} audience="booking" />
-                        </td>
-                        <td>{booking.confirmedAt ? formatTimestamp(booking.confirmedAt) : '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            <AdminTable
+              columns={[
+                { key: 'service', label: t('admin.fields.service'), render: (row) => row.service?.name || '—' },
+                { key: 'provider', label: t('admin.fields.provider'), render: (row) => row.provider?.name || '—' },
+                { key: 'status', label: t('admin.fields.status'), render: (row) => <StatusBadge status={row.status} audience="booking" /> },
+                { key: 'accepted', label: t('admin.fields.accepted'), render: (row) => (row.confirmedAt ? formatTimestamp(row.confirmedAt) : '—') },
+              ]}
+              rows={bookings}
+              emptyTitle={t('admin.shared.noBookingsYet')}
+              getRowHref={(row) => `/app/admin/bookings/${row.id}`}
+            />
           </section>
 
-          <section className="section section--tight" aria-labelledby="customer-reviews-heading">
-            <h2 id="customer-reviews-heading" className="section__title">
-              {t('admin.customerDetail.reviewsLeft')} {reviews.length > 0 ? <span className="count">{reviews.length}</span> : null}
+          <section className="section" aria-labelledby="customer-reviews-heading">
+            <h2 id="customer-reviews-heading" className="section-header__title">
+              {t('admin.customerDetail.reviewsLeft')} {reviews.length > 0 ? <span className="section-header__count">{reviews.length}</span> : null}
             </h2>
             {reviews.length === 0 ? (
               <p className="body-text">{t('admin.shared.noReviewsYet')}</p>
             ) : (
-              <div className="list">
+              <div className="stack">
                 {reviews.map((review) => (
-                  <article key={review.id} className="card review-card">
-                    <div className="review-card__top">
+                  <article key={review.id} className="card review-item">
+                    <div className="review-item__top">
                       <strong>{t('admin.shared.ratingOutOf', { rating: review.rating })}</strong>
-                      <span className="review-card__meta">{formatTimestamp(review.createdAt)}</span>
+                      <span className="field-hint">{formatTimestamp(review.createdAt)}</span>
                     </div>
-                    {review.comment ? <p className="review-card__comment">{review.comment}</p> : null}
+                    {review.comment ? <p className="body-text">{review.comment}</p> : null}
                   </article>
                 ))}
               </div>

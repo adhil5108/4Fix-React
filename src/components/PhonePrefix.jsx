@@ -1,10 +1,6 @@
+// India-only numbers for now: the country code shown inside the phone field.
 function PhonePrefix() {
-  return (
-    <span className="field-prefix-content">
-      <span aria-hidden="true">🇮🇳</span>
-      <span>+91</span>
-    </span>
-  );
+  return <span className="field-prefix-content">+91</span>;
 }
 
 export default PhonePrefix;

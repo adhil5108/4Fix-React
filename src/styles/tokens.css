@@ -1,0 +1,105 @@
+/* 4Fix design tokens. Every colour, size, radius and shadow in the app comes from here. */
+
+:root {
+  /* Brand */
+  --c-primary: #005b3e;
+  --c-primary-hover: #004b33;
+  --c-primary-pressed: #003d29;
+  --c-primary-soft: #e3f1e9;
+  --c-primary-tint: #f1f7f3;
+  --c-on-primary: #ffffff;
+
+  /* Neutrals (warm) */
+  --c-bg: #f7f6f2;
+  --c-surface: #ffffff;
+  --c-surface-sunken: #f1efe9;
+  --c-ink: #10141b;
+  --c-text: #3d4450;
+  --c-muted: #6b717c;
+  --c-placeholder: #9a9fa8;
+  --c-border: #e7e4dc;
+  --c-border-strong: #d6d2c8;
+  --c-overlay: rgba(16, 20, 27, 0.45);
+
+  /* Status */
+  --c-open-bg: #fff3d6;
+  --c-open-fg: #865400;
+  --c-assigned-bg: #e5eefc;
+  --c-assigned-fg: #1e4f9c;
+  --c-progress-bg: #efe8fb;
+  --c-progress-fg: #5a34a3;
+  --c-done-bg: #e3f2e8;
+  --c-done-fg: #0d6a3d;
+  --c-muted-bg: #eeece7;
+  --c-muted-fg: #5b616c;
+  --c-info-bg: #eef4fc;
+  --c-info-fg: #1e4f9c;
+  --c-danger: #b42318;
+  --c-danger-hover: #93190f;
+  --c-danger-bg: #fdeeec;
+  --c-danger-border: #f4c7c1;
+  --c-star: #f2a516;
+
+  /* Unread: attention in the brand colour, never the error red. */
+  --c-unread: var(--c-primary);
+  --c-on-unread: #ffffff;
+
+  /* Service / category art tiles */
+  --tone-mint-bg: #e4f3ea;
+  --tone-mint-fg: #12744a;
+  --tone-sun-bg: #fff2d4;
+  --tone-sun-fg: #a86a00;
+  --tone-sky-bg: #e5f0fb;
+  --tone-sky-fg: #2563a8;
+  --tone-peach-bg: #fde8dc;
+  --tone-peach-fg: #b4511c;
+  --tone-lilac-bg: #eee8fb;
+  --tone-lilac-fg: #6741b8;
+  --tone-sand-bg: #f2ede2;
+  --tone-sand-fg: #77653f;
+
+  /* Type: one family for English and Malayalam (glyphs fall back per script). */
+  --font-sans: 'Inter Variable', 'Noto Sans Malayalam Variable', system-ui, -apple-system, 'Segoe UI',
+    Roboto, sans-serif;
+  --text-xs: 0.8125rem; /* 13px  badges, nav labels */
+  --text-sm: 0.875rem; /* 14px  metadata, hints, labels */
+  --text-md: 1rem; /* 16px  body, inputs, buttons */
+  --text-lg: 1.125rem; /* 18px  section and card titles, top bar */
+  --text-xl: 1.375rem; /* 22px  detail headers */
+  --text-2xl: 1.75rem; /* 28px  root page titles, greeting */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --leading-tight: 1.25;
+  --leading-body: 1.5;
+
+  /* Spacing */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+
+  /* Shape */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+
+  /* Elevation (used sparingly) */
+  --shadow-sm: 0 1px 2px rgba(16, 20, 27, 0.05);
+  --shadow-md: 0 6px 20px rgba(16, 20, 27, 0.08);
+  --shadow-lg: 0 16px 40px rgba(16, 20, 27, 0.16);
+
+  /* Layout */
+  --gutter: 16px;
+  --content-max: 600px;
+  --topbar-h: 56px;
+  --nav-h: 64px;
+  --tap: 44px;
+  --focus-ring: 0 0 0 3px rgba(0, 91, 62, 0.28);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}

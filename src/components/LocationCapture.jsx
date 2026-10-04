@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CircleCheck, LocateFixed } from 'lucide-react';
 import TextField from './TextField.jsx';
 import { Button, Notice } from './ui.jsx';
 
@@ -115,8 +116,9 @@ function LocationCapture({ value, onChange, error, disabled = false, variant = '
       {value && status !== 'locating' ? (
         <>
           <LocationPreview latitude={value.latitude} longitude={value.longitude} title={copy('mapTitle')} />
-          <p className="field-hint">
-            {accuracy ? copy('capturedAccuracy', { meters: accuracy }) : copy('captured')}
+          <p className="location-captured">
+            <CircleCheck aria-hidden="true" />
+            <span>{accuracy ? copy('capturedAccuracy', { meters: accuracy }) : copy('captured')}</span>
           </p>
           <TextField
             id={`${id}Address`}
@@ -131,7 +133,7 @@ function LocationCapture({ value, onChange, error, disabled = false, variant = '
       ) : null}
 
       {status !== 'locating' ? (
-        <Button variant="secondary" onClick={locate} disabled={disabled}>
+        <Button variant={value ? 'secondary' : 'tonal'} icon={LocateFixed} onClick={locate} disabled={disabled}>
           {status === 'error'
             ? t('cards.location.tryAgain')
             : value

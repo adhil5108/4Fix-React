@@ -1,16 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Search } from 'lucide-react';
+import { Button } from './ui.jsx';
 
-function SearchIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.5-3.5" />
-    </svg>
-  );
-}
-
-function SearchBar({ initialValue = '', placeholder, onSearch, size }) {
+// Service search: a field with a search icon. The submit button appears once there is
+// something to search for (the keyboard's search key also submits).
+function SearchBar({ initialValue = '', placeholder, onSearch, autoFocus = false }) {
   const { t } = useTranslation();
   const [value, setValue] = useState(initialValue);
 
@@ -20,22 +15,24 @@ function SearchBar({ initialValue = '', placeholder, onSearch, size }) {
   }
 
   return (
-    <form className={`search-bar${size ? ` search-bar--${size}` : ''}`} role="search" onSubmit={handleSubmit}>
-      <span className="search-bar__icon">
-        <SearchIcon />
-      </span>
+    <form className="search" role="search" onSubmit={handleSubmit}>
+      <Search aria-hidden="true" />
       <input
         type="search"
-        className="search-bar__input"
+        enterKeyHint="search"
+        className="search__input"
         value={value}
         placeholder={placeholder ?? t('public.search.placeholder')}
         aria-label={t('public.search.label')}
         maxLength={80}
+        autoFocus={autoFocus}
         onChange={(event) => setValue(event.target.value)}
       />
-      <button type="submit" className="btn btn--primary btn--sm search-bar__button">
-        {t('public.search.submit')}
-      </button>
+      {value.trim() ? (
+        <Button type="submit" size="sm">
+          {t('public.search.submit')}
+        </Button>
+      ) : null}
     </form>
   );
 }

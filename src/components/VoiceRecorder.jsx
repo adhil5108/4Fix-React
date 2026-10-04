@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Mic, RotateCcw, Square, Trash2 } from 'lucide-react';
 import { uploadsApi } from '../services/fixApi.js';
 import { Button } from './ui.jsx';
 
@@ -198,8 +199,9 @@ function VoiceRecorder({ value, onChange, disabled }) {
           </span>
           <Button
             type="button"
-            variant="secondary"
+            variant="ghost"
             size="sm"
+            icon={Trash2}
             onClick={removeRecording}
             disabled={disabled}
           >
@@ -208,9 +210,11 @@ function VoiceRecorder({ value, onChange, disabled }) {
         </div>
       ) : status === 'recording' ? (
         <div className="voice-recorder voice-recorder--recording">
-          <span className="voice-recorder__dot" aria-hidden="true" />
-          <span aria-live="polite">{t('cards.voice.recording', { time: formatDuration(elapsed) })}</span>
-          <Button type="button" variant="secondary" size="sm" onClick={stopRecording}>
+          <span className="voice-recorder__live">
+            <span className="voice-recorder__dot" aria-hidden="true" />
+            <span aria-live="polite">{t('cards.voice.recording', { time: formatDuration(elapsed) })}</span>
+          </span>
+          <Button type="button" variant="danger" icon={Square} onClick={stopRecording}>
             {t('cards.voice.stop')}
           </Button>
         </div>
@@ -229,15 +233,15 @@ function VoiceRecorder({ value, onChange, disabled }) {
         <div className="voice-recorder">
           <Button
             type="button"
-            variant="secondary"
-            size="sm"
+            variant="tonal"
+            icon={status === 'error' ? RotateCcw : Mic}
             onClick={status === 'error' ? retryUpload : startRecording}
             disabled={disabled}
           >
             {status === 'error' ? t('cards.voice.retryUpload') : t('cards.voice.record')}
           </Button>
           {status === 'error' ? (
-            <button type="button" className="text-link" onClick={removeRecording}>
+            <button type="button" className="link" onClick={removeRecording}>
               {t('cards.voice.discard')}
             </button>
           ) : null}

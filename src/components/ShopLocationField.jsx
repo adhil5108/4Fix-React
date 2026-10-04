@@ -96,7 +96,7 @@ function ShopLocationField({ value, onChange, error, disabled = false, manualOnl
             onChange={(event) => value && onChange({ ...value, address: event.target.value })}
           />
           {geolocationSupported ? (
-            <button type="button" className="text-link location-switch" onClick={() => setManual(false)}>
+            <button type="button" className="link location-switch" onClick={() => setManual(false)}>
               {t('cards.shopLocation.useDevice')}
             </button>
           ) : null}
@@ -111,7 +111,7 @@ function ShopLocationField({ value, onChange, error, disabled = false, manualOnl
             disabled={disabled}
             onChange={onChange}
           />
-          <button type="button" className="text-link location-switch" onClick={() => setManual(true)}>
+          <button type="button" className="link location-switch" onClick={() => setManual(true)}>
             {t('cards.shopLocation.enterManually')}
           </button>
         </>

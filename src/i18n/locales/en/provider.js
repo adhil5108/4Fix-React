@@ -30,6 +30,11 @@ export default {
     accepted: 'Accepted',
   },
   dashboard: {
+    greet: {
+      morning: 'Good morning,',
+      afternoon: 'Good afternoon,',
+      evening: 'Good evening,',
+    },
     greeting: 'Hi {{name}}',
     subtitle: 'Find new work and keep your jobs moving.',
     browseRequests: 'Browse requests',
@@ -120,6 +125,9 @@ export default {
     },
   },
   job: {
+    acceptedOn: 'Accepted {{time}}',
+    call: 'Call',
+    chatShort: 'Chat',
     justAccepted: 'Job accepted. It’s yours — navigate to the customer and start the job when you begin work.',
     actions: {
       start: {

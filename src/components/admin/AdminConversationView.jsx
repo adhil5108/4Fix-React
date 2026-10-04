@@ -1,4 +1,6 @@
+import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
+import { RotateCw } from 'lucide-react';
 import { Button, EmptyState, ErrorState, LoadingState } from '../ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { bookingsApi } from '../../services/fixApi.js';
@@ -49,7 +51,7 @@ function AdminConversationView({ bookingId }) {
   let previousDay = null;
 
   return (
-    <div className="chat chat--admin">
+    <div className="chat chat--embedded">
       <div className="chat__messages" role="log" aria-label={t('admin.conversation.logLabel')}>
         {messages.length === 0 ? <p className="chat__empty">{t('admin.conversation.noMessages')}</p> : null}
         {messages.map((message) => {
@@ -58,22 +60,21 @@ function AdminConversationView({ bookingId }) {
           previousDay = day;
 
           return (
-            <div key={message.id}>
+            <Fragment key={message.id}>
               {showDay ? <p className="chat__day">{formatTimestamp(message.createdAt)}</p> : null}
               <div className={`bubble${message.senderRole === 'PROVIDER' ? ' bubble--mine' : ''}`}>
                 <span className="bubble__role">{t(`admin.conversation.roles.${message.senderRole}`, { defaultValue: message.senderRole })}</span>
                 <p className="bubble__text">{message.message}</p>
                 <span className="bubble__meta">
-                  {formatClock(message.createdAt)}
-                  {message.readAt ? t('admin.conversation.read') : t('admin.conversation.sent')}
+                  {formatClock(message.createdAt)} · {message.readAt ? t('admin.conversation.read') : t('admin.conversation.sent')}
                 </span>
               </div>
-            </div>
+            </Fragment>
           );
         })}
       </div>
-      <div className="chat__admin-footer">
-        <Button type="button" variant="secondary" size="sm" onClick={data.refresh}>
+      <div className="chat__footer">
+        <Button type="button" variant="secondary" size="sm" icon={RotateCw} onClick={data.refresh}>
           {t('admin.conversation.refresh')}
         </Button>
         <span className="field-hint">{t('admin.conversation.readOnlyNotice')}</span>

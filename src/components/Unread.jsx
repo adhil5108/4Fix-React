@@ -1,16 +1,9 @@
 import { useTranslation } from 'react-i18next';
+import { MessageCircle, X } from 'lucide-react';
 import { useUnread, useUnreadCount } from '../hooks/useUnread.jsx';
 import { navigate } from '../hooks/useRoute.js';
 
 const shown = (count) => (count > 99 ? '99+' : String(count));
-
-function ChatIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M21 11.5a8.4 8.4 0 0 1-12.2 7.5L3 20.5l1.6-5A8.4 8.4 0 1 1 21 11.5z" />
-    </svg>
-  );
-}
 
 // The number on a navigation item: total unread across all of this person's chats.
 // The digits are decorative; screen readers get the full phrase.
@@ -38,7 +31,7 @@ export function ChatCount({ bookingId }) {
 
   return (
     <span className="chat-count" data-testid="chat-unread" title={t('common.unread.count', { count })}>
-      <ChatIcon />
+      <MessageCircle aria-hidden="true" />
       <span aria-hidden="true">{shown(count)}</span>
       <span className="sr-only">{t('common.unread.count', { count })}</span>
     </span>
@@ -64,7 +57,7 @@ export function UnreadToasts() {
               }}
             >
               <span className="toast__icon">
-                <ChatIcon />
+                <MessageCircle aria-hidden="true" />
               </span>
               <span className="toast__text">
                 <strong>
@@ -81,7 +74,7 @@ export function UnreadToasts() {
               aria-label={t('common.unread.dismiss')}
               onClick={() => dismissToast(toast.id)}
             >
-              ×
+              <X aria-hidden="true" />
             </button>
           </div>
         ))}

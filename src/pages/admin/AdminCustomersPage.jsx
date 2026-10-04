@@ -18,7 +18,7 @@ const COLUMNS = [
     key: 'isActive',
     label: 'admin.fields.status',
     render: (row, t) => (
-      <span className={`badge badge--${row.isActive ? 'success' : 'muted'}`}>
+      <span className={`badge badge--${row.isActive ? 'done' : 'muted'}`}>
         {row.isActive ? t('admin.shared.active') : t('admin.shared.deactivated')}
       </span>
     ),

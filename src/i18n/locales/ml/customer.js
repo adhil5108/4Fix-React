@@ -18,6 +18,7 @@ export default {
     allServices: 'എല്ലാ സേവനങ്ങളും',
     unavailable: 'ഈ സേവനം ഇപ്പോൾ ലഭ്യമല്ല. മറ്റൊന്ന് തിരഞ്ഞെടുക്കുക.',
     sections: {
+      media: 'ഫോട്ടോകളും വോയ്സ് നോട്ടും',
       service: 'സേവനം',
       issue: 'എന്താണ് പ്രശ്നം?',
       description: 'പ്രശ്നം വിവരിക്കുക',
@@ -59,6 +60,20 @@ export default {
       namePlaceholder: 'ഉദാ: ആശ നായർ',
       phone: 'ഫോൺ നമ്പർ',
       phonePlaceholder: 'ഉദാ: 98765 43210',
+    },
+  },
+  job: {
+    progress: 'പുരോഗതി',
+    call: 'വിളിക്കുക',
+    chat: 'ചാറ്റ്',
+    callName: '{{name}} എന്നയാളെ വിളിക്കുക',
+    openElsewhere: 'മറ്റൊരു ഫോണിൽ തുറക്കുക',
+    openElsewhereHint: 'ഈ അഭ്യർത്ഥന മറ്റെവിടെയെങ്കിലും പിന്തുടരാൻ ഒരു സ്വകാര്യ ലിങ്ക് നേടുക.',
+    stages: {
+      sent: 'അഭ്യർത്ഥന അയച്ചു',
+      assigned: 'സേവനദാതാവിനെ നിയോഗിച്ചു',
+      inProgress: 'ജോലി നടക്കുന്നു',
+      completed: 'പൂർത്തിയായി',
     },
   },
   request: {
@@ -128,6 +143,7 @@ export default {
     viewRequest: 'യഥാർത്ഥ അഭ്യർത്ഥന കാണുക',
   },
   chat: {
+    providerRole: 'നിങ്ങളുടെ സേവനദാതാവ്',
     opening: 'ചാറ്റ് തുറക്കുന്നു…',
   },
   review: {

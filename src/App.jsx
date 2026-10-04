@@ -8,6 +8,8 @@ import SignupPage from './pages/SignupPage.jsx';
 import BookPage from './pages/customer/BookPage.jsx';
 import BookingPage from './pages/customer/BookingPage.jsx';
 import ChatPage from './pages/customer/ChatPage.jsx';
+import ChatsPage from './pages/ChatsPage.jsx';
+import MorePage from './pages/customer/MorePage.jsx';
 import InvoicePage from './pages/InvoicePage.jsx';
 import RequestDetailsPage from './pages/customer/RequestDetailsPage.jsx';
 import RequestsPage from './pages/customer/RequestsPage.jsx';
@@ -66,6 +68,9 @@ const ROUTES = [
     render: ({ providerId }) => <ProviderProfilePage key={providerId} providerId={providerId} />,
   },
   { path: '/about', access: PUBLIC, render: () => <AboutPage /> },
+  { path: '/more', access: PUBLIC, render: () => <MorePage /> },
+  // The customer's conversations (one per job), found through this browser's requests.
+  { path: '/chats', access: PUBLIC, render: () => <ChatsPage /> },
 
   { path: '/login', access: GUEST, render: () => <LoginPage /> },
   // Only providers have accounts; customers use 4Fix without signing up.
@@ -119,7 +124,7 @@ const ROUTES = [
     access: PUBLIC,
     render: ({ bookingId }) => <ReviewPage key={bookingId} bookingId={bookingId} />,
   },
-  { path: '/profile', access: PUBLIC, redirect: '/requests' },
+  { path: '/profile', access: PUBLIC, redirect: '/more' },
 
   {
     path: '/provider',
@@ -166,6 +171,11 @@ const ROUTES = [
     path: '/provider/jobs/:bookingId',
     access: 'PROVIDER',
     render: ({ bookingId }) => <ProviderJobPage key={bookingId} bookingId={bookingId} />,
+  },
+  {
+    path: '/provider/chats',
+    access: 'PROVIDER',
+    render: () => <ChatsPage />,
   },
   {
     path: '/provider/profile',

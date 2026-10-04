@@ -1,9 +1,9 @@
-/* Admin back-office shell: sticky header, persistent sidebar (desktop) / off-canvas
-   drawer (mobile, toggled by the header's hamburger button), table. */
+/* Admin console: information-dense, desktop-friendly, same tokens and components as the
+   app. Phone: hamburger + off-canvas drawer. Desktop: persistent sidebar. */
 
 .admin-shell {
   min-height: 100vh;
-  background: var(--ground);
+  background: var(--c-bg);
   overflow-x: hidden;
 }
 
@@ -13,89 +13,86 @@
   z-index: 20;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  border-bottom: 1px solid var(--line);
-  background: rgba(243, 244, 242, 0.94);
+  gap: var(--s-3);
+  border-bottom: 1px solid var(--c-border);
+  background: rgba(247, 246, 242, 0.94);
   backdrop-filter: blur(10px);
-  padding: 14px 20px;
+  padding: var(--s-2) var(--gutter);
+  min-height: var(--topbar-h);
 }
 
 .admin-header__menu-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--ink);
-  font-size: 1.1rem;
-  line-height: 1;
+  display: inline-grid;
+  width: var(--tap);
+  height: var(--tap);
+  place-items: center;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  color: var(--c-ink);
+  padding: 0;
 }
 
-a.admin-header__brand {
-  margin: 0 auto 0 0;
-  font-size: 1.25rem;
+.admin-header__menu-toggle svg {
+  width: 22px;
+  height: 22px;
+}
+
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  color: var(--c-ink);
+  font-size: 1.3rem;
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.02em;
   text-decoration: none;
 }
 
 .admin-header__tag {
-  display: inline-block;
-  margin-left: 6px;
-  border-radius: 999px;
-  background: var(--green-soft);
-  color: var(--green);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  vertical-align: middle;
-  padding: 3px 8px;
+  margin-left: var(--s-2);
+  border-radius: var(--r-pill);
+  background: var(--c-primary-soft);
+  color: var(--c-primary);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0;
+  padding: 2px 8px;
 }
 
-/* On mobile the same profile/log out controls live in the drawer footer instead, so
-   the header stays to just the toggle and brand and never has to wrap. */
+.admin-header__lang {
+  margin-left: auto;
+}
+
 .admin-header__actions {
   display: none;
   align-items: center;
-  gap: 14px;
+  gap: var(--s-4);
 }
 
 .admin-header__user {
-  color: var(--muted);
-  font-size: 0.86rem;
-  font-weight: 650;
-}
-
-@media (min-width: 860px) {
-  .admin-header__actions {
-    display: flex;
-  }
+  color: var(--c-muted);
+  font-size: var(--text-sm);
 }
 
 .admin-drawer-backdrop {
   position: fixed;
   inset: 0;
   z-index: 30;
-  border: none;
+  border: 0;
   margin: 0;
   padding: 0;
-  background: rgba(5, 7, 13, 0.45);
+  background: var(--c-overlay);
   cursor: default;
 }
 
 .admin-layout {
   display: grid;
-  max-width: 1280px;
+  gap: var(--s-5);
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 20px 20px 60px;
-  gap: 20px;
+  padding: var(--s-5) var(--gutter) 64px;
 }
 
-/* Off-canvas by default (mobile): a fixed drawer sliding in from the left, opened by
-   the header's hamburger button and closed by the backdrop, Log out, or navigating. */
 .admin-sidebar {
   position: fixed;
   top: 0;
@@ -104,13 +101,13 @@ a.admin-header__brand {
   z-index: 40;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  width: 264px;
-  max-width: 82vw;
+  gap: var(--s-1);
+  width: 272px;
+  max-width: 84vw;
   overflow-y: auto;
-  border-right: 1px solid var(--line);
-  background: var(--surface);
-  padding: 18px 14px;
+  border-right: 1px solid var(--c-border);
+  background: var(--c-surface);
+  padding: var(--s-4) var(--s-3);
   transform: translateX(-100%);
   transition: transform 0.2s ease;
 }
@@ -120,38 +117,32 @@ a.admin-header__brand {
 }
 
 .admin-sidebar__brand {
-  margin: 0 6px 10px;
-  font-size: 1.1rem;
-  text-decoration: none;
+  margin: 0 var(--s-2) var(--s-3);
 }
 
-/* Area switcher: which of the three top-level areas (Admin Console / Customer View /
-   Provider View) the admin is in — visually grouped apart from the admin section nav. */
 .admin-sidebar__areas {
   display: grid;
   gap: 2px;
-  margin-bottom: 14px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  margin-bottom: var(--s-3);
+  border-radius: var(--r-md);
+  background: var(--c-surface-sunken);
   padding: 4px;
 }
 
 .admin-sidebar__area-link {
-  border-radius: 8px;
-  color: var(--text);
-  font-size: 0.82rem;
-  font-weight: 650;
+  border-radius: var(--r-sm);
+  color: var(--c-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
   padding: 8px 10px;
   text-decoration: none;
 }
 
-.admin-sidebar__area-link:hover {
-  background: rgba(5, 7, 13, 0.05);
-}
-
 .admin-sidebar__area-link.is-active {
-  background: var(--ink);
-  color: #ffffff;
+  background: var(--c-surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--c-ink);
+  font-weight: var(--weight-semibold);
 }
 
 .admin-sidebar__nav {
@@ -159,21 +150,53 @@ a.admin-header__brand {
   gap: 2px;
 }
 
+.admin-sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 44px;
+  border-radius: var(--r-md);
+  color: var(--c-text);
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  padding: 8px 12px;
+  text-decoration: none;
+}
+
+.admin-sidebar__link svg {
+  width: 20px;
+  height: 20px;
+  color: var(--c-muted);
+}
+
+.admin-sidebar__link:hover {
+  background: rgba(16, 20, 27, 0.04);
+}
+
+.admin-sidebar__link.is-active {
+  background: var(--c-primary-soft);
+  color: var(--c-primary);
+  font-weight: var(--weight-semibold);
+}
+
+.admin-sidebar__link.is-active svg {
+  color: var(--c-primary);
+}
+
 .admin-sidebar__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--s-2);
   margin-top: auto;
-  border-top: 1px solid var(--line);
-  padding: 14px 6px 4px;
+  border-top: 1px solid var(--c-border);
+  padding: var(--s-3) var(--s-2) 0;
 }
 
 .admin-sidebar__user {
   overflow: hidden;
-  color: var(--muted);
-  font-size: 0.86rem;
-  font-weight: 650;
+  color: var(--c-muted);
+  font-size: var(--text-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -182,135 +205,154 @@ a.admin-header__brand {
   min-width: 0;
 }
 
-.admin-content__header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.admin-content__title {
-  margin: 0;
-  color: var(--ink);
-  font-size: 1.4rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-}
-
-.admin-content__subtitle {
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 0.92rem;
-}
-
-.admin-sidebar__link {
-  border-radius: 10px;
-  color: var(--text);
-  font-size: 0.93rem;
-  font-weight: 650;
-  padding: 10px 12px;
-  text-decoration: none;
-}
-
-.admin-sidebar__link:hover {
-  background: rgba(5, 7, 13, 0.05);
-}
-
-.admin-sidebar__link.is-active {
-  background: var(--green-soft);
-  color: var(--green);
-}
-
-.admin-sidebar__link:focus-visible {
-  outline: 3px solid rgba(0, 91, 62, 0.25);
-  outline-offset: 2px;
-}
-
-@media (min-width: 860px) {
-  .admin-header__menu-toggle {
-    display: none;
-  }
-
+@media (min-width: 900px) {
+  .admin-header__menu-toggle,
   .admin-drawer-backdrop {
     display: none;
   }
 
+  .admin-header__actions {
+    display: flex;
+  }
+
   .admin-layout {
-    grid-template-columns: 210px minmax(0, 1fr);
+    grid-template-columns: 220px minmax(0, 1fr);
     align-items: start;
   }
 
+  /* On desktop the header already has the brand and log out. */
   .admin-sidebar {
     position: sticky;
-    top: 84px;
-    left: auto;
-    bottom: auto;
+    top: calc(var(--topbar-h) + var(--s-5));
     z-index: 1;
     width: auto;
     max-width: none;
-    max-height: calc(100vh - 104px);
-    border-right: none;
+    max-height: calc(100vh - 96px);
+    border-right: 0;
     background: transparent;
     padding: 0;
     transform: none;
     transition: none;
   }
+
+  .admin-sidebar__brand,
+  .admin-sidebar__footer {
+    display: none;
+  }
 }
 
-/* Stat cards (dashboard) reuse .stat-grid / .card.stat from app.css as-is. */
+/* Page header (admin only — the app uses the top bar) */
+.page-header {
+  margin-bottom: var(--s-5);
+}
+
+.page-header__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: var(--s-2);
+  color: var(--c-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+}
+
+.page-header__back svg {
+  width: 18px;
+  height: 18px;
+}
+
+.page-header__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.page-header__text {
+  min-width: 0;
+}
+
+.page-header__title {
+  color: var(--c-ink);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  overflow-wrap: break-word;
+}
+
+.page-header__subtitle {
+  margin-top: 4px;
+  color: var(--c-muted);
+  font-size: var(--text-sm);
+}
+
+.page-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* Dashboard */
+.admin-stat-groups {
+  display: grid;
+  gap: var(--s-4);
+}
+
+@media (min-width: 640px) {
+  .admin-stat-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
 
 /* Filters */
-
 .admin-filters {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--s-3);
+  margin-bottom: var(--s-4);
 }
 
 .admin-filters .field {
-  margin: 0;
-  min-width: 160px;
+  flex: 1 1 180px;
+  max-width: 280px;
 }
 
-/* Table */
-
+/* Tables */
 .admin-table-wrap {
   overflow-x: auto;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
 }
 
 .admin-table {
   width: 100%;
   min-width: 640px;
   border-collapse: collapse;
-  font-size: 0.89rem;
+  font-size: var(--text-sm);
 }
 
 .admin-table th {
-  background: var(--ground);
-  color: var(--muted);
-  font-size: 0.74rem;
-  font-weight: 750;
-  letter-spacing: 0.03em;
-  text-align: left;
-  text-transform: uppercase;
-  white-space: nowrap;
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface-sunken);
+  color: var(--c-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
   padding: 10px 14px;
-  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
 }
 
 .admin-table td {
+  border-bottom: 1px solid var(--c-border);
+  color: var(--c-text);
   padding: 12px 14px;
-  border-bottom: 1px solid var(--line);
-  color: var(--text);
   vertical-align: middle;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .admin-table tr:last-child td {
@@ -322,78 +364,105 @@ a.admin-header__brand {
 }
 
 .admin-table__row--link:hover {
-  background: var(--ground);
+  background: var(--c-primary-tint);
 }
 
 .admin-table__row--link:focus-visible {
-  outline: 3px solid rgba(0, 91, 62, 0.25);
-  outline-offset: -3px;
+  box-shadow: inset var(--focus-ring);
 }
 
 .admin-pagination {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  margin-top: 16px;
+  gap: var(--s-3);
+  margin-top: var(--s-4);
 }
 
 .admin-pagination__label {
-  color: var(--muted);
-  font-size: 0.85rem;
+  color: var(--c-muted);
+  font-size: var(--text-sm);
+}
+
+/* Forms & detail pages */
+.admin-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
 }
 
 .admin-issue-row {
   display: grid;
-  gap: 14px;
+  gap: var(--s-3);
 }
 
 .admin-issue-row__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--s-3);
 }
 
-.admin-form-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-/* Admin detail pages: a simple two-column layout on wide screens. */
-
-.admin-detail {
-  display: grid;
-  gap: 14px;
-}
-
-@media (min-width: 900px) {
-  .admin-detail {
-    grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
-    align-items: start;
-  }
-}
-
-.admin-header-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-/* Categories: table plus an editor card beside it on wide screens. */
+.admin-detail,
 .admin-split {
   display: grid;
-  gap: 14px;
+  gap: var(--s-4);
 }
 
-.admin-split__main {
+.admin-detail > *,
+.admin-split > * {
+  display: grid;
+  align-content: start;
+  gap: var(--s-4);
   min-width: 0;
 }
 
 @media (min-width: 1000px) {
+  .admin-detail {
+    grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+    align-items: start;
+  }
+
   .admin-split {
     grid-template-columns: minmax(0, 1.4fr) minmax(300px, 1fr);
     align-items: start;
   }
+}
+
+.admin-content .card__title {
+  margin-bottom: var(--s-3);
+}
+
+.card__subtitle {
+  margin: var(--s-4) 0 var(--s-2);
+  color: var(--c-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.card__heading-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.card__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+  margin-top: var(--s-3);
+}
+
+.card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-3);
+}
+
+.service-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Star } from 'lucide-react';
 import { TextArea } from './TextField.jsx';
 import { Button, Notice } from './ui.jsx';
 
@@ -12,9 +13,7 @@ export function StarRating({ value, onChange, readOnly = false, size }) {
     return (
       <span className={`stars${size ? ` stars--${size}` : ''}`} aria-label={t('cards.rating.outOf', { value })}>
         {[1, 2, 3, 4, 5].map((star) => (
-          <span key={star} className={`stars__star${star <= value ? ' is-on' : ''}`} aria-hidden="true">
-            ★
-          </span>
+          <Star key={star} className={star <= value ? 'is-on' : ''} aria-hidden="true" />
         ))}
       </span>
     );
@@ -30,13 +29,13 @@ export function StarRating({ value, onChange, readOnly = false, size }) {
             role="radio"
             aria-checked={value === star}
             aria-label={t('cards.rating.starOption', { count: star, label: t(`cards.rating.labels.${star}`) })}
-            className={`stars__star stars__star--button${star <= shown ? ' is-on' : ''}`}
+            className={`stars__button${star <= shown ? ' is-on' : ''}`}
             onMouseEnter={() => setHover(star)}
             onFocus={() => setHover(star)}
             onBlur={() => setHover(0)}
             onClick={() => onChange(star)}
           >
-            ★
+            <Star aria-hidden="true" />
           </button>
         ))}
       </span>
@@ -65,8 +64,8 @@ export function ReviewForm({ providerName, busy, error, onSubmit }) {
   return (
     <form className="form-stack" onSubmit={handleSubmit} noValidate>
       <Notice>{error}</Notice>
-      <div className="field">
-        <label>
+      <div className="field review-rating">
+        <label className="review-rating__question">
           {providerName
             ? t('cards.review.questionWith', { name: providerName })
             : t('cards.review.question')}

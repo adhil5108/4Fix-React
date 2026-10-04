@@ -1,10 +1,11 @@
 import { useTranslation } from 'react-i18next';
+import { Plus } from 'lucide-react';
 import AdminPagination from '../../components/admin/AdminPagination.jsx';
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import AdminTable from '../../components/admin/AdminTable.jsx';
 import { Select } from '../../components/TextField.jsx';
 import { ServiceIcon } from '../../components/cards.jsx';
-import { ButtonLink } from '../../components/ui.jsx';
+import { ButtonLink, PageHeader } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { navigate, useQueryParam } from '../../hooks/useRoute.js';
 import { formatMoney } from '../../utils/format.js';
@@ -27,9 +28,9 @@ const COLUMNS = [
     label: 'admin.services.columns.category',
     render: (row, t) =>
       row.category?.name ? (
-        <span className="badge badge--info">{row.category.name}</span>
+        <span className="badge badge--plain badge--brand">{row.category.name}</span>
       ) : (
-        <span className="badge badge--neutral">{t('admin.services.noCategory')}</span>
+        <span className="badge badge--plain badge--open">{t('admin.services.noCategory')}</span>
       ),
   },
   {
@@ -43,7 +44,7 @@ const COLUMNS = [
     key: 'isActive',
     label: 'admin.fields.status',
     render: (row, t) => (
-      <span className={`badge badge--${row.isActive ? 'success' : 'muted'}`}>
+      <span className={`badge badge--${row.isActive ? 'done' : 'muted'}`}>
         {row.isActive ? t('admin.shared.active') : t('admin.shared.inactive')}
       </span>
     ),
@@ -91,20 +92,20 @@ function AdminServicesPage() {
 
   return (
     <AdminShell>
-      <div className="admin-content__header">
-        <div>
-          <h1 className="admin-content__title">{t('common.adminNav.services')}</h1>
-          <p className="admin-content__subtitle">{t('admin.services.subtitle')}</p>
-        </div>
-        <div className="admin-header-actions">
-          <ButtonLink to="/app/admin/categories" size="sm" variant="secondary">
-            {t('admin.services.manageCategories')}
-          </ButtonLink>
-          <ButtonLink to="/app/admin/services/new" size="sm">
-            {t('admin.services.newService')}
-          </ButtonLink>
-        </div>
-      </div>
+      <PageHeader
+        title={t('common.adminNav.services')}
+        subtitle={t('admin.services.subtitle')}
+        actions={
+          <>
+            <ButtonLink to="/app/admin/categories" size="sm" variant="secondary">
+              {t('admin.services.manageCategories')}
+            </ButtonLink>
+            <ButtonLink to="/app/admin/services/new" size="sm" icon={Plus}>
+              {t('admin.services.newService')}
+            </ButtonLink>
+          </>
+        }
+      />
 
       <div className="admin-filters">
         <Select

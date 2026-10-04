@@ -8,3 +8,7 @@ export function bookPath(serviceId, issueKey) {
 export function categoryPath(categoryId) {
   return `/categories/${encodeURIComponent(categoryId)}`;
 }
+
+export function servicePath(serviceId) {
+  return `/services/${encodeURIComponent(serviceId)}`;
+}

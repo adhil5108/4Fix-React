@@ -1,22 +1,15 @@
 import { useTranslation } from 'react-i18next';
+import { Plus, Wrench } from 'lucide-react';
 import AppShell from '../../components/AppShell.jsx';
-import {
-  ButtonLink,
-  EmptyState,
-  ErrorState,
-  Link,
-  LoadingState,
-  PageHeader,
-  StatusBadge,
-} from '../../components/ui.jsx';
-import { ChatCount } from '../../components/Unread.jsx';
+import { ProviderJobCard } from '../../components/cards.jsx';
+import { EmptyState, ErrorState, IconButton, LoadingState, SegmentedTabs } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
+import { useAuth } from '../../hooks/useAuth.jsx';
 import { navigate, useQueryParam } from '../../hooks/useRoute.js';
 import { providerApi } from '../../services/fixApi.js';
-import { formatIssueLabel, formatSlot } from '../../utils/format.js';
 
 // Labels come from provider.jobs.tabs.<key>.
-const TABS = [{ key: 'active' }, { key: 'completed' }, { key: 'cancelled' }];
+const TABS = ['active', 'completed', 'cancelled'];
 
 // The server is the source of truth for jobs: everything here comes from /api/provider/jobs.
 export function splitJobs(jobs) {
@@ -30,99 +23,56 @@ export function splitJobs(jobs) {
   };
 }
 
-export function jobPath(job) {
-  if (job.source === 'EXTERNAL') return `/provider/jobs/external/${job.id}`;
-  return job.bookingId ? `/provider/jobs/${job.bookingId}` : `/provider/requests/${job.id}`;
-}
-
-export function JobCard({ job }) {
-  const { t } = useTranslation();
-  const isExternal = job.source === 'EXTERNAL';
-  const slot = job.scheduledDate
-    ? t('provider.jobs.card.scheduled', { slot: formatSlot(job.scheduledDate, job.scheduledTime) })
-    : job.preferredDate
-      ? t('provider.jobs.card.preferred', { slot: formatSlot(job.preferredDate, job.preferredTime) })
-      : t('provider.shared.notScheduledYet');
-
-  return (
-    <Link to={jobPath(job)} className="card card--link request-card">
-      <span className="request-card__top">
-        <span className="request-card__service">
-          {job.service?.name || job.serviceLabel || t('provider.shared.job')}
-          {formatIssueLabel(job.issueKey, job.issueLabel) ? <span className="request-card__issue"> · {formatIssueLabel(job.issueKey, job.issueLabel)}</span> : null}
-        </span>
-        <span className="job-card__badges">
-          {job.bookingId ? <ChatCount bookingId={job.bookingId} /> : null}
-          {isExternal ? <span className="badge badge--muted">{t('provider.shared.external')}</span> : null}
-          {isExternal ? (
-            <StatusBadge status={job.status} audience="externalJob" />
-          ) : job.bookingStatus ? (
-            <StatusBadge status={job.bookingStatus} audience="booking" />
-          ) : (
-            <StatusBadge status={job.status} audience="provider" />
-          )}
-        </span>
-      </span>
-      <span className="request-card__description">{job.description}</span>
-      <span className="request-card__meta">
-        <span>{slot}</span>
-        {job.address ? <span>{[job.address.city, job.address.pincode].filter(Boolean).join(' · ')}</span> : null}
-      </span>
-    </Link>
-  );
-}
-
 function ProviderJobsPage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const tabParam = useQueryParam('tab');
-  const tab = TABS.some((item) => item.key === tabParam) ? tabParam : 'active';
+  const tab = TABS.includes(tabParam) ? tabParam : 'active';
   const jobs = useApi(() => providerApi.jobs(), []);
   const grouped = jobs.data ? splitJobs(jobs.data.jobs) : null;
   const list = grouped ? grouped[tab] : [];
 
   return (
-    <AppShell>
-      <PageHeader
-        title={t('provider.shared.myJobs')}
-        subtitle={t('provider.jobs.subtitle')}
-        actions={
-          <ButtonLink to="/provider/jobs/new" size="sm">
-            {t('provider.jobs.addJob')}
-          </ButtonLink>
-        }
+    <AppShell
+      title={t('provider.shared.myJobs')}
+      large
+      actions={
+        user.role === 'PROVIDER' ? (
+          <IconButton icon={Plus} to="/provider/jobs/new" variant="tonal" label={t('provider.jobs.addJob')} />
+        ) : null
+      }
+    >
+      <SegmentedTabs
+        label={t('provider.jobs.tabsAria')}
+        value={tab}
+        onChange={(key) => navigate(key === 'active' ? '/provider/jobs' : `/provider/jobs?tab=${key}`, { replace: true })}
+        items={TABS.map((key) => ({
+          key,
+          label: t(`provider.jobs.tabs.${key}`),
+          count: grouped ? grouped[key].length : undefined,
+        }))}
       />
 
-      <div className="tabs" role="tablist" aria-label={t('provider.jobs.tabsAria')}>
-        {TABS.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            role="tab"
-            aria-selected={tab === item.key}
-            className={`tab${tab === item.key ? ' is-active' : ''}`}
-            onClick={() => navigate(item.key === 'active' ? '/provider/jobs' : `/provider/jobs?tab=${item.key}`, { replace: true })}
-          >
-            {t(`provider.jobs.tabs.${item.key}`)}
-            {grouped ? <span className="count">{grouped[item.key].length}</span> : null}
-          </button>
-        ))}
+      <div className="section">
+        {jobs.loading ? <LoadingState label={t('provider.jobs.loading')} /> : null}
+        {jobs.error ? <ErrorState error={jobs.error} onRetry={jobs.reload} /> : null}
+        {grouped && list.length === 0 ? (
+          <EmptyState
+            icon={Wrench}
+            title={t(`provider.jobs.empty.${tab}`)}
+            message={tab === 'active' ? t('provider.jobs.emptyActiveMessage') : undefined}
+          />
+        ) : null}
+        {grouped && list.length > 0 ? (
+          <div className="stack">
+            {list.map((job) => (
+              <ProviderJobCard key={job.id} job={job} />
+            ))}
+          </div>
+        ) : null}
       </div>
 
-      {jobs.loading ? <LoadingState label={t('provider.jobs.loading')} /> : null}
-      {jobs.error ? <ErrorState error={jobs.error} onRetry={jobs.reload} /> : null}
-      {grouped && list.length === 0 ? (
-        <EmptyState
-          title={t(`provider.jobs.empty.${tab}`)}
-          message={tab === 'active' ? t('provider.jobs.emptyActiveMessage') : undefined}
-        />
-      ) : null}
-      {grouped && list.length > 0 ? (
-        <div className="list">
-          {list.map((job) => (
-            <JobCard key={job.id} job={job} />
-          ))}
-        </div>
-      ) : null}
+      {user.role === 'PROVIDER' ? <p className="page-note">{t('provider.jobs.subtitle')}</p> : null}
     </AppShell>
   );
 }

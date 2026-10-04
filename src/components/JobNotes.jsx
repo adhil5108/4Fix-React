@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Pencil, Trash2 } from 'lucide-react';
 import { useAction, useApi } from '../hooks/useApi.js';
 import { formatDateTime } from '../utils/format.js';
 import { TextArea } from './TextField.jsx';
-import { Button, Notice } from './ui.jsx';
+import { Button, IconButton, Notice } from './ui.jsx';
 
 const MAX_NOTE_LENGTH = 2000;
 
@@ -27,7 +28,7 @@ function NoteForm({ initialValue = '', busy, error, submitLabel, onCancel, onSub
         rows={3}
         onChange={(event) => setContent(event.target.value)}
       />
-      <div className="card__actions">
+      <div className="row job-note__form-actions">
         {onCancel ? (
           <Button type="button" variant="secondary" size="sm" onClick={onCancel} disabled={busy}>
             {t('provider.notes.cancel')}
@@ -77,22 +78,18 @@ function NoteItem({ note, notesApi, jobId, onChanged }) {
       <p className="job-note__content">{note.content}</p>
       <div className="job-note__meta">
         <span>{formatDateTime(note.updatedAt)}</span>
-        <span className="job-note__actions">
-          <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
-            {t('provider.notes.edit')}
-          </Button>
-          <Button
-            variant="danger-ghost"
-            size="sm"
-            loading={remove.pending === 'delete'}
-            loadingText={t('provider.notes.deleting')}
+        <span className="row">
+          <IconButton icon={Pencil} label={t('provider.notes.edit')} onClick={() => setEditing(true)} />
+          <IconButton
+            icon={Trash2}
+            label={t('provider.notes.delete')}
+            className="icon-btn--danger"
+            disabled={remove.pending === 'delete'}
             onClick={async () => {
               const ok = await remove.run('delete', () => notesApi.remove(jobId, note.id));
               if (ok) onChanged();
             }}
-          >
-            {t('provider.notes.delete')}
-          </Button>
+          />
         </span>
       </div>
       <Notice>{remove.error}</Notice>
@@ -112,7 +109,7 @@ function JobNotes({ jobId, notesApi }) {
   const [formKey, setFormKey] = useState(0);
 
   if (data.loading) {
-    return <p className="body-text">{t('provider.notes.loading')}</p>;
+    return <p className="field-hint">{t('provider.notes.loading')}</p>;
   }
 
   if (data.error) {

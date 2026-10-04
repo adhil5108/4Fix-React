@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { LANGUAGES, setLanguage } from '../i18n/index.js';
 
-// Two-option segmented control; the active language is filled. Switching re-renders
-// in place (no reload) and the choice is persisted by the i18n module.
-function LanguageSwitcher({ className = '' }) {
+// Two-option segmented control; the active language is highlighted. Switching re-renders
+// in place (no reload) and the choice is persisted by the i18n module. `compact` shows
+// the short labels (EN / മല) for top bars.
+function LanguageSwitcher({ className = '', compact = false }) {
   const { t, i18n } = useTranslation();
 
   return (
@@ -21,10 +22,7 @@ function LanguageSwitcher({ className = '' }) {
             aria-label={active ? language.label : t('common.language.switchTo', { language: language.label })}
             onClick={() => setLanguage(language.code)}
           >
-            <span className="lang-switch__full">{language.label}</span>
-            <span className="lang-switch__short" aria-hidden="true">
-              {language.shortLabel}
-            </span>
+            {compact ? language.shortLabel : language.label}
           </button>
         );
       })}

@@ -4,7 +4,7 @@ import { AddressForm, validateAddress } from '../../components/AddressForm.jsx';
 import AppShell from '../../components/AppShell.jsx';
 import ImageAttachments from '../../components/ImageAttachments.jsx';
 import TextField, { TextArea } from '../../components/TextField.jsx';
-import { Button, Card, ErrorState, LoadingState, Notice, PageHeader } from '../../components/ui.jsx';
+import { Button, ErrorState, LoadingState, Notice, StickyActionBar } from '../../components/ui.jsx';
 import { useAction, useApi } from '../../hooks/useApi.js';
 import { useTranslatedErrors } from '../../hooks/useTranslatedErrors.js';
 import { navigate } from '../../hooks/useRoute.js';
@@ -126,11 +126,11 @@ function ExternalJobForm({ jobId, initialJob }) {
   }
 
   return (
-    <form className="stack" onSubmit={handleSubmit} noValidate>
+    <form id="external-job-form" className="book-form" onSubmit={handleSubmit} noValidate>
       <Notice>{submit.error}</Notice>
 
-      <Card>
-        <h2 className="card__title">{t('provider.externalForm.customerTitle')}</h2>
+      <section className="form-section">
+        <h2 className="form-section__title">{t('provider.externalForm.customerTitle')}</h2>
         <div className="form-stack">
           <TextField
             id="customerName"
@@ -152,10 +152,10 @@ function ExternalJobForm({ jobId, initialJob }) {
             onChange={(event) => updateField('customerPhone', event.target.value)}
           />
         </div>
-      </Card>
+      </section>
 
-      <Card>
-        <h2 className="card__title">{t('provider.externalForm.jobTitle')}</h2>
+      <section className="form-section">
+        <h2 className="form-section__title">{t('provider.externalForm.jobTitle')}</h2>
         <div className="form-stack">
           <TextField
             id="serviceLabel"
@@ -178,16 +178,16 @@ function ExternalJobForm({ jobId, initialJob }) {
           />
           <ImageAttachments attachments={attachments} setAttachments={setAttachments} />
         </div>
-      </Card>
+      </section>
 
-      <Card>
-        <h2 className="card__title">{t('provider.externalForm.locationTitle')}</h2>
+      <section className="form-section">
+        <h2 className="form-section__title">{t('provider.externalForm.locationTitle')}</h2>
         <AddressForm form={form} errors={errors} onChange={updateField} />
-      </Card>
+      </section>
 
-      <Card>
-        <h2 className="card__title">{t('provider.externalForm.scheduleTitle')}</h2>
-        <p className="field-hint">{t('provider.externalForm.scheduleHint')}</p>
+      <section className="form-section">
+        <h2 className="form-section__title">{t('provider.externalForm.scheduleTitle')}</h2>
+        <p className="field-hint section-hint">{t('provider.externalForm.scheduleHint')}</p>
         <div className="form-row">
           <TextField
             id="scheduledDate"
@@ -206,12 +206,12 @@ function ExternalJobForm({ jobId, initialJob }) {
             onChange={(event) => updateField('scheduledTime', event.target.value)}
           />
         </div>
-      </Card>
+      </section>
 
       {!isEdit ? (
-        <Card>
-          <h2 className="card__title">{t('provider.externalForm.notesTitle')}</h2>
-          <p className="field-hint">{t('provider.externalForm.notesHint')}</p>
+        <section className="form-section">
+          <h2 className="form-section__title">{t('provider.externalForm.notesTitle')}</h2>
+          <p className="field-hint section-hint">{t('provider.externalForm.notesHint')}</p>
           <TextArea
             id="initialNote"
             label={t('provider.externalForm.noteLabel')}
@@ -221,14 +221,14 @@ function ExternalJobForm({ jobId, initialJob }) {
             placeholder={t('provider.externalForm.notePlaceholder')}
             onChange={(event) => setInitialNote(event.target.value)}
           />
-        </Card>
+        </section>
       ) : null}
 
-      <div className="sticky-actions">
-        <Button type="submit" block size="lg" loading={submit.pending === 'save'} loadingText={t('provider.externalForm.saving')}>
+      <StickyActionBar>
+        <Button type="submit" form="external-job-form" block size="lg" loading={submit.pending === 'save'} loadingText={t('provider.externalForm.saving')}>
           {isEdit ? t('provider.externalForm.save') : t('provider.externalForm.add')}
         </Button>
-      </div>
+      </StickyActionBar>
     </form>
   );
 }
@@ -241,9 +241,11 @@ function ExternalJobFormPage({ jobId }) {
     ? { to: `/provider/jobs/external/${jobId}`, label: t('provider.externalForm.backToJob') }
     : { to: '/provider/jobs', label: t('provider.shared.myJobs') };
 
+  const title = isEdit ? t('provider.externalForm.editTitle') : t('provider.externalForm.addTitle');
+
   if (isEdit && data.loading) {
     return (
-      <AppShell width="narrow">
+      <AppShell title={title} back={back} nav={false}>
         <LoadingState label={t('provider.shared.loadingJob')} />
       </AppShell>
     );
@@ -251,20 +253,15 @@ function ExternalJobFormPage({ jobId }) {
 
   if (isEdit && data.error) {
     return (
-      <AppShell width="narrow">
-        <PageHeader title={t('provider.shared.job')} back={back} />
+      <AppShell title={title} back={back} nav={false}>
         <ErrorState error={data.error} onRetry={data.reload} />
       </AppShell>
     );
   }
 
   return (
-    <AppShell width="narrow">
-      <PageHeader
-        back={back}
-        title={isEdit ? t('provider.externalForm.editTitle') : t('provider.externalForm.addTitle')}
-        subtitle={isEdit ? undefined : t('provider.externalForm.subtitle')}
-      />
+    <AppShell title={title} back={back} nav={false} bar>
+      {isEdit ? null : <p className="intro-header__text page-lead">{t('provider.externalForm.subtitle')}</p>}
       <ExternalJobForm jobId={jobId} initialJob={isEdit ? data.data.job : null} />
     </AppShell>
   );

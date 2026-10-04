@@ -4,7 +4,7 @@ import AdminShell from '../../components/admin/AdminShell.jsx';
 import AdminTable from '../../components/admin/AdminTable.jsx';
 import TextField, { TextArea } from '../../components/TextField.jsx';
 import { ServiceIcon } from '../../components/cards.jsx';
-import { Button, Card, ConfirmDialog, Notice } from '../../components/ui.jsx';
+import { Button, Card, ConfirmDialog, Notice, PageHeader } from '../../components/ui.jsx';
 import { useAction, useApi } from '../../hooks/useApi.js';
 import { useTranslatedErrors } from '../../hooks/useTranslatedErrors.js';
 import { adminApi } from '../../services/fixApi.js';
@@ -120,7 +120,7 @@ function AdminCategoriesPage() {
       key: 'isActive',
       label: t('admin.fields.status'),
       render: (row) => (
-        <span className={`badge badge--${row.isActive ? 'success' : 'muted'}`}>
+        <span className={`badge badge--${row.isActive ? 'done' : 'muted'}`}>
           {row.isActive ? t('admin.shared.active') : t('admin.shared.inactive')}
         </span>
       ),
@@ -129,7 +129,7 @@ function AdminCategoriesPage() {
       key: 'actions',
       label: '',
       render: (row) => (
-        <button type="button" className="text-link" onClick={() => startEdit(row)}>
+        <button type="button" className="link" onClick={() => startEdit(row)}>
           {t('admin.categories.edit')}
         </button>
       ),
@@ -140,12 +140,10 @@ function AdminCategoriesPage() {
 
   return (
     <AdminShell>
-      <div className="admin-content__header">
-        <div>
-          <h1 className="admin-content__title">{t('common.adminNav.categories')}</h1>
-          <p className="admin-content__subtitle">{t('admin.categories.subtitle')}</p>
-        </div>
-      </div>
+      <PageHeader
+        title={t('common.adminNav.categories')}
+        subtitle={t('admin.categories.subtitle')}
+      />
 
       <div className="stack">
         <Notice tone="success">{success ? t(success) : ''}</Notice>

@@ -72,13 +72,13 @@ function AdminProviderDetailPage({ providerId }) {
       <div className="admin-detail">
         <div>
           <Card>
-            <div className="provider-card__head">
+            <div className="contact-card__person">
               <Avatar name={provider.name} image={provider.profileImage} />
-              <div className="provider-card__identity">
-                <span className="provider-card__name">{provider.name}</span>
+              <div className="contact-card__who">
+                <span className="contact-card__name">{provider.name}</span>
                 <RatingSummary rating={provider.rating} reviewCount={provider.reviewCount} />
               </div>
-              <span className={`badge badge--${provider.isActive ? 'success' : 'muted'}`}>
+              <span className={`badge badge--${provider.isActive ? 'done' : 'muted'}`}>
                 {provider.isActive ? t('admin.shared.active') : t('admin.shared.deactivated')}
               </span>
             </div>
@@ -86,9 +86,9 @@ function AdminProviderDetailPage({ providerId }) {
             <ProviderFacts provider={provider} />
           </Card>
 
-          <section className="section section--tight" aria-labelledby="provider-bookings-heading">
-            <h2 id="provider-bookings-heading" className="section__title">
-              {t('admin.providerDetail.bookings')} {bookings.length > 0 ? <span className="count">{bookings.length}</span> : null}
+          <section className="section" aria-labelledby="provider-bookings-heading">
+            <h2 id="provider-bookings-heading" className="section-header__title">
+              {t('admin.providerDetail.bookings')} {bookings.length > 0 ? <span className="section-header__count">{bookings.length}</span> : null}
             </h2>
             {bookings.length === 0 ? (
               <p className="body-text">{t('admin.shared.noBookingsYet')}</p>
@@ -124,23 +124,23 @@ function AdminProviderDetailPage({ providerId }) {
             )}
           </section>
 
-          <section className="section section--tight" aria-labelledby="provider-reviews-heading">
-            <h2 id="provider-reviews-heading" className="section__title">
-              {t('admin.providerDetail.reviews')} {reviews.length > 0 ? <span className="count">{reviews.length}</span> : null}
+          <section className="section" aria-labelledby="provider-reviews-heading">
+            <h2 id="provider-reviews-heading" className="section-header__title">
+              {t('admin.providerDetail.reviews')} {reviews.length > 0 ? <span className="section-header__count">{reviews.length}</span> : null}
             </h2>
             {reviews.length === 0 ? (
               <p className="body-text">{t('admin.shared.noReviewsYet')}</p>
             ) : (
-              <div className="list">
+              <div className="stack">
                 {reviews.map((review) => (
-                  <article key={review.id} className="card review-card">
-                    <div className="review-card__top">
+                  <article key={review.id} className="card review-item">
+                    <div className="review-item__top">
                       <strong>{t('admin.shared.ratingOutOf', { rating: review.rating })}</strong>
-                      <span className="review-card__meta">
+                      <span className="field-hint">
                         {review.customer?.name || t('admin.shared.customerFallback')} · {formatTimestamp(review.createdAt)}
                       </span>
                     </div>
-                    {review.comment ? <p className="review-card__comment">{review.comment}</p> : null}
+                    {review.comment ? <p className="body-text">{review.comment}</p> : null}
                   </article>
                 ))}
               </div>

@@ -41,13 +41,20 @@ export default {
     viewBooking: 'View booking →',
   },
   dashboard: {
+    viewAll: 'View all',
+    groups: {
+      jobs: 'Jobs',
+      marketplace: 'Marketplace',
+    },
     greeting: 'Hi {{name}}',
     subtitle: 'Marketplace overview and recent activity.',
     loading: 'Loading dashboard…',
     tiles: {
       totalCustomers: 'Customers',
-      totalProviders: 'Providers',
-      totalServices: 'Services',
+      activeProviders: 'Active providers',
+      totalProviders: 'All providers',
+      activeServices: 'Active services',
+      totalServices: 'All services',
       openRequests: 'Open requests',
       acceptedRequests: 'Accepted requests',
       activeBookings: 'Active bookings',

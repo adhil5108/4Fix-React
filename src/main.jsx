@@ -1,10 +1,13 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/noto-sans-malayalam';
 import './i18n/index.js';
 import App from './App.jsx';
-import './styles/index.css';
-import './styles/app.css';
-import './styles/flow.css';
+import './styles/tokens.css';
+import './styles/base.css';
+import './styles/components.css';
+import './styles/pages.css';
 import './styles/admin.css';
 import './styles/i18n.css';
 
@@ -13,4 +16,3 @@ createRoot(document.getElementById('root')).render(
     <App />
   </StrictMode>,
 );
-
