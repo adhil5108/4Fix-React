@@ -21,26 +21,26 @@ import {
   Zap,
 } from 'lucide-react';
 
-// Services and categories without an uploaded icon get drawn art: a soft tile with a
-// line glyph chosen from their name. Admin-uploaded icons always win (see ServiceIcon).
+// Services and categories without an uploaded icon get a line icon chosen from their
+// name. Admin-uploaded icons always win (see ServiceIcon).
 // Order matters: the first matching rule is used.
 const ART_RULES = [
-  { match: /\ba\.?c\b|air ?con|air condition|cooling/i, icon: AirVent, tone: 'sky' },
-  { match: /(fridge|refrigerator|freezer)/i, icon: Refrigerator, tone: 'sky' },
-  { match: /(washing|washer|laundry|appliance)/i, icon: WashingMachine, tone: 'lilac' },
-  { match: /\b(fan|ceiling fan)/i, icon: Fan, tone: 'mint' },
-  { match: /(electric|wiring|wire|switch|socket|power|inverter)/i, icon: Zap, tone: 'sun' },
-  { match: /(light|lamp|bulb)/i, icon: Lightbulb, tone: 'sun' },
-  { match: /(plumb|pipe|tap|leak|water|drain|bathroom|toilet)/i, icon: Droplets, tone: 'sky' },
-  { match: /(paint|wall)/i, icon: PaintRoller, tone: 'peach' },
-  { match: /(carpent|wood|furniture|door|cupboard)/i, icon: Hammer, tone: 'sand' },
-  { match: /(clean|housekeep|sanit)/i, icon: Sparkles, tone: 'mint' },
-  { match: /(pest|termite|insect)/i, icon: Bug, tone: 'sand' },
-  { match: /(tv|television|electronic)/i, icon: Tv, tone: 'lilac' },
-  { match: /(gas|stove|cook|chimney)/i, icon: Flame, tone: 'peach' },
+  { match: /\ba\.?c\b|air ?con|air condition|cooling/i, icon: AirVent },
+  { match: /(fridge|refrigerator|freezer)/i, icon: Refrigerator },
+  { match: /(washing|washer|laundry|appliance)/i, icon: WashingMachine },
+  { match: /\b(fan|ceiling fan)/i, icon: Fan },
+  { match: /(electric|wiring|wire|switch|socket|power|inverter)/i, icon: Zap },
+  { match: /(light|lamp|bulb)/i, icon: Lightbulb },
+  { match: /(plumb|pipe|tap|leak|water|drain|bathroom|toilet)/i, icon: Droplets },
+  { match: /(paint|wall)/i, icon: PaintRoller },
+  { match: /(carpent|wood|furniture|door|cupboard)/i, icon: Hammer },
+  { match: /(clean|housekeep|sanit)/i, icon: Sparkles },
+  { match: /(pest|termite|insect)/i, icon: Bug },
+  { match: /(tv|television|electronic)/i, icon: Tv },
+  { match: /(gas|stove|cook|chimney)/i, icon: Flame },
 ];
 
-const FALLBACK = { icon: Wrench, tone: 'mint' };
+const FALLBACK = { icon: Wrench };
 
 // `item` is a service ({ name, category }) or a category ({ name }); a service with no
 // matching name falls back to its category's art so siblings look like a family.

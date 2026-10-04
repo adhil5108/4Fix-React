@@ -1315,13 +1315,12 @@ html:has(.app--with-bar) {
 .service-icon {
   display: inline-grid;
   flex: 0 0 auto;
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   place-items: center;
-  overflow: hidden;
-  border-radius: var(--r-md);
-  background: var(--tone-mint-bg);
-  color: var(--tone-mint-fg);
+  /* No tile: the icon itself sits on the card/page background. */
+  background: none;
+  color: var(--c-icon);
 }
 
 .service-icon img {
@@ -1329,44 +1328,42 @@ html:has(.app--with-bar) {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 6px;
 }
 
 .service-icon svg {
-  width: 52%;
-  height: 52%;
-  stroke-width: 1.7;
+  width: 100%;
+  height: 100%;
+  stroke-width: 1.5;
 }
 
 .service-icon__initials {
+  color: var(--c-icon);
   font-size: 0.95rem;
   font-weight: var(--weight-bold);
 }
 
 .service-icon--sm {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 28px;
+  height: 28px;
+}
+
+.service-icon--sm svg {
+  stroke-width: 1.7;
 }
 
 .service-icon--lg {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--r-lg);
+  width: 44px;
+  height: 44px;
 }
 
 .service-icon--xl {
-  width: 80px;
-  height: 80px;
-  border-radius: 20px;
+  width: 56px;
+  height: 56px;
 }
 
-.tone-mint { background: var(--tone-mint-bg); color: var(--tone-mint-fg); }
-.tone-sun { background: var(--tone-sun-bg); color: var(--tone-sun-fg); }
-.tone-sky { background: var(--tone-sky-bg); color: var(--tone-sky-fg); }
-.tone-peach { background: var(--tone-peach-bg); color: var(--tone-peach-fg); }
-.tone-lilac { background: var(--tone-lilac-bg); color: var(--tone-lilac-fg); }
-.tone-sand { background: var(--tone-sand-bg); color: var(--tone-sand-fg); }
+.service-icon--xl svg {
+  stroke-width: 1.35;
+}
 
 /* Category tiles (Home, Services): three across on phones. */
 .category-grid {
@@ -2003,7 +2000,8 @@ a.job-card:hover {
 }
 
 .image-picker__thumb--icon {
-  background: var(--tone-mint-bg);
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
   padding: 10px;
 }
 

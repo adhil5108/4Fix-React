@@ -44,19 +44,8 @@
   --c-unread: var(--c-primary);
   --c-on-unread: #ffffff;
 
-  /* Service / category art tiles */
-  --tone-mint-bg: #e4f3ea;
-  --tone-mint-fg: #12744a;
-  --tone-sun-bg: #fff2d4;
-  --tone-sun-fg: #a86a00;
-  --tone-sky-bg: #e5f0fb;
-  --tone-sky-fg: #2563a8;
-  --tone-peach-bg: #fde8dc;
-  --tone-peach-fg: #b4511c;
-  --tone-lilac-bg: #eee8fb;
-  --tone-lilac-fg: #6741b8;
-  --tone-sand-bg: #f2ede2;
-  --tone-sand-fg: #77653f;
+  /* Service / category icons: a muted line colour, drawn straight on the surface. */
+  --c-icon: #4f5663;
 
   /* Type: one family for English and Malayalam (glyphs fall back per script). */
   --font-sans: 'Inter Variable', 'Noto Sans Malayalam Variable', system-ui, -apple-system, 'Segoe UI',

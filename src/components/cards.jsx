@@ -14,15 +14,16 @@ import { artFor, issueIcon } from './serviceArt.js';
 import { ButtonLink, Link, ListRow, StatusBadge } from './ui.jsx';
 import { ChatCount } from './Unread.jsx';
 
-// The icon of a service or category. An uploaded asset (API field `image`) is always an
-// ICON: shown small, contain-fit, never cropped or used as a banner. Without one, drawn
-// art matching the name is shown (see serviceArt.js).
+// The icon of a service or category, drawn straight on the card/page — no tile behind
+// it. An uploaded asset (API field `image`) is always an ICON: compact, contain-fit,
+// never cropped or used as a banner. Without one, a line icon matching the name is shown
+// (see serviceArt.js).
 export function ServiceIcon({ service, size = 'md' }) {
   const art = artFor(service);
   const Art = art.icon;
 
   return (
-    <span className={`service-icon service-icon--${size} tone-${art.tone}`} aria-hidden="true">
+    <span className={`service-icon service-icon--${size}`} aria-hidden="true">
       {service?.image ? (
         <img src={service.image} alt="" loading="lazy" />
       ) : Art ? (
