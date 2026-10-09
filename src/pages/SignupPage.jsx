@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import CategoryPicker from '../components/CategoryPicker.jsx';
 import PasswordField from '../components/PasswordField.jsx';
 import PhonePrefix from '../components/PhonePrefix.jsx';
-import ShopLocationField from '../components/ShopLocationField.jsx';
+import ShopDetailsFields, { validateShopDetails } from '../components/ShopDetailsFields.jsx';
 import TextField from '../components/TextField.jsx';
 import AuthLayout from '../components/AuthLayout.jsx';
 import { Button, Notice } from '../components/ui.jsx';
@@ -21,7 +21,7 @@ const initialForm = {
 };
 
 // Returns translation keys (translated where rendered) so errors follow a language switch.
-function validateForm(form, shopLocation, categories) {
+function validateForm(form, shop, categories) {
   const errors = {};
 
   if (!form.phoneNumber.trim()) {
@@ -44,13 +44,8 @@ function validateForm(form, shopLocation, categories) {
     errors.confirmPassword = 'auth.errors.passwordMismatch';
   }
 
-  // Registration takes the shop address only (same length rule as an address line).
-  const shopAddress = shopLocation?.address?.trim() || '';
-  if (!shopAddress) {
-    errors.shopLocationAddress = 'auth.errors.shopAddressRequired';
-  } else if (shopAddress.length < 5) {
-    errors.shopLocationAddress = 'auth.errors.shopAddressShort';
-  }
+  // Shop name and address are separate; the typed address is the shop location.
+  Object.assign(errors, validateShopDetails(shop));
 
   if (categories.length === 0) {
     errors.categories = 'auth.errors.categoriesRequired';
@@ -66,7 +61,7 @@ function SignupPage() {
   const returnTo = getSafeReturnTo(useQueryParam('returnTo'));
   const returnQuery = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : '';
   const [form, setForm] = useState(initialForm);
-  const [shopLocation, setShopLocation] = useState(null);
+  const [shop, setShop] = useState({ shopName: '', address: '' });
   const [categories, setCategories] = useState([]);
   const categoryList = useApi(() => categoriesApi.list(), []);
   const [errors, setErrors] = useState({});
@@ -86,7 +81,7 @@ function SignupPage() {
       return;
     }
 
-    const nextErrors = validateForm(form, shopLocation, categories);
+    const nextErrors = validateForm(form, shop, categories);
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
@@ -100,7 +95,8 @@ function SignupPage() {
     try {
       const result = await signupProvider({
         ...form,
-        shopLocation: { address: shopLocation.address.trim() },
+        shopName: shop.shopName.trim(),
+        shopLocation: { address: shop.address.trim() },
         categories,
       });
       navigate(resolvePostAuthRoute(result.user.role, returnTo), { replace: true });
@@ -204,17 +200,19 @@ function SignupPage() {
 
         <section className="form-section" aria-labelledby="signup-shop">
           <h2 id="signup-shop" className="form-section__title">
-            {t('auth.signup.shopLocationTitle')}
+            {t('auth.signup.shopTitle')}
           </h2>
-          <p className="field-hint section-hint">{t('auth.signup.shopLocationHint')}</p>
-          <ShopLocationField
-            manualOnly
-            value={shopLocation}
-            error={errors.shopLocationAddress ? t(errors.shopLocationAddress) : ''}
+          <p className="field-hint section-hint">{t('auth.signup.shopHint')}</p>
+          <ShopDetailsFields
+            value={shop}
+            errors={{
+              shopName: errors.shopName ? t(errors.shopName) : '',
+              shopAddress: errors.shopAddress ? t(errors.shopAddress) : '',
+            }}
             disabled={isSubmitting}
-            onChange={(next) => {
-              setShopLocation(next);
-              setErrors((current) => ({ ...current, shopLocationAddress: '' }));
+            onChange={(field, text) => {
+              setShop((current) => ({ ...current, [field]: text }));
+              setErrors((current) => ({ ...current, [field === 'address' ? 'shopAddress' : 'shopName']: '' }));
               setFormError('');
             }}
           />

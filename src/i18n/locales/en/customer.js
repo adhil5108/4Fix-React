@@ -72,6 +72,7 @@ export default {
     stages: {
       sent: 'Request sent',
       assigned: 'Provider assigned',
+      locationReached: 'Provider reached your location',
       inProgress: 'Work in progress',
       completed: 'Completed',
     },
@@ -100,6 +101,7 @@ export default {
       PENDING: 'Your request is live. Nearby providers can see it — the first one to accept takes the job. This page updates automatically.',
       ACCEPTED: '{{name}} accepted your request and will start the job soon. You can chat with them now.',
       acceptedFallbackName: 'A provider',
+      LOCATION_REACHED: '{{name}} has reached your location and will start the job soon.',
       IN_PROGRESS: 'Work on your request is in progress.',
       COMPLETED: 'This job is complete. Let others know how it went by leaving a review.',
       CANCELLED: 'This request was cancelled.',
@@ -134,6 +136,7 @@ export default {
       COMPLETED: 'Service completed. Rate your experience to help other customers.',
       CANCELLED: 'This booking was cancelled.',
       ASSIGNED: 'Your provider accepted the job and will start soon.',
+      LOCATION_REACHED: 'Your provider has reached your location and will start soon.',
       IN_PROGRESS: 'Your provider is working on it.',
     },
     chatWith: 'Chat with {{name}}',

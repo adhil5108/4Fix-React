@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
@@ -493,7 +494,9 @@ export function ConfirmDialog({
     return null;
   }
 
-  return (
+  // Portalled to <body>: callers may render this inside a fixed sticky action bar, whose
+  // stacking context would otherwise leave the dialog under the bottom navigation.
+  return createPortal(
     <div className="sheet-backdrop" onClick={() => !busy && onCancel()}>
       <div
         className="sheet"
@@ -519,6 +522,7 @@ export function ConfirmDialog({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

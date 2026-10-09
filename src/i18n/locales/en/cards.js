@@ -147,6 +147,7 @@ export default {
     ariaLabel: 'Job progress',
     stages: {
       ASSIGNED: 'Provider accepted',
+      LOCATION_REACHED: 'Reached customer location',
       IN_PROGRESS: 'Work in progress',
       COMPLETED: 'Completed',
     },
@@ -160,20 +161,5 @@ export default {
     placeholder: 'Type a message',
     inputLabel: 'Message',
     send: 'Send',
-  },
-  shopLocation: {
-    mapTitle: 'Shop location on a map',
-    unsupportedManual: 'This browser can’t share your location. Enter your shop coordinates instead.',
-    captured: 'Shop location captured. Make sure you’re at your shop, or update it.',
-    capturedAccuracy: 'Shop location captured (accurate to about {{meters}} m). Make sure you’re at your shop, or update it.',
-    landmark: 'Shop name or address (optional)',
-    landmarkPlaceholder: 'e.g. Cool Air Services, MG Road',
-    manualHelp: 'Open your shop in Google Maps, copy the link (or the coordinates) and paste it here.',
-    manualLabel: 'Coordinates or Google Maps link',
-    manualPlaceholder: 'e.g. 9.9312, 76.2673',
-    manualInvalid: 'We couldn’t find coordinates in that. Paste a Google Maps link or “latitude, longitude”.',
-    useDevice: 'Use this device’s location instead',
-    enterManually: 'Can’t use location here? Enter coordinates',
-    addressLabel: 'Shop name or address',
   },
 };

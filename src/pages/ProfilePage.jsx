@@ -9,6 +9,7 @@ import {
   MapPin,
   NotebookText,
   Phone,
+  Star,
   Store,
   User,
   Wrench,
@@ -16,8 +17,7 @@ import {
 import AppShell from '../components/AppShell.jsx';
 import CategoryPicker from '../components/CategoryPicker.jsx';
 import LanguageSwitcher from '../components/LanguageSwitcher.jsx';
-import { LocationPreview } from '../components/LocationCapture.jsx';
-import ShopLocationField from '../components/ShopLocationField.jsx';
+import ShopDetailsFields, { validateShopDetails } from '../components/ShopDetailsFields.jsx';
 import TextField, { TextArea } from '../components/TextField.jsx';
 import { Avatar } from '../components/cards.jsx';
 import { Button, ErrorState, ListRow, LoadingState, Notice } from '../components/ui.jsx';
@@ -59,81 +59,83 @@ function EditAction({ onClick }) {
   );
 }
 
-// The provider's registered shop/business location — fixed profile data, not a live
-// position. Shown to the provider and admin only; never on the public profile.
+// The provider's shop/business name and address — fixed profile data typed by the
+// provider, never a map pin or a live position. Shown to the provider and admin only;
+// never on the public profile. Providers registered before the name was a separate
+// field keep their combined text as the address and may add a name here.
+function shopForm(user) {
+  return { shopName: user.shopName || '', address: user.shopLocation?.address || '' };
+}
+
 function BusinessSection({ user, onSaved }) {
   const { t } = useTranslation();
-  const current = user.shopLocation;
-  const hasCoordinates = Number.isFinite(current?.latitude) && Number.isFinite(current?.longitude);
+  const current = user.shopLocation?.address ? user.shopLocation : null;
   const [editing, setEditing] = useState(!current);
-  const [value, setValue] = useState(null);
-  const [error, setError] = useState('');
+  const [value, setValue] = useState(() => shopForm(user));
+  // Translation keys, so errors follow a language switch.
+  const [errors, setErrors] = useState({});
   const save = useAction();
 
+  function startEditing() {
+    setValue(shopForm(user));
+    setErrors({});
+    setEditing(true);
+  }
+
   async function handleSave() {
-    if (!value) {
-      setError('auth.errors.shopLocationRequired');
+    const nextErrors = validateShopDetails(value, { requireName: false });
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
       return;
     }
 
     const ok = await save.run('shop', async () => {
       const result = await updateMeRequest({
-        shopLocation: {
-          latitude: value.latitude,
-          longitude: value.longitude,
-          address: value.address?.trim() || undefined,
-        },
+        shopName: value.shopName.trim() || null,
+        shopLocation: { address: value.address.trim() },
       });
       await onSaved(result.user);
     });
 
-    if (ok) {
-      setEditing(false);
-      setValue(null);
-    }
+    if (ok) setEditing(false);
   }
 
   return (
     <Section
       title={t('profile.sections.business')}
-      action={current && !editing ? <EditAction onClick={() => setEditing(true)} /> : null}
+      action={current && !editing ? <EditAction onClick={startEditing} /> : null}
     >
       {current && !editing ? (
         <>
-          <ListRow
-            icon={Store}
-            label={t('profile.shop.addressLabel')}
-            value={current.address || t('profile.shop.noAddress')}
-            muted={!current.address}
-          />
-          <ListRow
-            icon={MapPin}
-            label={t('profile.shop.statusLabel')}
-            value={
-              <span className={`badge ${hasCoordinates ? 'badge--done' : 'badge--muted'}`}>
-                {hasCoordinates ? t('profile.shop.pinSet') : t('profile.shop.pinMissing')}
-              </span>
-            }
-          />
-          {/* Providers who registered with an address only have no coordinates yet. */}
-          {hasCoordinates ? (
+          {!user.shopName ? (
             <div className="list-block">
-              <LocationPreview latitude={current.latitude} longitude={current.longitude} title={t('profile.shop.title')} />
+              <Notice tone="info">{t('profile.shop.missingName')}</Notice>
             </div>
           ) : null}
+          <ListRow
+            icon={Store}
+            label={t('profile.shop.nameLabel')}
+            value={user.shopName || t('profile.shop.noName')}
+            muted={!user.shopName}
+          />
+          <ListRow icon={MapPin} label={t('profile.shop.addressLabel')} value={current.address} />
         </>
       ) : (
         <div className="list-block form-stack">
           <p className="field-hint">{t('profile.shop.hint')}</p>
           {!current ? <Notice tone="info">{t('profile.shop.missing')}</Notice> : null}
           <Notice>{save.error}</Notice>
-          <ShopLocationField
+          <ShopDetailsFields
             value={value}
-            error={error ? t(error) : ''}
+            errors={{
+              shopName: errors.shopName ? t(errors.shopName) : '',
+              shopAddress: errors.shopAddress ? t(errors.shopAddress) : '',
+            }}
             disabled={save.pending === 'shop'}
-            onChange={(next) => {
-              setValue(next);
-              setError('');
+            onChange={(field, text) => {
+              setValue((form) => ({ ...form, [field]: text }));
+              setErrors((form) => ({ ...form, [field === 'address' ? 'shopAddress' : 'shopName']: '' }));
             }}
           />
           <div className="button-row">
@@ -456,6 +458,7 @@ function ProfilePage() {
         {isProvider ? (
           <>
             <ListRow icon={Wrench} to="/provider/jobs" title={t('common.nav.myJobs')} />
+            <ListRow icon={Star} to="/provider/reviews" title={t('provider.reviews.title')} />
             <ListRow icon={Eye} to={`/providers/${user.id}`} title={t('profile.account.viewPublic')} />
           </>
         ) : null}

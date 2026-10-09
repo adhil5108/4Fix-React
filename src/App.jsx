@@ -35,6 +35,7 @@ import ProviderJobPage from './pages/provider/ProviderJobPage.jsx';
 import ProviderJobsPage from './pages/provider/ProviderJobsPage.jsx';
 import ProviderRequestDetailsPage from './pages/provider/ProviderRequestDetailsPage.jsx';
 import ProviderRequestsPage from './pages/provider/ProviderRequestsPage.jsx';
+import ProviderReviewsPage from './pages/provider/ProviderReviewsPage.jsx';
 import AboutPage from './pages/public/AboutPage.jsx';
 import CategoryPage from './pages/public/CategoryPage.jsx';
 import HomePage from './pages/public/HomePage.jsx';
@@ -176,6 +177,12 @@ const ROUTES = [
     path: '/provider/chats',
     access: 'PROVIDER',
     render: () => <ChatsPage />,
+  },
+  {
+    // Admin (Provider View) gets an empty list from the API, like /provider/jobs.
+    path: '/provider/reviews',
+    access: ['PROVIDER', 'ADMIN'],
+    render: () => <ProviderReviewsPage />,
   },
   {
     path: '/provider/profile',

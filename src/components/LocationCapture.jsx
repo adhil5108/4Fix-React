@@ -46,13 +46,12 @@ export function LocationPreview({ latitude, longitude, title }) {
 }
 
 // Captures the device's current position once, on request — a customer's service
-// location, or (variant="shop") a provider's shop location at signup/profile. It never
-// tracks. `value` is { latitude, longitude, address } or null; `address` is an optional
-// typed hint.
-function LocationCapture({ value, onChange, error, disabled = false, variant = 'service', id = 'location' }) {
+// location. It never tracks. `value` is { latitude, longitude, address } or null;
+// `address` is an optional typed hint. (Provider shop details never use this: they are
+// a typed address only.)
+function LocationCapture({ value, onChange, error, disabled = false, id = 'location' }) {
   const { t } = useTranslation();
-  // Wording differs per use; everything else (states, errors, buttons) is shared.
-  const copy = (key, options) => t(`cards.${variant === 'shop' ? 'shopLocation' : 'location'}.${key}`, options);
+  const copy = (key, options) => t(`cards.location.${key}`, options);
   const supported = typeof navigator !== 'undefined' && Boolean(navigator.geolocation);
   const [status, setStatus] = useState(value ? 'ready' : 'idle');
   const [message, setMessage] = useState('');

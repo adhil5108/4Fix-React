@@ -151,8 +151,12 @@ export const providerApi = {
   getRequest: (requestId) => apiRequest(`/api/provider/requests/${id(requestId)}`),
   jobs: ({ status, bookingStatus } = {}) =>
     apiRequest(`/api/provider/jobs${toQueryString({ status, bookingStatus })}`),
+  // The signed-in provider's own reviews ("My Reviews"); scoped by the JWT, no id.
+  reviews: () => apiRequest('/api/provider/reviews'),
   // Atomically claims an open request; 409 when another provider got there first.
   accept: (requestId) => apiRequest(`/api/requests/${id(requestId)}/accept`, { method: 'POST' }),
+  locationReached: (requestId) =>
+    apiRequest(`/api/requests/${id(requestId)}/location-reached`, { method: 'POST' }),
   start: (requestId) => apiRequest(`/api/requests/${id(requestId)}/start`, { method: 'POST' }),
   complete: (requestId) =>
     apiRequest(`/api/requests/${id(requestId)}/complete`, { method: 'POST' }),

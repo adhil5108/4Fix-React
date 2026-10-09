@@ -334,6 +334,39 @@
   gap: var(--s-2);
 }
 
+.review-item__comment {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* The job a review was left on (provider's "My Reviews"). */
+.review-item__job {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding-top: var(--s-2);
+  border-top: 1px solid var(--c-border);
+  min-width: 0;
+}
+
+.review-item__job > div {
+  min-width: 0;
+}
+
+.review-item__service {
+  color: var(--c-ink);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.review-summary__value {
+  color: var(--c-ink);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+}
+
 /* ---------------------------------------------------------------- Profiles */
 
 .profile-summary {

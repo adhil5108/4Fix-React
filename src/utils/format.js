@@ -3,6 +3,7 @@ import i18n, { currentDateLocale } from '../i18n/index.js';
 export const REQUEST_STATUSES = [
   'PENDING',
   'ACCEPTED',
+  'LOCATION_REACHED',
   'IN_PROGRESS',
   'COMPLETED',
   'CANCELLED',
@@ -39,6 +40,7 @@ export function statusTone(status) {
     case 'ASSIGNED':
     case 'SCHEDULED':
       return 'assigned';
+    case 'LOCATION_REACHED':
     case 'IN_PROGRESS':
     case 'ON_THE_WAY':
     case 'ARRIVED':

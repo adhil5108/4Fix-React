@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CircleCheck, FileText, MessageCircle, Navigation, NotebookPen, Phone, Play } from 'lucide-react';
+import { CircleCheck, FileText, MapPinCheck, MessageCircle, Navigation, NotebookPen, Phone, Play } from 'lucide-react';
 import AppShell from '../../components/AppShell.jsx';
 import JobNotes from '../../components/JobNotes.jsx';
 import TrackingTimeline from '../../components/TrackingTimeline.jsx';
@@ -33,16 +33,18 @@ import { bookingsApi, providerApi } from '../../services/fixApi.js';
 import { formatDateTime, formatIssueLabel, shortRef } from '../../utils/format.js';
 
 const TERMINAL = ['COMPLETED', 'CANCELLED'];
-const ACTION_ICONS = { start: Play, complete: CircleCheck };
+const ACTION_ICONS = { locationReached: MapPinCheck, start: Play, complete: CircleCheck };
 
-// V1 job lifecycle: accepted → start → complete. Every button calls the backend and
-// refreshes; nothing changes state locally. There are no scheduling or travel steps and
-// the provider never shares a live location — Navigate opens the customer's location.
+// Job lifecycle: accepted → location reached → start → complete. Every button calls the
+// backend and refreshes; nothing changes state locally (the backend rejects skipped or
+// out-of-order steps). There is no scheduling step and the provider never shares a live
+// location — Navigate opens the customer's location, and Location Reached is a tap.
 function nextAction(booking) {
   const { requestStatus, status } = booking;
 
   if (TERMINAL.includes(status) || TERMINAL.includes(requestStatus)) return null;
-  if (requestStatus === 'ACCEPTED') return 'start';
+  if (requestStatus === 'ACCEPTED') return 'locationReached';
+  if (requestStatus === 'LOCATION_REACHED') return 'start';
   if (requestStatus === 'IN_PROGRESS') return 'complete';
   return null;
 }
@@ -96,6 +98,12 @@ function ProviderJobPage({ bookingId }) {
   }
 
   const runners = {
+    locationReached: () =>
+      perform(
+        'locationReached',
+        () => providerApi.locationReached(booking.requestId),
+        'provider.job.success.locationReached',
+      ),
     start: () => perform('start', () => providerApi.start(booking.requestId), 'provider.job.success.start'),
     complete: () => perform('complete', () => providerApi.complete(booking.requestId), 'provider.job.success.complete'),
   };

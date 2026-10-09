@@ -4,17 +4,20 @@ import { formatDateTime } from '../utils/format.js';
 
 // Default stages are labelled by status key (cards.timeline.stages.*). Custom `stages`
 // from callers may carry a `labelKey` to translate, or a ready (already translated) `label`.
-// A 4Fix job: accepted → in progress → completed. No travel/arrival steps.
+// A 4Fix job: accepted → location reached → in progress → completed. No live travel
+// tracking. Jobs started before the Location Reached step show it done, without a time.
 const BOOKING_STAGES = [
   { status: 'ASSIGNED', labelKey: 'cards.timeline.stages.ASSIGNED', at: 'acceptedAt' },
+  { status: 'LOCATION_REACHED', labelKey: 'cards.timeline.stages.LOCATION_REACHED', at: 'locationReachedAt' },
   { status: 'IN_PROGRESS', labelKey: 'cards.timeline.stages.IN_PROGRESS', at: 'startedAt' },
   { status: 'COMPLETED', labelKey: 'cards.timeline.stages.COMPLETED', at: 'completedAt' },
 ];
 
 const BOOKING_RANK = {
   ASSIGNED: 0,
-  IN_PROGRESS: 1,
-  COMPLETED: 2,
+  LOCATION_REACHED: 1,
+  IN_PROGRESS: 2,
+  COMPLETED: 3,
 };
 
 // `stages`/`rank` default to a Booking's own lifecycle; an external job passes its own

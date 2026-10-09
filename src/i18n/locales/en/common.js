@@ -98,6 +98,7 @@ export default {
     request: {
       PENDING: 'Finding a provider',
       ACCEPTED: 'Provider assigned',
+      LOCATION_REACHED: 'Provider at your location',
       IN_PROGRESS: 'In progress',
       COMPLETED: 'Completed',
       CANCELLED: 'Cancelled',
@@ -105,12 +106,14 @@ export default {
     provider: {
       PENDING: 'Open',
       ACCEPTED: 'Accepted by you',
+      LOCATION_REACHED: 'At location',
       IN_PROGRESS: 'In progress',
       COMPLETED: 'Completed',
       CANCELLED: 'Cancelled',
     },
     booking: {
       ASSIGNED: 'Assigned',
+      LOCATION_REACHED: 'Location reached',
       IN_PROGRESS: 'In progress',
       COMPLETED: 'Completed',
       CANCELLED: 'Cancelled',

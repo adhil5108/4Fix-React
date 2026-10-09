@@ -95,6 +95,7 @@ export default {
     request: {
       PENDING: 'സേവനദാതാവിനെ തിരയുന്നു',
       ACCEPTED: 'സേവനദാതാവിനെ നിയോഗിച്ചു',
+      LOCATION_REACHED: 'സേവനദാതാവ് നിങ്ങളുടെ സ്ഥലത്തുണ്ട്',
       IN_PROGRESS: 'ജോലി നടക്കുന്നു',
       COMPLETED: 'പൂർത്തിയായി',
       CANCELLED: 'റദ്ദാക്കി',
@@ -102,12 +103,14 @@ export default {
     provider: {
       PENDING: 'ഓപ്പൺ',
       ACCEPTED: 'നിങ്ങൾ സ്വീകരിച്ചു',
+      LOCATION_REACHED: 'സ്ഥലത്തെത്തി',
       IN_PROGRESS: 'ജോലി നടക്കുന്നു',
       COMPLETED: 'പൂർത്തിയായി',
       CANCELLED: 'റദ്ദാക്കി',
     },
     booking: {
       ASSIGNED: 'നിയോഗിച്ചു',
+      LOCATION_REACHED: 'സ്ഥലത്തെത്തി',
       IN_PROGRESS: 'ജോലി നടക്കുന്നു',
       COMPLETED: 'പൂർത്തിയായി',
       CANCELLED: 'റദ്ദാക്കി',

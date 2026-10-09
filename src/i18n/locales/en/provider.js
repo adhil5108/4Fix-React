@@ -86,7 +86,7 @@ export default {
     posted: 'posted {{time}}',
     postedWithIssue: '{{issue}} · posted {{time}}',
     takeTitle: 'Take this job?',
-    takeText: 'The first provider to accept gets the job. You’ll then see the customer’s exact location, can chat with them and schedule the visit. Agree the price with the customer directly.',
+    takeText: 'The first provider to accept gets the job. You’ll then see the customer’s exact location, can chat with them and navigate there. Tap Location Reached when you arrive, then start the job. Agree the price with the customer directly.',
     adminReadOnly: 'Admin preview is read-only — accepting jobs is a provider-only action.',
     yoursTitle: 'This is your job',
     yoursText: 'Manage the visit, navigation, chat and notes from the job page.',
@@ -128,11 +128,16 @@ export default {
     acceptedOn: 'Accepted {{time}}',
     call: 'Call',
     chatShort: 'Chat',
-    justAccepted: 'Job accepted. It’s yours — navigate to the customer and start the job when you begin work.',
+    justAccepted: 'Job accepted. It’s yours — navigate to the customer and tap Location Reached when you get there.',
     actions: {
+      locationReached: {
+        title: 'On your way?',
+        text: 'Navigate to the customer, then tap Location Reached when you arrive.',
+        button: 'Location Reached',
+      },
       start: {
         title: 'Ready to work?',
-        text: 'Navigate to the customer, then start the job when you begin work.',
+        text: 'You’re at the customer’s location. Start the job when you begin work.',
         button: 'Start Job',
       },
       complete: {
@@ -142,10 +147,16 @@ export default {
       },
     },
     success: {
+      locationReached: 'The customer can see that you have reached their location.',
       start: 'Job started.',
       complete: 'Job completed.',
     },
     confirm: {
+      locationReached: {
+        title: 'Reached the location?',
+        message: 'The customer will see that you have arrived. Do this only once you are at their location.',
+        confirmLabel: 'Location Reached',
+      },
       start: {
         title: 'Start this job?',
         message: 'The customer will see that work is in progress.',
@@ -231,6 +242,17 @@ export default {
     editTitle: 'Edit job',
     addTitle: 'Add a job',
     subtitle: 'Record a job that came in outside 4Fix.',
+  },
+  reviews: {
+    title: 'My Reviews',
+    loading: 'Loading your reviews…',
+    listTitle: 'What customers said',
+    summary_one: 'Average of {{count}} review',
+    summary_other: 'Average of {{count}} reviews',
+    emptyTitle: 'No reviews yet',
+    emptyMessage: 'When customers review a job you completed, it will appear here.',
+    noComment: 'No written comment.',
+    completedOn: 'Completed {{date}}',
   },
   notes: {
     loading: 'Loading notes…',

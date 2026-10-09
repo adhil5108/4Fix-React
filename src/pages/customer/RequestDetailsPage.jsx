@@ -37,19 +37,21 @@ import {
 import { customerBookingsApi, requestsApi } from '../../services/fixApi.js';
 import { formatIssueLabel, formatSlot, formatTimestamp, shortRef } from '../../utils/format.js';
 
-// The customer's side of a job: request sent → provider assigned → in progress → done.
+// The customer's side of a job: request sent → provider assigned → provider reached the
+// location → in progress → done.
 const JOB_STAGES = [
   { status: 'PENDING', labelKey: 'customer.job.stages.sent', at: 'sentAt' },
   { status: 'ACCEPTED', labelKey: 'customer.job.stages.assigned', at: 'acceptedAt' },
+  { status: 'LOCATION_REACHED', labelKey: 'customer.job.stages.locationReached', at: 'locationReachedAt' },
   { status: 'IN_PROGRESS', labelKey: 'customer.job.stages.inProgress', at: 'startedAt' },
   { status: 'COMPLETED', labelKey: 'customer.job.stages.completed', at: 'completedAt' },
 ];
-const JOB_RANK = { PENDING: 0, ACCEPTED: 1, IN_PROGRESS: 2, COMPLETED: 3 };
-const LIVE = ['PENDING', 'ACCEPTED', 'IN_PROGRESS'];
+const JOB_RANK = { PENDING: 0, ACCEPTED: 1, LOCATION_REACHED: 2, IN_PROGRESS: 3, COMPLETED: 4 };
+const LIVE = ['PENDING', 'ACCEPTED', 'LOCATION_REACHED', 'IN_PROGRESS'];
 
 function statusText(request, t) {
-  if (request.status === 'ACCEPTED') {
-    return t('customer.request.status.ACCEPTED', {
+  if (request.status === 'ACCEPTED' || request.status === 'LOCATION_REACHED') {
+    return t(`customer.request.status.${request.status}`, {
       name: request.selectedProvider?.name || t('customer.request.status.acceptedFallbackName'),
     });
   }
@@ -183,6 +185,7 @@ function RequestDetailsPage({ requestId }) {
   const timeline = {
     sentAt: request.createdAt,
     acceptedAt: request.acceptedAt,
+    locationReachedAt: request.locationReachedAt ?? booking?.timeline?.locationReachedAt,
     startedAt: booking?.timeline?.startedAt,
     completedAt: booking?.timeline?.completedAt,
   };
