@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Copy, FileText, MessageCircle, Phone, Smartphone, Star, XCircle } from 'lucide-react';
+import { Check, ChevronDown, Copy, FileText, Link2, MessageCircle, Phone, Plus, Star } from 'lucide-react';
 import AppShell from '../../components/AppShell.jsx';
+import NoRequestAccess from '../../components/NoRequestAccess.jsx';
 import TrackingTimeline from '../../components/TrackingTimeline.jsx';
 import {
   AttachmentList,
@@ -16,17 +17,15 @@ import {
   ButtonLink,
   Card,
   ConfirmDialog,
-  EmptyState,
   ErrorState,
   ListRow,
   LoadingState,
   Notice,
   SectionHeader,
   Sheet,
-  StatusBadge,
 } from '../../components/ui.jsx';
 import { useAction, useApi } from '../../hooks/useApi.js';
-import { useQueryParam } from '../../hooks/useRoute.js';
+import { navigate, useQueryParam } from '../../hooks/useRoute.js';
 import { usePolling } from '../../hooks/usePolling.js';
 import {
   adoptTokenFromLocation,
@@ -35,29 +34,9 @@ import {
   trackingLink,
 } from '../../services/customerAccess.js';
 import { customerBookingsApi, requestsApi } from '../../services/fixApi.js';
+import { customerTimeline, isActiveRequest, requestActions } from '../../utils/customerRequest.js';
 import { formatIssueLabel, formatSlot, formatTimestamp, shortRef } from '../../utils/format.js';
-
-// The customer's side of a job: request sent → provider assigned → provider reached the
-// location → in progress → done.
-const JOB_STAGES = [
-  { status: 'PENDING', labelKey: 'customer.job.stages.sent', at: 'sentAt' },
-  { status: 'ACCEPTED', labelKey: 'customer.job.stages.assigned', at: 'acceptedAt' },
-  { status: 'LOCATION_REACHED', labelKey: 'customer.job.stages.locationReached', at: 'locationReachedAt' },
-  { status: 'IN_PROGRESS', labelKey: 'customer.job.stages.inProgress', at: 'startedAt' },
-  { status: 'COMPLETED', labelKey: 'customer.job.stages.completed', at: 'completedAt' },
-];
-const JOB_RANK = { PENDING: 0, ACCEPTED: 1, LOCATION_REACHED: 2, IN_PROGRESS: 3, COMPLETED: 4 };
-const LIVE = ['PENDING', 'ACCEPTED', 'LOCATION_REACHED', 'IN_PROGRESS'];
-
-function statusText(request, t) {
-  if (request.status === 'ACCEPTED' || request.status === 'LOCATION_REACHED') {
-    return t(`customer.request.status.${request.status}`, {
-      name: request.selectedProvider?.name || t('customer.request.status.acceptedFallbackName'),
-    });
-  }
-
-  return t(`customer.request.status.${request.status}`, { defaultValue: '' });
-}
+import { bookPath } from '../public/publicLinks.js';
 
 // Fetch-if-exists: 404 simply means "not there yet".
 async function optional(promise) {
@@ -69,10 +48,35 @@ async function optional(promise) {
   }
 }
 
-// "Open on another phone": the private tracking link, kept out of the way in a sheet.
-function ShareSheet({ open, requestId, onClose }) {
+// Clipboard API where allowed; the older copy command otherwise (e.g. plain-http
+// previews). Returns false when neither worked so the link can be shown to copy by hand.
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    try {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      const ok = document.execCommand('copy');
+      area.remove();
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+}
+
+// "Keep this request": the private tracking link, copied rather than displayed. The
+// link (it carries the access token) is only shown if copying is impossible.
+function KeepRequestPanel({ requestId }) {
   const { t } = useTranslation();
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState('idle');
   const token = tokenForRequest(requestId);
 
   if (!token) {
@@ -82,39 +86,171 @@ function ShareSheet({ open, requestId, onClose }) {
   const link = trackingLink(requestId, token);
 
   async function copy() {
-    try {
-      await navigator.clipboard.writeText(link);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
+    setCopyState((await copyText(link)) ? 'copied' : 'failed');
   }
 
   return (
-    <Sheet open={open} title={t('customer.request.trackingLink.title')} onClose={onClose}>
-      <div className="form-stack">
-        <p className="body-text">{t('customer.request.trackingLink.hint')}</p>
-        <div className="field-control">
-          <input
-            className="field-input"
-            readOnly
-            value={link}
-            aria-label={t('customer.request.trackingLink.title')}
-            onFocus={(event) => event.target.select()}
-          />
+    <div className="keep-request">
+      <p className="body-text">{t('customer.keep.text')}</p>
+      <p className="keep-request__warning">{t('customer.keep.warning')}</p>
+      <Button icon={copyState === 'copied' ? Check : Copy} variant="secondary" block onClick={copy}>
+        {copyState === 'copied' ? t('customer.keep.copied') : t('customer.keep.copy')}
+      </Button>
+      <p className="sr-only" role="status">
+        {copyState === 'copied' ? t('customer.keep.copied') : ''}
+      </p>
+      {copyState === 'failed' ? (
+        <div className="form-stack">
+          <p className="field-hint">{t('customer.keep.copyFailed')}</p>
+          <div className="field-control">
+            <input
+              className="field-input"
+              readOnly
+              value={link}
+              aria-label={t('customer.keep.linkLabel')}
+              onFocus={(event) => event.target.select()}
+            />
+          </div>
         </div>
-        <Button icon={Copy} block size="lg" onClick={copy}>
-          {copied ? t('customer.request.trackingLink.copied') : t('customer.request.trackingLink.copy')}
-        </Button>
-      </div>
-    </Sheet>
+      ) : null}
+    </div>
   );
 }
 
-// One "My job" screen for the whole lifecycle. (The old /bookings/:id page redirects here.)
+// One button per action key from requestActions().
+function StatusAction({ action, tier, request, bookingId }) {
+  const { t } = useTranslation();
+  const label = t(`customer.state.actions.${action}`);
+  const variant = tier === 'primary' ? 'primary' : tier === 'secondary' ? 'secondary' : 'ghost';
+  const common = { variant, block: tier !== 'tertiary', size: tier === 'primary' ? 'lg' : tier === 'tertiary' ? 'sm' : undefined };
+
+  switch (action) {
+    case 'call':
+      return (
+        <ButtonLink href={`tel:${request.provider.phone}`} icon={Phone} {...common}>
+          {tier === 'tertiary' ? t('customer.job.call') : label}
+        </ButtonLink>
+      );
+    case 'chat':
+      return (
+        <ButtonLink to={`/bookings/${bookingId}/chat`} icon={MessageCircle} {...common}>
+          {tier === 'tertiary' ? t('customer.job.chat') : label}
+          <ChatCount bookingId={bookingId} />
+        </ButtonLink>
+      );
+    case 'review':
+    case 'yourReview':
+      return (
+        <ButtonLink to={`/bookings/${bookingId}/review`} icon={Star} {...common}>
+          {label}
+        </ButtonLink>
+      );
+    case 'invoice':
+      return (
+        <ButtonLink to={`/bookings/${bookingId}/invoice`} icon={FileText} {...common}>
+          {label}
+        </ButtonLink>
+      );
+    case 'newRequest':
+      return (
+        <ButtonLink
+          to={request.service?.id ? bookPath(request.service.id, request.issueKey || undefined) : '/services'}
+          icon={Plus}
+          {...common}
+        >
+          {label}
+        </ButtonLink>
+      );
+    default:
+      return null;
+  }
+}
+
+// The one place that says where the request stands: what it means, what the customer
+// can do now (right under the status, so it stays near the top on small phones), and
+// what happens next.
+function StatusCard({ request, review, firstView, busy, onCancel }) {
+  const { t } = useTranslation();
+  const provider = request.selectedProvider;
+  const bookingId = request.booking?.id;
+  const isCancelled = request.status === 'CANCELLED';
+  const name = provider?.name || t('customer.state.fallbackName');
+  const copyKey = firstView && request.status === 'PENDING' ? 'firstView' : request.status;
+  const actions = requestActions(request.status, {
+    hasPhone: Boolean(request.provider?.phone),
+    hasBooking: Boolean(bookingId),
+    hasReview: Boolean(review),
+  });
+  const next =
+    request.status === 'COMPLETED' && review
+      ? t('customer.state.COMPLETED.reviewed')
+      : t(`customer.state.${copyKey}.next`, { defaultValue: '' });
+
+  return (
+    <Card tint={!isCancelled} className={`request-status request-status--${request.status.toLowerCase()}`}>
+      <div className="request-status__summary" aria-live="polite">
+        <h2 id="request-status-title" className="request-status__title">
+          {t(`customer.state.${copyKey}.title`, { name, defaultValue: request.status })}
+        </h2>
+        <p className="request-status__body">{t(`customer.state.${copyKey}.body`, { name, defaultValue: '' })}</p>
+      </div>
+
+      {provider && !isCancelled ? (
+        <ContactCard
+          role={t('customer.state.yourProvider')}
+          name={provider.name}
+          image={provider.profileImage}
+          phone={request.provider?.phone}
+          profileTo={`/providers/${provider.id}`}
+        />
+      ) : null}
+
+      {actions.primary || actions.secondary.length ? (
+        <div className="request-status__actions">
+          {actions.primary ? (
+            <StatusAction action={actions.primary} tier="primary" request={request} bookingId={bookingId} />
+          ) : null}
+          {actions.secondary.length ? (
+            <div className="request-status__secondary">
+              {actions.secondary.map((action) => (
+                <StatusAction key={action} action={action} tier="secondary" request={request} bookingId={bookingId} />
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {next ? (
+        <div className="request-status__next">
+          <h3 className="request-status__next-label">{t('customer.state.nextLabel')}</h3>
+          <p>{next}</p>
+          {copyKey === 'firstView' ? <p>{t('customer.state.firstView.recovery')}</p> : null}
+        </div>
+      ) : null}
+
+      {actions.tertiary.length ? (
+        <div className="request-status__tertiary">
+          {actions.tertiary.map((action) => (
+            <StatusAction key={action} action={action} tier="tertiary" request={request} bookingId={bookingId} />
+          ))}
+        </div>
+      ) : null}
+
+      {actions.canCancel ? (
+        <button type="button" className="link request-status__cancel" onClick={onCancel} disabled={busy}>
+          {t('customer.request.cancel')}
+        </button>
+      ) : null}
+    </Card>
+  );
+}
+
+// One "My request" screen for the whole lifecycle. (The old /bookings/:id page redirects here.)
 function RequestDetailsPage({ requestId }) {
   const { t } = useTranslation();
-  const justCreated = useQueryParam('created') === '1';
+  // Set once by the request form; consumed below so it never outlives this visit.
+  const createdParam = useQueryParam('created') === '1';
+  const [firstView] = useState(createdParam);
   // A private tracking link (#access=…) grants access on this browser; adopt it before
   // the first fetch. Without a saved token there is nothing to load.
   const [hasAccess] = useState(() => {
@@ -136,23 +272,31 @@ function RequestDetailsPage({ requestId }) {
   const action = useAction();
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [sharing, setSharing] = useState(false);
-  const [success, setSuccess] = useState('');
+  const [cancelFailed, setCancelFailed] = useState(false);
+  const errorRef = useRef(null);
 
   const request = data.data?.request;
   // Poll while the job is live so the customer sees acceptance / start / completion.
-  usePolling(() => data.refresh(), 15000, Boolean(request) && LIVE.includes(request.status));
+  usePolling(() => data.refresh(), 15000, Boolean(request) && isActiveRequest(request));
+
+  // Drop "?created=1" from the address bar once read: a refresh, a bookmark or the
+  // browser history then show the request as it is, not the one-time confirmation.
+  useEffect(() => {
+    if (createdParam) {
+      navigate(`/requests/${encodeURIComponent(requestId)}`, { replace: true });
+    }
+  }, [createdParam, requestId]);
+
+  useEffect(() => {
+    if (action.error) errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [action.error]);
 
   const back = { to: '/requests', label: t('common.nav.myRequests') };
 
   if (!hasAccess) {
     return (
       <AppShell title={t('customer.request.title')} back={back}>
-        <EmptyState
-          icon={Smartphone}
-          title={t('customer.access.noAccessTitle')}
-          message={t('customer.access.noAccessMessage')}
-          action={<ButtonLink to="/services">{t('common.nav.bookService')}</ButtonLink>}
-        />
+        <NoRequestAccess />
       </AppShell>
     );
   }
@@ -177,11 +321,11 @@ function RequestDetailsPage({ requestId }) {
   }
 
   const { booking, review } = data.data;
-  const provider = request.selectedProvider;
-  const bookingId = request.booking?.id;
   const issue = formatIssueLabel(request.issueKey, request.issueLabel);
-  const isCompleted = request.status === 'COMPLETED';
   const isCancelled = request.status === 'CANCELLED';
+  const showFirstView = firstView && request.status === 'PENDING';
+  const canKeep = !isCancelled && Boolean(tokenForRequest(request.id));
+  const { stages, rank } = customerTimeline(request.status);
   const timeline = {
     sentAt: request.createdAt,
     acceptedAt: request.acceptedAt,
@@ -191,138 +335,109 @@ function RequestDetailsPage({ requestId }) {
   };
 
   async function cancel() {
-    setSuccess('');
     const ok = await action.run('cancel', () => requestsApi.cancel(request.id));
+    setCancelFailed(!ok);
     setConfirmCancel(false);
-    // Stored as a key so the notice follows a language switch.
-    if (ok) setSuccess('customer.request.cancelled');
     // Refresh either way so a conflict (a provider just accepted) shows the real state.
     await data.refresh();
   }
 
   return (
-    <AppShell title={request.service?.name || t('customer.request.title')} back={back}>
-      <header className="job-header">
+    <AppShell title={t('customer.request.title')} back={back}>
+      <header className="request-head">
         <ServiceIcon service={request.service} size="lg" />
-        <div className="job-header__text">
-          <p className="job-header__ref">
-            {shortRef(request.id)} · {formatTimestamp(request.createdAt)}
+        <div className="request-head__text">
+          <p className="request-head__service">{request.service?.name || t('customer.shared.service')}</p>
+          {issue ? <p className="request-head__issue">{issue}</p> : null}
+          <p className="request-head__ref">
+            {t('customer.request.reference', { ref: shortRef(request.id), date: formatTimestamp(request.createdAt) })}
           </p>
-          <h2 className="job-header__title">{request.service?.name || t('customer.shared.service')}</h2>
-          {issue ? <p className="job-header__sub">{issue}</p> : null}
         </div>
       </header>
 
-      <div className="stack section-gap">
-        {justCreated && !success ? <Notice tone="success">{t('customer.request.created')}</Notice> : null}
-        <Notice tone="success">{success ? t(success) : ''}</Notice>
-        <Notice>{action.error}</Notice>
-        {data.error ? <Notice>{data.error.message}</Notice> : null}
+      <div className="stack section-gap" ref={errorRef}>
+        {/* A provider accepted just before the cancel landed: the page already shows it. */}
+        {cancelFailed && !['PENDING', 'CANCELLED'].includes(request.status) ? (
+          <Notice tone="info">{t('customer.request.cancelTooLate')}</Notice>
+        ) : (
+          <Notice>{action.error}</Notice>
+        )}
+        {data.error ? (
+          <Notice>
+            <strong>{t('customer.state.staleTitle')}</strong> {t('customer.state.stale')}{' '}
+            <button type="button" className="link" onClick={() => data.refresh()}>
+              {t('common.actions.tryAgain')}
+            </button>
+          </Notice>
+        ) : null}
       </div>
 
-      <Card tint={!isCancelled} className="status-panel">
-        <StatusBadge status={request.status} />
-        <p className="status-panel__text">{statusText(request, t)}</p>
-        {isCompleted && bookingId ? (
-          <div className="status-panel__actions">
-            <ButtonLink to={`/bookings/${bookingId}/invoice`} icon={FileText} block>
-              {t('invoice.view')}
-            </ButtonLink>
-            <ButtonLink to={`/bookings/${bookingId}/review`} icon={Star} variant="secondary" block>
-              {review ? t('customer.booking.yourReview') : t('customer.request.leaveReview')}
-            </ButtonLink>
-          </div>
-        ) : null}
-        {request.status === 'PENDING' ? (
-          <div className="status-panel__actions">
-            <Button
-              variant="danger-ghost"
-              icon={XCircle}
-              block
-              onClick={() => setConfirmCancel(true)}
-              disabled={Boolean(action.pending)}
-            >
-              {t('customer.request.cancel')}
-            </Button>
-          </div>
-        ) : null}
-      </Card>
+      <StatusCard
+        request={request}
+        review={review}
+        firstView={firstView}
+        busy={Boolean(action.pending)}
+        onCancel={() => setConfirmCancel(true)}
+      />
 
-      {provider ? (
-        <section className="section" aria-labelledby="provider-heading">
-          <SectionHeader id="provider-heading" title={t('customer.request.yourProvider')} />
+      {showFirstView && canKeep ? (
+        <section className="section" aria-labelledby="keep-heading">
+          <SectionHeader id="keep-heading" title={t('customer.keep.title')} />
           <Card>
-            <ContactCard
-              role={
-                request.acceptedAt
-                  ? t('customer.request.acceptedAt', { time: formatTimestamp(request.acceptedAt) })
-                  : t('customer.request.yourProvider')
-              }
-              name={provider.name}
-              image={provider.profileImage}
-              phone={request.provider?.phone}
-              profileTo={`/providers/${provider.id}`}
-              actions={[
-                request.provider?.phone && !isCancelled
-                  ? { key: 'call', icon: Phone, label: t('customer.job.call'), href: `tel:${request.provider.phone}`, primary: true }
-                  : null,
-                bookingId && !isCancelled
-                  ? {
-                      key: 'chat',
-                      icon: MessageCircle,
-                      label: t('customer.job.chat'),
-                      to: `/bookings/${bookingId}/chat`,
-                      badge: <ChatCount bookingId={bookingId} />,
-                    }
-                  : null,
-              ].filter(Boolean)}
-            />
+            <KeepRequestPanel requestId={request.id} />
           </Card>
         </section>
       ) : null}
 
-      <section className="section" aria-labelledby="progress-heading">
-        <SectionHeader id="progress-heading" title={t('customer.job.progress')} />
-        <Card>
-          <TrackingTimeline status={request.status} timeline={timeline} stages={JOB_STAGES} rank={JOB_RANK} />
-        </Card>
-      </section>
+      {!isCancelled ? (
+        <section className="section" aria-labelledby="progress-heading">
+          <SectionHeader id="progress-heading" title={t('customer.job.progress')} />
+          <Card>
+            <TrackingTimeline status={request.status} timeline={timeline} stages={stages} rank={rank} reachedIsDone />
+          </Card>
+        </section>
+      ) : null}
 
-      <section className="section" aria-labelledby="details-heading">
-        <SectionHeader id="details-heading" title={t('customer.request.yourRequest')} />
-        <div className="list-group">
-          {issue ? <ListRow label={t('customer.shared.issue')} value={issue} /> : null}
-          <ListRow label={t('customer.shared.details')} value={request.description} />
-          {request.preferredDate ? (
-            <ListRow label={t('customer.request.preferredTime')} value={formatSlot(request.preferredDate, request.preferredTime)} />
-          ) : null}
-          {request.attachments?.length || request.voiceNote?.url ? (
-            <div className="list-block stack">
-              <span className="list-row__label">{t('customer.request.attachments')}</span>
-              <AttachmentList attachments={request.attachments} />
-              <VoiceNoteBlock voiceNote={request.voiceNote} />
+      <section className="section">
+        <details className="request-details">
+          <summary className="request-details__summary">
+            <span>{t('customer.request.requestDetails')}</span>
+            <ChevronDown aria-hidden="true" />
+          </summary>
+          <div className="list-group">
+            {issue ? <ListRow label={t('customer.shared.issue')} value={issue} /> : null}
+            <ListRow label={t('customer.shared.details')} value={request.description} />
+            {request.preferredDate ? (
+              <ListRow label={t('customer.request.preferredTime')} value={formatSlot(request.preferredDate, request.preferredTime)} />
+            ) : null}
+            {request.attachments?.length || request.voiceNote?.url ? (
+              <div className="list-block stack">
+                <span className="list-row__label">{t('customer.request.attachments')}</span>
+                <AttachmentList attachments={request.attachments} />
+                <VoiceNoteBlock voiceNote={request.voiceNote} />
+              </div>
+            ) : null}
+            <div className="list-block">
+              <span className="list-row__label">{t('customer.shared.serviceLocation')}</span>
+              <ServiceLocationBlock location={request.location} address={request.address} fallback={null} />
             </div>
-          ) : null}
-          <div className="list-block">
-            <span className="list-row__label">{t('customer.shared.serviceLocation')}</span>
-            <ServiceLocationBlock location={request.location} address={request.address} fallback={null} />
+            {request.customerDetails ? (
+              <ListRow
+                label={t('customer.request.yourDetails')}
+                value={`${request.customerDetails.name} · ${request.customerDetails.phone}`}
+              />
+            ) : null}
           </div>
-          {request.customerDetails ? (
-            <ListRow
-              label={t('customer.request.yourDetails')}
-              value={`${request.customerDetails.name} · ${request.customerDetails.phone}`}
-            />
-          ) : null}
-        </div>
+        </details>
       </section>
 
-      {!isCancelled && tokenForRequest(request.id) ? (
+      {canKeep && !showFirstView ? (
         <section className="section">
           <div className="list-group">
             <ListRow
-              icon={Smartphone}
-              title={t('customer.job.openElsewhere')}
-              value={t('customer.job.openElsewhereHint')}
+              icon={Link2}
+              title={t('customer.keep.title')}
+              value={t('customer.keep.rowText')}
               muted
               onClick={() => setSharing(true)}
               chevron
@@ -331,7 +446,9 @@ function RequestDetailsPage({ requestId }) {
         </section>
       ) : null}
 
-      <ShareSheet open={sharing} requestId={request.id} onClose={() => setSharing(false)} />
+      <Sheet open={sharing} title={t('customer.keep.title')} onClose={() => setSharing(false)}>
+        <KeepRequestPanel requestId={request.id} />
+      </Sheet>
 
       <ConfirmDialog
         open={confirmCancel}

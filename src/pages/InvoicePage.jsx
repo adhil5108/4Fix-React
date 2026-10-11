@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next';
-import { Printer, Smartphone } from 'lucide-react';
+import { Printer } from 'lucide-react';
 import AppShell from '../components/AppShell.jsx';
 import AdminShell from '../components/admin/AdminShell.jsx';
-import { EmptyState, ErrorState, IconButton, LoadingState, PageHeader } from '../components/ui.jsx';
+import NoRequestAccess from '../components/NoRequestAccess.jsx';
+import { ErrorState, IconButton, LoadingState, PageHeader } from '../components/ui.jsx';
 import { useApi } from '../hooks/useApi.js';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { requestIdForBooking, tokenForBooking } from '../services/customerAccess.js';
@@ -63,13 +64,13 @@ function InvoicePage({ bookingId }) {
       ? { to: `/provider/jobs/${bookingId}`, label: t('customer.shared.job') }
       : isAdmin
         ? { to: `/app/admin/bookings/${bookingId}`, label: t('customer.shared.booking') }
-        : { to: requestId ? `/requests/${requestId}` : '/requests', label: t('customer.shared.job') };
+        : { to: requestId ? `/requests/${requestId}` : '/requests', label: t('customer.shared.request') };
   const title = t('invoice.title');
 
   if (!canRead) {
     return (
       <Frame isAdmin={isAdmin} title={title} back={{ to: '/requests', label: t('common.nav.myRequests') }}>
-        <EmptyState icon={Smartphone} title={t('customer.access.noAccessTitle')} message={t('customer.access.noAccessMessage')} />
+        <NoRequestAccess />
       </Frame>
     );
   }

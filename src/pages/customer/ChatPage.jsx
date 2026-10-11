@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Phone, Smartphone } from 'lucide-react';
+import { Phone } from 'lucide-react';
 import AppShell from '../../components/AppShell.jsx';
 import ChatWindow from '../../components/ChatWindow.jsx';
+import NoRequestAccess from '../../components/NoRequestAccess.jsx';
 import { Avatar } from '../../components/cards.jsx';
-import { BackButton, EmptyState, ErrorState, IconButton, LoadingState } from '../../components/ui.jsx';
+import { BackButton, ErrorState, IconButton, LoadingState } from '../../components/ui.jsx';
 import { UnreadToasts } from '../../components/Unread.jsx';
 import { useAction, useApi } from '../../hooks/useApi.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
@@ -81,12 +82,12 @@ function ChatPage({ bookingId }) {
   const requestId = isProvider ? null : requestIdForBooking(bookingId);
   const back = isProvider
     ? { to: `/provider/jobs/${bookingId}`, label: t('customer.shared.job') }
-    : { to: requestId ? `/requests/${requestId}` : '/chats', label: t('customer.shared.booking') };
+    : { to: requestId ? `/requests/${requestId}` : '/chats', label: t('customer.shared.request') };
 
   if (!canChat) {
     return (
       <AppShell title={t('customer.shared.chat')} back={{ to: '/chats', label: t('common.navShort.chat') }}>
-        <EmptyState icon={Smartphone} title={t('customer.access.noAccessTitle')} message={t('customer.access.noAccessMessage')} />
+        <NoRequestAccess />
       </AppShell>
     );
   }

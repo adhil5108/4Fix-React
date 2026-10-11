@@ -193,7 +193,8 @@ export function JobCard({
   );
 }
 
-// A customer's request (My requests, Home).
+// A customer's request (My requests, Home): the customer's own status wording, and a
+// plain "View progress" so it is clear the whole card opens the request.
 export function CustomerRequestCard({ request, compact = false }) {
   const { t } = useTranslation();
   const issue = formatIssueLabel(request.issueKey, request.issueLabel);
@@ -208,9 +209,19 @@ export function CustomerRequestCard({ request, compact = false }) {
       service={request.service}
       title={request.service?.name || t('cards.requestCard.fallbackService')}
       subtitle={issue || request.description}
-      badge={<StatusBadge status={request.status} />}
+      badge={
+        <span className="customer-card__status">
+          <StatusBadge status={request.status} audience="customerRequest" />
+        </span>
+      }
       chatBookingId={request.booking?.id}
       meta={meta}
+      actions={
+        <span className="customer-card__open">
+          {t('customer.card.viewProgress')}
+          <ChevronRight aria-hidden="true" />
+        </span>
+      }
     />
   );
 }

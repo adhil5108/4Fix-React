@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AddressForm, validateAddress } from '../../components/AddressForm.jsx';
 import AppShell from '../../components/AppShell.jsx';
@@ -13,6 +13,7 @@ import { useTranslatedErrors } from '../../hooks/useTranslatedErrors.js';
 import { navigate, useQueryParam } from '../../hooks/useRoute.js';
 import { saveRequestAccess } from '../../services/customerAccess.js';
 import { requestsApi, servicesApi } from '../../services/fixApi.js';
+import { formatIssueLabel } from '../../utils/format.js';
 import { categoryPath, servicePath } from '../public/publicLinks.js';
 
 const initialForm = {
@@ -83,10 +84,11 @@ function FormSection({ id, title, optional = false, children }) {
   );
 }
 
-// The booking form: service → issue → description → photos/voice → location → name →
+// The request form: service → issue → description → photos/voice → location → name →
 // phone → send. Customers need no account; the request's access token is kept in
-// this browser after sending. The bottom navigation is hidden so "Send Request" (pinned
-// to the bottom) is the only primary action.
+// this browser after sending. The bottom navigation is hidden so "Send request" (pinned
+// to the bottom) is the only primary action. An issue chosen on the service page shows
+// as a summary with "Change" instead of the whole grid again.
 function BookPage({ serviceId }) {
   const { t } = useTranslation();
   const initialIssue = (useQueryParam('issue') || '').toUpperCase();
@@ -98,12 +100,28 @@ function BookPage({ serviceId }) {
   const [location, setLocation] = useState(null);
   const [manualAddress, setManualAddress] = useState(!geolocationSupported);
   const [errors, setErrors] = useState({});
+  const [issueOpen, setIssueOpen] = useState(false);
+  // In-flight/failed uploads from the photo and voice pickers: sending waits for them.
+  const [photoStatus, setPhotoStatus] = useState({ uploading: false, failed: false });
+  const [voiceStatus, setVoiceStatus] = useState({ uploading: false, recording: false, failed: false });
+  const submitErrorRef = useRef(null);
+  const issueGridRef = useRef(null);
+  const issueChangeRef = useRef(null);
   const details = service.data?.service;
   const validIssueKey = details?.issues.some((item) => item.key === issueKey) ? issueKey : '';
   useTranslatedErrors(setErrors, () =>
     validate(form, validIssueKey, attachments, { location, manualAddress }, t),
   );
   const submit = useAction();
+
+  // A server-side failure is shown at the end of the form; bring it into view.
+  useEffect(() => {
+    if (submit.error) {
+      submitErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      submitErrorRef.current?.focus({ preventScroll: true });
+    }
+  }, [submit.error]);
+
   const fallbackBack = { to: '/services', label: t('customer.book.allServices') };
 
   if (service.loading) {
@@ -132,6 +150,14 @@ function BookPage({ serviceId }) {
   const issue = details.issues.find((item) => item.key === validIssueKey) || null;
   const isOther = issue?.key === 'OTHER';
   const busy = submit.pending === 'create';
+  const showIssueGrid = !issue || issueOpen;
+  const uploadBlock = voiceStatus.recording
+    ? 'recording'
+    : photoStatus.uploading || voiceStatus.uploading
+      ? 'uploading'
+      : photoStatus.failed || voiceStatus.failed
+        ? 'failed'
+        : null;
   const back = { to: servicePath(serviceId), label: details.name };
   const changeTo = details.category?.id ? categoryPath(details.category.id) : '/services';
 
@@ -142,13 +168,26 @@ function BookPage({ serviceId }) {
   }
 
   function chooseIssue(selected) {
+    const wasOpen = issueOpen;
     setIssueKey(selected.key);
+    setIssueOpen(false);
     setErrors((current) => ({ ...current, issue: '' }));
     submit.setError('');
+    // Back to the summary; keep keyboard focus on its "Change" button.
+    if (wasOpen) window.setTimeout(() => issueChangeRef.current?.focus(), 0);
+  }
+
+  function openIssues() {
+    setIssueOpen(true);
+    window.setTimeout(() => issueGridRef.current?.focus(), 0);
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
+
+    if (uploadBlock || busy) {
+      return;
+    }
 
     const nextErrors = validate(form, validIssueKey, attachments, { location, manualAddress }, t);
 
@@ -195,13 +234,16 @@ function BookPage({ serviceId }) {
       // No account: this browser keeps the request's access token so the customer can
       // follow it (the request page also offers a private link to keep elsewhere).
       saveRequestAccess(result.request.id, result.accessToken);
-      navigate(`/requests/${result.request.id}?created=1`);
+      // Replace the form in the history: Back must not reopen it, empty, to send again.
+      navigate(`/requests/${result.request.id}?created=1`, { replace: true });
     });
   }
 
   return (
     <AppShell title={t('customer.book.title')} back={back} nav={false} bar>
       <form id="book-form" className="book-form" onSubmit={handleSubmit} noValidate>
+        <p className="book-form__intro">{t('customer.book.intro')}</p>
+
         <FormSection id="book-service" title={t('customer.book.sections.service')}>
           <div className="summary-row">
             <ServiceIcon service={details} />
@@ -216,18 +258,38 @@ function BookPage({ serviceId }) {
         </FormSection>
 
         <FormSection id="book-issue" title={t('customer.book.sections.issue')}>
-          <div
-            id="book-issues"
-            className="issue-grid"
-            role="group"
-            tabIndex={-1}
-            aria-labelledby="book-issue"
-            aria-describedby={errors.issue ? 'book-issues-error' : undefined}
-          >
-            {details.issues.map((item) => (
-              <IssueTile key={item.key} issue={item} selected={item.key === validIssueKey} onSelect={chooseIssue} />
-            ))}
-          </div>
+          {showIssueGrid ? (
+            <div
+              id="book-issues"
+              ref={issueGridRef}
+              className="issue-grid"
+              role="group"
+              tabIndex={-1}
+              aria-labelledby="book-issue"
+              aria-describedby={errors.issue ? 'book-issues-error' : undefined}
+            >
+              {details.issues.map((item) => (
+                <IssueTile key={item.key} issue={item} selected={item.key === validIssueKey} onSelect={chooseIssue} />
+              ))}
+            </div>
+          ) : (
+            <div className="summary-row">
+              <div className="summary-row__text">
+                <span className="summary-row__title">{formatIssueLabel(issue.key, issue.label)}</span>
+                {issue.description ? <span className="summary-row__sub">{issue.description}</span> : null}
+              </div>
+              <button
+                ref={issueChangeRef}
+                type="button"
+                className="link"
+                aria-expanded={false}
+                aria-label={t('customer.book.changeIssue')}
+                onClick={openIssues}
+              >
+                {t('customer.book.change')}
+              </button>
+            </div>
+          )}
           {errors.issue ? (
             <p id="book-issues-error" className="field-error">
               {errors.issue}
@@ -239,6 +301,8 @@ function BookPage({ serviceId }) {
           <TextArea
             id="description"
             label={isOther ? t('customer.book.describeLabel') : t('customer.book.anythingLabel')}
+            hint={t('customer.book.descriptionHint')}
+            required
             rows={4}
             maxLength={2000}
             value={form.description}
@@ -256,8 +320,9 @@ function BookPage({ serviceId }) {
               error={errors.attachments}
               label={t('customer.book.photosLabel')}
               hint={t('customer.book.photosHint', { max: MAX_ATTACHMENTS })}
+              onStatusChange={setPhotoStatus}
             />
-            <VoiceRecorder value={voiceNote} onChange={setVoiceNote} disabled={busy} />
+            <VoiceRecorder value={voiceNote} onChange={setVoiceNote} disabled={busy} onStatusChange={setVoiceStatus} />
           </div>
         </FormSection>
 
@@ -318,11 +383,32 @@ function BookPage({ serviceId }) {
           </div>
         </FormSection>
 
-        <Notice>{submit.error}</Notice>
+        <div ref={submitErrorRef} tabIndex={-1} className="book-form__error">
+          <Notice>{submit.error}</Notice>
+        </div>
       </form>
 
-      <StickyActionBar note={t('customer.book.footnote')}>
-        <Button type="submit" form="book-form" block size="lg" loading={busy} loadingText={t('customer.book.sending')}>
+      <StickyActionBar
+        lead={
+          <>
+            {uploadBlock ? (
+              <p className="sticky-bar__status" role="status">
+                {t(`customer.book.uploads.${uploadBlock}`)}
+              </p>
+            ) : null}
+            <p className="sticky-bar__explain">{t('customer.book.footnote')}</p>
+          </>
+        }
+      >
+        <Button
+          type="submit"
+          form="book-form"
+          block
+          size="lg"
+          loading={busy}
+          loadingText={t('customer.book.sending')}
+          disabled={Boolean(uploadBlock)}
+        >
           {t('customer.book.submit')}
         </Button>
       </StickyActionBar>

@@ -4,7 +4,12 @@
 const STORAGE_KEY = '4fix.customerRequests';
 const MAX_ENTRIES = 50;
 
-function readAll() {
+// A copy of the last list written, kept for this tab only. When the browser refuses
+// storage (blocked site data, full quota) the request just created — and its private
+// link — still work until the tab is closed. Nothing more permanent is promised.
+let memoryEntries = [];
+
+function readStored() {
   try {
     const parsed = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || '[]');
     return Array.isArray(parsed) ? parsed.filter((entry) => entry?.requestId && entry?.token) : [];
@@ -13,11 +18,20 @@ function readAll() {
   }
 }
 
+function readAll() {
+  const stored = readStored();
+  const storedIds = new Set(stored.map((entry) => entry.requestId));
+  return [...stored, ...memoryEntries.filter((entry) => !storedIds.has(entry.requestId))];
+}
+
 function writeAll(entries) {
+  const kept = entries.slice(0, MAX_ENTRIES);
+  memoryEntries = kept;
+
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries.slice(0, MAX_ENTRIES)));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(kept));
   } catch {
-    // Storage unavailable (private mode): the tracking link still works for this visit.
+    // Storage unavailable: the in-memory copy above keeps this tab working.
   }
 }
 

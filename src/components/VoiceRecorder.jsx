@@ -33,7 +33,9 @@ function formatDuration(totalSeconds) {
 // local (nothing is sent, and the mic is never touched, until the customer presses
 // Record); the resulting clip uploads immediately once recording stops, the same
 // eager-upload pattern ImageAttachments uses for photos.
-function VoiceRecorder({ value, onChange, disabled }) {
+// `onStatusChange` (optional) hears { uploading, recording, failed } whenever that
+// changes, so a form can hold its submission until the voice note is safely uploaded.
+function VoiceRecorder({ value, onChange, disabled, onStatusChange }) {
   const { t } = useTranslation();
   const [status, setStatus] = useState('idle');
   const [elapsed, setElapsed] = useState(0);
@@ -47,6 +49,16 @@ function VoiceRecorder({ value, onChange, disabled }) {
   const startedAtRef = useRef(0);
   const elapsedRef = useRef(0);
   const lastBlobRef = useRef(null);
+  const onStatusChangeRef = useRef(onStatusChange);
+  onStatusChangeRef.current = onStatusChange;
+  const uploading = status === 'uploading';
+  const recording = status === 'recording' || status === 'requesting';
+  // An upload error with a recording still held (retry or discard); not a denied mic.
+  const failed = status === 'error';
+
+  useEffect(() => {
+    onStatusChangeRef.current?.({ uploading, recording, failed });
+  }, [uploading, recording, failed]);
 
   useEffect(
     () => () => {

@@ -32,7 +32,7 @@ export default {
       },
       accept: {
         title: 'A provider accepts',
-        text: 'A nearby provider takes the job — no quotes to compare.',
+        text: 'When a nearby provider accepts, you’ll see who it is and can call or chat with them.',
       },
       track: {
         title: 'Chat and rate',
@@ -43,6 +43,9 @@ export default {
     providerText: 'Find customers who need your skills and accept jobs near you.',
     joinProvider: 'Join as a provider',
     latestRequest: 'Your latest request',
+    activeRequests_one: 'Your active request',
+    activeRequests_other: 'Your active requests',
+    activeHint: 'Tap a request to see its progress.',
   },
   about: {
     title: 'About 4Fix',
@@ -88,7 +91,7 @@ export default {
     startingFrom: 'Starting from',
     priceAgreed: 'Final price agreed with your provider',
     continue: 'Continue',
-    noAccount: 'No account needed. You can choose or change the problem on the next step.',
+    noAccount: 'No account needed. Next, you’ll describe the problem and share your location.',
     loading: 'Loading service…',
     fallbackTitle: 'Service',
     unavailable: 'This service does not exist or is no longer available.',
@@ -96,7 +99,7 @@ export default {
     priceNote: ' · you agree the final price directly with your provider',
     whatsWrong: 'What’s wrong?',
     providerNotice: 'You are logged in as a provider. Only customers can book a service.',
-    pickClosest: 'Pick the closest match. You can add details on the next step.',
+    pickClosest: 'Pick the closest match. You can change it or add details on the next step.',
   },
   providerProfile: {
     loading: 'Loading provider…',

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Smartphone } from 'lucide-react';
 import AppShell from '../../components/AppShell.jsx';
+import NoRequestAccess from '../../components/NoRequestAccess.jsx';
 import { ReviewForm, StarRating } from '../../components/StarRating.jsx';
 import { Avatar } from '../../components/cards.jsx';
-import { ButtonLink, Card, EmptyState, ErrorState, Link, LoadingState, Notice } from '../../components/ui.jsx';
+import { ButtonLink, Card, ErrorState, Link, LoadingState, Notice } from '../../components/ui.jsx';
 import { useAction, useApi } from '../../hooks/useApi.js';
 import { requestIdForBooking, tokenForBooking } from '../../services/customerAccess.js';
 import { customerBookingsApi } from '../../services/fixApi.js';
@@ -31,12 +31,12 @@ function ReviewPage({ bookingId }) {
   const submit = useAction();
   const [submitted, setSubmitted] = useState(false);
   const requestId = requestIdForBooking(bookingId);
-  const back = { to: requestId ? `/requests/${requestId}` : '/requests', label: t('customer.shared.job') };
+  const back = { to: requestId ? `/requests/${requestId}` : '/requests', label: t('customer.shared.request') };
 
   if (!hasAccess) {
     return (
       <AppShell title={t('customer.review.title')} back={{ to: '/requests', label: t('common.nav.myRequests') }}>
-        <EmptyState icon={Smartphone} title={t('customer.access.noAccessTitle')} message={t('customer.access.noAccessMessage')} />
+        <NoRequestAccess />
       </AppShell>
     );
   }
@@ -91,6 +91,9 @@ function ReviewPage({ bookingId }) {
             {review.comment ? <p className="body-text">{review.comment}</p> : null}
             <p className="field-hint">{t('customer.review.noEdit')}</p>
           </Card>
+          <ButtonLink to={back.to} variant="secondary" block>
+            {t('customer.review.backToRequest')}
+          </ButtonLink>
           {provider ? (
             <Link to={`/providers/${provider.id}`} className="link page-note">
               {t('customer.review.seeAll', { name: provider.name })}
@@ -107,7 +110,7 @@ function ReviewPage({ bookingId }) {
         <div className="stack stack--lg">
           <Notice tone="info">{t('customer.review.notYet')}</Notice>
           <ButtonLink to={back.to} variant="secondary" block>
-            {t('customer.review.backToBooking')}
+            {t('customer.review.backToRequest')}
           </ButtonLink>
         </div>
       </AppShell>

@@ -100,6 +100,14 @@ export default {
       COMPLETED: 'പൂർത്തിയായി',
       CANCELLED: 'റദ്ദാക്കി',
     },
+    customerRequest: {
+      PENDING: 'സേവനദാതാവിനായി കാത്തിരിക്കുന്നു',
+      ACCEPTED: 'സ്വീകരിച്ചു',
+      LOCATION_REACHED: 'സേവനദാതാവ് എത്തി',
+      IN_PROGRESS: 'ജോലി നടക്കുന്നു',
+      COMPLETED: 'പൂർത്തിയായി',
+      CANCELLED: 'റദ്ദാക്കി',
+    },
     provider: {
       PENDING: 'ഓപ്പൺ',
       ACCEPTED: 'നിങ്ങൾ സ്വീകരിച്ചു',

@@ -12,8 +12,11 @@ export const REQUEST_STATUSES = [
 export const BOOKING_GROUPS = ['UPCOMING', 'ACTIVE', 'COMPLETED', 'CANCELLED'];
 
 // Status values stay as the API sends them; only their display label is translated.
+// `customerRequest` is the anonymous customer's own wording (customer screens only);
+// `customer` keeps the shared request labels the admin console also shows.
 const STATUS_AUDIENCES = {
   customer: 'request',
+  customerRequest: 'customerRequest',
   provider: 'provider',
   booking: 'booking',
   externalJob: 'externalJob',

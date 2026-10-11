@@ -1,10 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import { Briefcase, ClipboardList, Info, Languages, LogIn } from 'lucide-react';
+import { Briefcase, Info, Languages, LogIn } from 'lucide-react';
 import AppShell from '../../components/AppShell.jsx';
 import LanguageSwitcher from '../../components/LanguageSwitcher.jsx';
 import { ListGroup, ListRow } from '../../components/ui.jsx';
 
 // Customers have no account, so this tab holds settings and links rather than a profile.
+// (Their requests have their own tab in the bottom navigation.)
 function MorePage() {
   const { t } = useTranslation();
 
@@ -13,10 +14,6 @@ function MorePage() {
       <div className="stack stack--lg">
         <ListGroup title={t('more.settings')}>
           <ListRow icon={Languages} title={t('common.language.label')} trailing={<LanguageSwitcher />} />
-        </ListGroup>
-
-        <ListGroup title={t('more.yourRequests')}>
-          <ListRow icon={ClipboardList} to="/requests" title={t('common.nav.myRequests')} value={t('more.deviceNote')} muted />
         </ListGroup>
 
         <ListGroup title={t('more.about')}>

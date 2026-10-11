@@ -715,6 +715,269 @@ td.invoice-doc__amount-col {
 }
 
 /* Printing an invoice prints only the document. */
+/* ---------------------------------------------------------------- Customer request flow */
+/* Customer screens only (Home, request form, request page, My requests). */
+
+.home-hello__greet {
+  color: var(--c-muted);
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+}
+
+.home-hello__greet + .home-hello__title {
+  margin-top: 2px;
+}
+
+.book-form__intro {
+  color: var(--c-text);
+  font-size: var(--text-sm);
+}
+
+.book-form__error:focus {
+  outline: none;
+}
+
+.sticky-bar__lead {
+  display: grid;
+  gap: var(--s-1);
+}
+
+.sticky-bar__explain {
+  color: var(--c-text);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+}
+
+.sticky-bar__status {
+  color: var(--c-open-fg);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  line-height: 1.35;
+}
+
+/* Request page: header, status card, private link, details. */
+.request-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+
+.request-head__text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.request-head__service {
+  color: var(--c-ink);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  overflow-wrap: break-word;
+}
+
+.request-head__issue {
+  color: var(--c-text);
+  overflow-wrap: break-word;
+}
+
+.request-head__ref {
+  color: var(--c-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.request-status {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s-4);
+  margin-top: var(--s-4);
+}
+
+.request-status__summary {
+  display: grid;
+  gap: var(--s-2);
+}
+
+.request-status__title {
+  color: var(--c-ink);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  overflow-wrap: break-word;
+}
+
+.request-status__body {
+  color: var(--c-ink);
+  overflow-wrap: break-word;
+}
+
+.request-status__next {
+  display: grid;
+  gap: var(--s-1);
+  border-top: 1px solid var(--c-border);
+  color: var(--c-text);
+  overflow-wrap: break-word;
+  padding-top: var(--s-3);
+}
+
+.request-status__next-label {
+  color: var(--c-ink);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.request-status .contact-card {
+  border-top: 1px solid var(--c-border);
+  padding-top: var(--s-3);
+}
+
+.request-status__actions {
+  display: grid;
+  gap: var(--s-2);
+}
+
+.request-status__secondary {
+  display: grid;
+  gap: var(--s-2);
+}
+
+.request-status__tertiary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.request-status__cancel {
+  justify-self: start;
+  color: var(--c-danger);
+  font-weight: var(--weight-medium);
+}
+
+.keep-request {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.keep-request__warning {
+  color: var(--c-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.request-details {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  overflow: hidden;
+}
+
+.request-details__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: var(--tap);
+  color: var(--c-ink);
+  cursor: pointer;
+  font-weight: var(--weight-semibold);
+  list-style: none;
+  padding: var(--s-3) var(--s-4);
+}
+
+.request-details__summary::-webkit-details-marker {
+  display: none;
+}
+
+.request-details__summary svg {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  color: var(--c-muted);
+  transition: transform 0.15s ease;
+}
+
+.request-details[open] .request-details__summary svg {
+  transform: rotate(180deg);
+}
+
+.request-details > .list-group {
+  border-width: 1px 0 0;
+  border-radius: 0;
+}
+
+/* My requests and shared customer bits. */
+.device-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  color: var(--c-text);
+  font-size: var(--text-sm);
+}
+
+.device-note svg {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  color: var(--c-muted);
+}
+
+.requests-none {
+  display: grid;
+  justify-items: start;
+  gap: var(--s-2);
+}
+
+.customer-card__status {
+  display: flex;
+  min-width: 0;
+}
+
+/* Long (Malayalam) status labels wrap inside the card instead of widening it. */
+.customer-card__status .badge {
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: normal;
+}
+
+/* Service details facts: one per row on phones (side by side only where both fit), so
+   long Malayalam labels wrap at spaces instead of widening the page. */
+.fact-row {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+
+.fact,
+.fact > span {
+  min-width: 0;
+}
+
+.fact__label {
+  overflow-wrap: anywhere;
+}
+
+.customer-card__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--c-primary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.customer-card__open svg {
+  width: 18px;
+  height: 18px;
+}
+
+.state__actions {
+  display: grid;
+  gap: var(--s-2);
+  width: 100%;
+  max-width: 320px;
+}
+
 @media print {
   body * {
     visibility: hidden;

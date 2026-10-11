@@ -103,6 +103,15 @@ export default {
       COMPLETED: 'Completed',
       CANCELLED: 'Cancelled',
     },
+    // What the customer sees on their own requests (the labels above are shared with admin).
+    customerRequest: {
+      PENDING: 'Waiting for provider',
+      ACCEPTED: 'Accepted',
+      LOCATION_REACHED: 'Provider arrived',
+      IN_PROGRESS: 'Work in progress',
+      COMPLETED: 'Completed',
+      CANCELLED: 'Cancelled',
+    },
     provider: {
       PENDING: 'Open',
       ACCEPTED: 'Accepted by you',

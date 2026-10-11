@@ -382,11 +382,13 @@ export function DetailList({ items }) {
 }
 
 // Fixed action area above the bottom navigation (or the screen edge when the page hides
-// the navigation). The page must render inside <AppShell bar>.
-export function StickyActionBar({ children, note }) {
+// the navigation). The page must render inside <AppShell bar>. `lead` (optional) is
+// shown above the actions, `note` below them.
+export function StickyActionBar({ children, note, lead }) {
   return (
     <div className="sticky-bar">
       <div className="sticky-bar__inner">
+        {lead ? <div className="sticky-bar__lead">{lead}</div> : null}
         {children}
         {note ? <p className="sticky-bar__note">{note}</p> : null}
       </div>

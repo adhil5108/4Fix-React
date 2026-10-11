@@ -1,8 +1,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Smartphone } from 'lucide-react';
 import AppShell from '../../components/AppShell.jsx';
-import { EmptyState } from '../../components/ui.jsx';
+import NoRequestAccess from '../../components/NoRequestAccess.jsx';
 import { navigate } from '../../hooks/useRoute.js';
 import { requestIdForBooking } from '../../services/customerAccess.js';
 
@@ -23,8 +22,8 @@ function BookingPage({ bookingId }) {
   }
 
   return (
-    <AppShell title={t('customer.shared.booking')} back={{ to: '/requests', label: t('common.nav.myRequests') }}>
-      <EmptyState icon={Smartphone} title={t('customer.access.noAccessTitle')} message={t('customer.access.noAccessMessage')} />
+    <AppShell title={t('customer.shared.request')} back={{ to: '/requests', label: t('common.nav.myRequests') }}>
+      <NoRequestAccess />
     </AppShell>
   );
 }

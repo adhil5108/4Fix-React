@@ -67,7 +67,11 @@ function ChatsPage() {
               <ButtonLink to="/provider/requests" variant="secondary">
                 {t('chats.findWork')}
               </ButtonLink>
-            ) : null
+            ) : (
+              <ButtonLink to="/requests" variant="secondary">
+                {t('customer.access.myRequests')}
+              </ButtonLink>
+            )
           }
         />
       ) : null}

@@ -25,18 +25,29 @@ function validateImageFile(file) {
 // Each picked file gets its own upload lifecycle (uploading/success/error), tracked
 // locally here. Only successfully uploaded Cloudinary URLs are pushed into
 // `attachments` — the array that is actually sent when the form is submitted.
+// `onStatusChange` (optional) hears { uploading, failed } whenever that changes, so a
+// form can hold its submission until every photo has finished uploading.
 function ImageAttachments({
   attachments,
   setAttachments,
   error,
   label,
   hint,
+  onStatusChange,
 }) {
   const { t } = useTranslation();
   const [items, setItems] = useState([]);
   const [pickError, setPickError] = useState(false);
   const inputRef = useRef(null);
   const removedIdsRef = useRef(new Set());
+  const onStatusChangeRef = useRef(onStatusChange);
+  onStatusChangeRef.current = onStatusChange;
+  const uploading = items.some((item) => item.status === 'uploading');
+  const failed = items.some((item) => item.status === 'error');
+
+  useEffect(() => {
+    onStatusChangeRef.current?.({ uploading, failed });
+  }, [uploading, failed]);
 
   useEffect(() => {
     // Revoke every preview URL once, when the form is left.

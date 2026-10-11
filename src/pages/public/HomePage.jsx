@@ -10,6 +10,7 @@ import { useAuth } from '../../hooks/useAuth.jsx';
 import { useSavedRequests } from '../../hooks/useSavedRequests.js';
 import { navigate } from '../../hooks/useRoute.js';
 import { categoriesApi, servicesApi } from '../../services/fixApi.js';
+import { groupRequests } from '../../utils/customerRequest.js';
 import { dayPeriod } from '../../utils/format.js';
 
 const HOME_CATEGORY_LIMIT = 6;
@@ -23,28 +24,34 @@ const STEPS = [
   { key: 'track', icon: MessageCircle },
 ];
 
-// The customer's most recent open request from this browser, if any.
-function ActiveRequest() {
+// Every request from this browser that is still in progress (usually just one), most
+// recently changed first. Tapping one opens its progress.
+function ActiveRequests() {
   const { t } = useTranslation();
   const saved = useSavedRequests();
-  const latest = (saved.data || []).find((request) => !['CANCELLED', 'COMPLETED'].includes(request.status));
+  const { active } = groupRequests(saved.data);
 
-  if (!latest) {
+  if (active.length === 0) {
     return null;
   }
 
   return (
-    <section className="section" aria-labelledby="active-request-heading">
+    <section className="section" aria-labelledby="active-requests-heading">
       <SectionHeader
-        id="active-request-heading"
-        title={t('public.home.latestRequest')}
+        id="active-requests-heading"
+        title={t('public.home.activeRequests', { count: active.length })}
         action={
           <Link to="/requests" className="link">
             {t('public.home.seeAll')}
           </Link>
         }
       />
-      <CustomerRequestCard request={latest} />
+      <p className="field-hint section-hint">{t('public.home.activeHint')}</p>
+      <div className="stack">
+        {active.map((request) => (
+          <CustomerRequestCard key={request.id} request={request} />
+        ))}
+      </div>
     </section>
   );
 }
@@ -60,13 +67,13 @@ function HomePage() {
   return (
     <AppShell brand actions={<LanguageSwitcher compact />}>
       <section className="home-hello">
-        <h1 className="home-hello__title">{t(`public.home.greet.${dayPeriod()}`)}</h1>
-        <p className="home-hello__text">{t('public.home.question')}</p>
+        <p className="home-hello__greet">{t(`public.home.greet.${dayPeriod()}`)}</p>
+        <h1 className="home-hello__title">{t('public.home.question')}</h1>
       </section>
 
       <SearchBar onSearch={(query) => navigate(query ? `/services?search=${encodeURIComponent(query)}` : '/services')} />
 
-      {!isAuthenticated ? <ActiveRequest /> : null}
+      {!isAuthenticated ? <ActiveRequests /> : null}
 
       <section className="section" aria-labelledby="categories-heading">
         <SectionHeader
@@ -94,17 +101,6 @@ function HomePage() {
         ) : null}
       </section>
 
-      {popular.length > 0 ? (
-        <section className="section" aria-labelledby="popular-heading">
-          <SectionHeader id="popular-heading" title={t('public.home.popular')} />
-          <div className="list-group">
-            {popular.map((service) => (
-              <ServiceRow key={service.id} service={service} showCategory />
-            ))}
-          </div>
-        </section>
-      ) : null}
-
       <section className="section" aria-labelledby="how-heading">
         <SectionHeader id="how-heading" title={t('public.home.howTitle')} />
         <div className="list-group">
@@ -119,6 +115,17 @@ function HomePage() {
           ))}
         </div>
       </section>
+
+      {popular.length > 0 ? (
+        <section className="section" aria-labelledby="popular-heading">
+          <SectionHeader id="popular-heading" title={t('public.home.popular')} />
+          <div className="list-group">
+            {popular.map((service) => (
+              <ServiceRow key={service.id} service={service} showCategory />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {!isAuthenticated ? (
         <section className="section">

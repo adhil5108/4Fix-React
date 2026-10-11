@@ -22,7 +22,10 @@ const BOOKING_RANK = {
 
 // `stages`/`rank` default to a Booking's own lifecycle; an external job passes its own
 // (SCHEDULED/ON_THE_WAY/ARRIVED/IN_PROGRESS/COMPLETED) instead of a separate component.
-function TrackingTimeline({ status, timeline = {}, stages = BOOKING_STAGES, rank = BOOKING_RANK }) {
+// Opt-in for the customer view: `reachedIsDone` shows every step up to and including the
+// current status as done (each is an event that has happened), and a stage may carry a
+// fixed `state` (e.g. a "waiting" step that is always the current one).
+function TrackingTimeline({ status, timeline = {}, stages = BOOKING_STAGES, rank = BOOKING_RANK, reachedIsDone = false }) {
   const { t } = useTranslation();
 
   if (status === 'CANCELLED') {
@@ -31,10 +34,16 @@ function TrackingTimeline({ status, timeline = {}, stages = BOOKING_STAGES, rank
 
   const currentRank = rank[status] ?? 0;
 
+  function stateOf(stage, index) {
+    if (stage.state) return stage.state;
+    if (reachedIsDone) return index <= currentRank ? 'done' : 'upcoming';
+    return index < currentRank ? 'done' : index === currentRank ? 'current' : 'upcoming';
+  }
+
   return (
     <ol className="timeline" aria-label={t('cards.timeline.ariaLabel')}>
       {stages.map((stage, index) => {
-        const state = index < currentRank ? 'done' : index === currentRank ? 'current' : 'upcoming';
+        const state = stateOf(stage, index);
         const reachedAt = timeline[stage.at];
 
         return (
