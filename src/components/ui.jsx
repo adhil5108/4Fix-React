@@ -134,8 +134,10 @@ export function IconButton({ icon: Icon, label, to, href, variant, className = '
 
 // `history`: go back in the browser history when there is somewhere to go back to
 // (pages reached from several places), otherwise to `to`.
-export function BackButton({ to, label, history = false }) {
+export function BackButton({ to, label, history = false, onClick }) {
   function handleClick(event) {
+    onClick?.(event);
+    if (event.defaultPrevented) return;
     if (history && window.history.length > 1) {
       event.preventDefault();
       window.history.back();

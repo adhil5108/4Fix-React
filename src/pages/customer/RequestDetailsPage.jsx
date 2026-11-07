@@ -383,9 +383,12 @@ function RequestDetailsPage({ requestId }) {
       {showFirstView && canKeep ? (
         <section className="section" aria-labelledby="keep-heading">
           <SectionHeader id="keep-heading" title={t('customer.keep.title')} />
-          <Card>
-            <KeepRequestPanel requestId={request.id} />
-          </Card>
+          <details className="request-details">
+            <summary className="request-details__summary"><span>{t('customer.keep.rowText')}</span><ChevronDown aria-hidden="true" /></summary>
+            <div className="booking-media__body">
+              <KeepRequestPanel requestId={request.id} />
+            </div>
+          </details>
         </section>
       ) : null}
 

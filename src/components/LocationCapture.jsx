@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CircleCheck, LocateFixed } from 'lucide-react';
 import TextField from './TextField.jsx';
@@ -56,7 +56,6 @@ function LocationCapture({ value, onChange, error, disabled = false, id = 'locat
   const [status, setStatus] = useState(value ? 'ready' : 'idle');
   const [message, setMessage] = useState('');
   const [accuracy, setAccuracy] = useState(null);
-  const requested = useRef(false);
   const valueRef = useRef(value);
   valueRef.current = value;
 
@@ -87,14 +86,6 @@ function LocationCapture({ value, onChange, error, disabled = false, id = 'locat
       GEO_OPTIONS,
     );
   }
-
-  // Ask once when the step opens; afterwards only on an explicit tap.
-  useEffect(() => {
-    if (!requested.current && !value) {
-      requested.current = true;
-      locate();
-    }
-  }, []);
 
   if (!supported) {
     return <Notice>{copy('unsupportedManual')}</Notice>;

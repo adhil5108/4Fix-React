@@ -8,6 +8,9 @@ export default {
     submit: 'Search',
   },
   home: {
+    simpleIntro: 'Tell us what needs fixing. A nearby provider can take it from there.',
+    findService: 'Find a service',
+    chooseService: 'What needs fixing?',
     greet: {
       morning: 'Good morning',
       afternoon: 'Good afternoon',

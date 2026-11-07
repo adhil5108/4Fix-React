@@ -6,6 +6,7 @@ import SearchBar from '../../components/SearchBar.jsx';
 import { CategoryTile, ServiceRow } from '../../components/cards.jsx';
 import { EmptyState, ErrorState, LoadingState, SectionHeader } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
+import { useAuth } from '../../hooks/useAuth.jsx';
 import { navigate, useQueryParam } from '../../hooks/useRoute.js';
 import { categoriesApi, servicesApi } from '../../services/fixApi.js';
 import { categoryPath } from './publicLinks.js';
@@ -16,6 +17,7 @@ const OBJECT_ID = /^[a-f0-9]{24}$/i;
 // one. Searching skips straight to matching services across every category.
 function ServicesPage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const search = (useQueryParam('search') || '').trim();
   const legacyCategory = useQueryParam('category') || '';
   const categories = useApi(() => categoriesApi.list(), []);
@@ -63,7 +65,7 @@ function ServicesPage() {
           {list.length > 0 && !services.error ? (
             <div className="list-group">
               {list.map((service) => (
-                <ServiceRow key={service.id} service={service} showCategory />
+                <ServiceRow key={service.id} service={service} showCategory requestDirect={user?.role !== 'PROVIDER'} />
               ))}
             </div>
           ) : null}
@@ -100,7 +102,7 @@ function ServicesPage() {
           <SectionHeader id="more-services-heading" title={t('public.services.moreServices')} />
           <div className="list-group">
             {uncategorized.map((service) => (
-              <ServiceRow key={service.id} service={service} />
+              <ServiceRow key={service.id} service={service} requestDirect={user?.role !== 'PROVIDER'} />
             ))}
           </div>
         </section>

@@ -1,17 +1,16 @@
 import { useTranslation } from 'react-i18next';
-import { Briefcase, ClipboardList, MessageCircle, UserCheck } from 'lucide-react';
+import { ChevronDown, ClipboardList, MessageCircle, UserCheck } from 'lucide-react';
 import AppShell from '../../components/AppShell.jsx';
 import LanguageSwitcher from '../../components/LanguageSwitcher.jsx';
 import SearchBar from '../../components/SearchBar.jsx';
 import { CategoryTile, CustomerRequestCard, ServiceRow } from '../../components/cards.jsx';
-import { EmptyState, ErrorState, Link, ListRow, LoadingState, SectionHeader } from '../../components/ui.jsx';
+import { EmptyState, ErrorState, Link, LoadingState, SectionHeader } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useSavedRequests } from '../../hooks/useSavedRequests.js';
 import { navigate } from '../../hooks/useRoute.js';
 import { categoriesApi, servicesApi } from '../../services/fixApi.js';
 import { groupRequests } from '../../utils/customerRequest.js';
-import { dayPeriod } from '../../utils/format.js';
 
 const HOME_CATEGORY_LIMIT = 6;
 const POPULAR_LIMIT = 4;
@@ -58,7 +57,7 @@ function ActiveRequests() {
 
 function HomePage() {
   const { t } = useTranslation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const categories = useApi(() => categoriesApi.list(), []);
   const services = useApi(() => servicesApi.list({ popular: 'true' }), []);
   const categoryList = categories.data?.categories || [];
@@ -66,19 +65,21 @@ function HomePage() {
 
   return (
     <AppShell brand actions={<LanguageSwitcher compact />}>
-      <section className="home-hello">
-        <p className="home-hello__greet">{t(`public.home.greet.${dayPeriod()}`)}</p>
-        <h1 className="home-hello__title">{t('public.home.question')}</h1>
+      <section className="customer-welcome">
+        <h1 className="home-hello__title">{t('public.home.chooseService')}</h1>
+        <p>{t('public.home.simpleIntro')}</p>
       </section>
 
-      <SearchBar onSearch={(query) => navigate(query ? `/services?search=${encodeURIComponent(query)}` : '/services')} />
-
       {!isAuthenticated ? <ActiveRequests /> : null}
+
+      <div className="customer-search">
+        <SearchBar onSearch={(query) => navigate(query ? `/services?search=${encodeURIComponent(query)}` : '/services')} />
+      </div>
 
       <section className="section" aria-labelledby="categories-heading">
         <SectionHeader
           id="categories-heading"
-          title={t('public.home.categories')}
+          title={t('public.home.findService')}
           action={
             categoryList.length > HOME_CATEGORY_LIMIT ? (
               <Link to="/services" className="link">
@@ -101,45 +102,34 @@ function HomePage() {
         ) : null}
       </section>
 
-      <section className="section" aria-labelledby="how-heading">
-        <SectionHeader id="how-heading" title={t('public.home.howTitle')} />
-        <div className="list-group">
-          {STEPS.map((step) => (
-            <ListRow
-              key={step.key}
-              icon={step.icon}
-              title={t(`public.home.steps.${step.key}.title`)}
-              value={t(`public.home.steps.${step.key}.text`)}
-              muted
-            />
-          ))}
-        </div>
-      </section>
-
       {popular.length > 0 ? (
         <section className="section" aria-labelledby="popular-heading">
           <SectionHeader id="popular-heading" title={t('public.home.popular')} />
           <div className="list-group">
             {popular.map((service) => (
-              <ServiceRow key={service.id} service={service} showCategory />
+              <ServiceRow key={service.id} service={service} showCategory requestDirect={user?.role !== 'PROVIDER'} />
             ))}
           </div>
         </section>
       ) : null}
 
-      {!isAuthenticated ? (
-        <section className="section">
-          <div className="list-group">
-            <ListRow
-              to="/signup/provider"
-              icon={Briefcase}
-              title={t('public.home.providerTitle')}
-              value={t('public.home.providerText')}
-              muted
-            />
+      <section className="section">
+        <details className="customer-help">
+          <summary>{t('public.home.howTitle')}<ChevronDown aria-hidden="true" /></summary>
+          <div className="customer-help__steps">
+            {STEPS.map((step, index) => {
+              const Icon = step.icon;
+              return (
+                <div className="customer-help__step" key={step.key}>
+                  <span className="customer-help__number">{index + 1}</span>
+                  <div><h3><Icon aria-hidden="true" />{t(`public.home.steps.${step.key}.title`)}</h3>
+                    <p>{t(`public.home.steps.${step.key}.text`)}</p></div>
+                </div>
+              );
+            })}
           </div>
-        </section>
-      ) : null}
+        </details>
+      </section>
     </AppShell>
   );
 }

@@ -3,12 +3,14 @@ import AppShell from '../../components/AppShell.jsx';
 import { ServiceIcon, ServiceRow } from '../../components/cards.jsx';
 import { ButtonLink, EmptyState, ErrorState, LoadingState, SectionHeader } from '../../components/ui.jsx';
 import { useApi } from '../../hooks/useApi.js';
+import { useAuth } from '../../hooks/useAuth.jsx';
 import { categoriesApi } from '../../services/fixApi.js';
 
 // Second browsing step: the services inside one category. Choosing a service
 // continues into its details and the booking form.
 function CategoryPage({ categoryId }) {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const data = useApi(() => categoriesApi.services(categoryId), [categoryId]);
   const back = { to: '/services', label: t('public.services.allCategories') };
 
@@ -57,7 +59,7 @@ function CategoryPage({ categoryId }) {
         ) : (
           <div className="list-group">
             {services.map((service) => (
-              <ServiceRow key={service.id} service={service} />
+              <ServiceRow key={service.id} service={service} requestDirect={user?.role !== 'PROVIDER'} />
             ))}
           </div>
         )}

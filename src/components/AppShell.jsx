@@ -117,7 +117,7 @@ export function TopBar({ title, back, actions, large = false, brand = false, bor
         .join(' ')}
     >
       <div className="topbar__inner">
-        {back ? <BackButton to={back.to} label={back.label || t('common.actions.goBack')} history={back.history} /> : null}
+        {back ? <BackButton to={back.to} label={back.label || t('common.actions.goBack')} history={back.history} onClick={back.onClick} /> : null}
         {brand ? (
           <Link to={homeTarget} className="topbar__brand" aria-label={t('common.brand.homeAria')}>
             <span className="brand-mark">4</span>Fix
@@ -153,7 +153,7 @@ function AppShell({ children, title, back, actions, large = false, brand = false
   useKeepFocusAboveBar(bar);
 
   return (
-    <div className={['app', nav ? '' : 'app--no-nav', bar ? 'app--with-bar' : ''].filter(Boolean).join(' ')}>
+    <div className={['app', side === 'CUSTOMER' ? 'app--customer' : '', nav ? '' : 'app--no-nav', bar ? 'app--with-bar' : ''].filter(Boolean).join(' ')}>
       <TopBar title={title} back={back} actions={actions} large={large} brand={brand} />
       {previewSide ? (
         <div className="preview-banner">

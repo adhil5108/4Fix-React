@@ -51,12 +51,12 @@ export function CategoryTile({ category, showCount = false }) {
 }
 
 // A service in a list (category page, search results). Opens the service.
-export function ServiceRow({ service, showCategory = false }) {
+export function ServiceRow({ service, showCategory = false, requestDirect = false }) {
   const { t } = useTranslation();
   const hasPrice = service.startingPrice !== null && service.startingPrice !== undefined;
 
   return (
-    <ListRow to={`/services/${service.id}`} leading={<ServiceIcon service={service} />}>
+    <ListRow to={requestDirect ? `/book/${service.id}` : `/services/${service.id}`} leading={<ServiceIcon service={service} />}>
       <span className="list-row__title">{service.name}</span>
       {showCategory && service.category?.name ? <span className="list-row__label">{service.category.name}</span> : null}
       {service.description ? <span className="service-row__desc">{service.description}</span> : null}

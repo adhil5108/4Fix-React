@@ -8,6 +8,9 @@ export default {
     submit: 'തിരയുക',
   },
   home: {
+    simpleIntro: 'എന്താണ് ശരിയാക്കേണ്ടതെന്ന് പറയൂ. അടുത്തുള്ള സേവനദാതാവിന് സഹായിക്കാം.',
+    findService: 'സേവനം കണ്ടെത്തുക',
+    chooseService: 'എന്താണ് ശരിയാക്കേണ്ടത്?',
     greet: {
       morning: 'സുപ്രഭാതം',
       afternoon: 'നമസ്കാരം',
